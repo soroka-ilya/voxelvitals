@@ -145,3 +145,41 @@ async def test_partial_card_resolves_alias(client):
     response = await client.get("/partials/server-card?address=hypixel&mock=true")
     assert response.status_code == 200
     assert "mc.hypixel.net" in response.text
+
+
+def test_suggestions_spaced_and_port_queries():
+    """Verify autocomplete suggestions succeed for spaced queries and queries with ports."""
+    res_2b = search_suggestions("2b 2t")
+    assert any("2b2t.org" in item["address"] for item in res_2b)
+
+    res_donut = search_suggestions("donut smp")
+    assert any("donutsmp.net" in item["address"] for item in res_donut)
+
+    res_gomme = search_suggestions("gomme hd")
+    assert any("gommehd.net" in item["address"] for item in res_gomme)
+
+    res_port = search_suggestions("mc.hypixel.net:25565")
+    assert any("mc.hypixel.net" in item["address"] for item in res_port)
+
+
+def test_localhost_and_ipv6_resolution():
+    """Verify localhost is preserved without TLD fallback and IPv6 parsing is robust."""
+    assert resolve_address("localhost") == "localhost"
+    assert resolve_address("localhost:25565") == "localhost:25565"
+    assert resolve_address("2001:db8::1234") == "2001:db8::1234"
+    assert resolve_address("[2001:db8::1]:25565") == "[2001:db8::1]:25565"
+
+
+def test_fallback_query_no_spaces():
+    """Verify fallback TLD domain does not contain illegal spaces."""
+    assert resolve_address("craft land") == "craftland.net"
+
+
+@pytest.mark.asyncio
+async def test_api_status_resolves_alias(client):
+    """Verify /api/status/{address} resolves alias to canonical address."""
+    response = await client.get("/api/status/2b2t?mock=true")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["address"] == "2b2t.org"
+

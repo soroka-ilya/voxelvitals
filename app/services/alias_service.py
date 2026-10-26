@@ -207,6 +207,24 @@ def normalize_query(query: str) -> str:
 def _split_host_port(address: str) -> tuple[str, Optional[int]]:
     """Separate hostname from optional port."""
     addr = address.strip()
+    if not addr:
+        return "", None
+
+    # Bracketed IPv6 notation: [2001:db8::1]:25565 or [2001:db8::1]
+    if addr.startswith("["):
+        if "]:" in addr:
+            parts = addr.rsplit("]:", 1)
+            host = parts[0] + "]"
+            port_str = parts[1]
+            if port_str.isdigit():
+                return host, int(port_str)
+            return addr, None
+        return addr, None
+
+    # Unbracketed IPv6 with multiple colons has no port
+    if addr.count(":") > 1:
+        return addr, None
+
     if ":" in addr:
         parts = addr.rsplit(":", 1)
         if parts[1].isdigit():
@@ -243,17 +261,23 @@ def resolve_address(query: str, default_tld: str = ".net") -> str:
         "",
         host_lower,
     ).strip()
+    stripped_noise_clean = re.sub(r"[^a-z0-9]", "", stripped_noise)
     if stripped_noise in ALIAS_MAP:
         resolved_host = ALIAS_MAP[stripped_noise]
         return f"{resolved_host}:{port}" if port else resolved_host
+    if stripped_noise_clean in ALIAS_MAP:
+        resolved_host = ALIAS_MAP[stripped_noise_clean]
+        return f"{resolved_host}:{port}" if port else resolved_host
 
-    # Check if host already contains a domain dot or is an IP address
-    if "." in host or host.count(":") > 1:
-        return f"{host}:{port}" if port else host
+    # Check if host is localhost or already contains a domain dot or is an IPv6 address
+    if host_lower == "localhost" or "." in host or host.count(":") > 1 or host.startswith("["):
+        sanitized_host = re.sub(r"\s+", "", host)
+        return f"{sanitized_host}:{port}" if port else sanitized_host
 
-    # Fallback to appending default TLD if no dot is present
+    # Fallback to appending default TLD if no dot is present (remove spaces for valid hostname)
+    sanitized_host = re.sub(r"\s+", "", host)
     tld = default_tld if default_tld.startswith(".") else f".{default_tld}"
-    fallback_host = f"{host}{tld}"
+    fallback_host = f"{sanitized_host}{tld}"
     return f"{fallback_host}:{port}" if port else fallback_host
 
 
@@ -280,6 +304,12 @@ def search_suggestions(query: str, limit: int = 5) -> List[Dict[str, Any]]:
             for s in CURATED_SERVERS[:limit]
         ]
 
+    q_host, _ = _split_host_port(clean_q)
+    resolved = resolve_address(clean_q)
+    resolved_host, _ = _split_host_port(resolved) if resolved else ("", None)
+    resolved_host_lower = resolved_host.lower() if resolved_host else ""
+    compact_q = re.sub(r"[^a-z0-9]", "", clean_q)
+
     scored_results: List[tuple[int, Dict[str, Any]]] = []
 
     for s in CURATED_SERVERS:
@@ -289,15 +319,28 @@ def search_suggestions(query: str, limit: int = 5) -> List[Dict[str, Any]]:
         cat_lower = s["category"].lower()
         tags = [t.lower() for t in s.get("tags", [])]
 
-        if addr_lower == clean_q or s["id"] == clean_q:
+        compact_id = re.sub(r"[^a-z0-9]", "", s["id"].lower())
+        compact_addr = re.sub(r"[^a-z0-9]", "", addr_lower)
+        compact_name = re.sub(r"[^a-z0-9]", "", name_lower)
+        compact_tags = [re.sub(r"[^a-z0-9]", "", t) for t in tags]
+
+        if resolved_host_lower and addr_lower == resolved_host_lower:
+            score += 120
+        elif addr_lower == clean_q or s["id"] == clean_q or addr_lower == q_host:
             score += 100
+        elif compact_q and (compact_q == compact_id or compact_q == compact_addr):
+            score += 95
         elif addr_lower.startswith(clean_q) or s["id"].startswith(clean_q):
+            score += 85
+        elif compact_q and (compact_addr.startswith(compact_q) or compact_id.startswith(compact_q)):
             score += 80
-        elif name_lower.startswith(clean_q):
+        elif name_lower.startswith(clean_q) or (compact_q and compact_name.startswith(compact_q)):
             score += 70
         elif clean_q in addr_lower or clean_q in name_lower:
+            score += 55
+        elif compact_q and (compact_q in compact_addr or compact_q in compact_name):
             score += 50
-        elif any(clean_q in t for t in tags):
+        elif any(clean_q in t for t in tags) or (compact_q and any(compact_q in ct for ct in compact_tags)):
             score += 40
         elif clean_q in cat_lower:
             score += 30
@@ -315,3 +358,4 @@ def search_suggestions(query: str, limit: int = 5) -> List[Dict[str, Any]]:
 
     scored_results.sort(key=lambda x: x[0], reverse=True)
     return [item for _, item in scored_results[:limit]]
+

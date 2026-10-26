@@ -2,22 +2,44 @@
  * VoxelVitals interactive UI enhancements
  * - Live search autocomplete suggestions
  * - Category filter tabs for curated server catalog
- * - One-click IP copy with visual feedback
+ * - One-click IP copy with visual feedback and robust fallback
  */
 
-// 1. One-click IP Copy Helper
+// Escape HTML entities to prevent any injection
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// 1. One-click IP Copy Helper with fallback
 function copyIp(address, btn) {
-  if (!navigator.clipboard) {
+  const fallbackCopy = (text) => {
     const input = document.createElement('input');
-    input.value = address;
+    input.value = text;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
     document.body.appendChild(input);
+    input.focus();
     input.select();
-    document.execCommand('copy');
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
     document.body.removeChild(input);
-  } else {
-    navigator.clipboard.writeText(address).catch(err => {
-      console.error('Clipboard copy failed:', err);
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(address).catch(() => {
+      fallbackCopy(address);
     });
+  } else {
+    fallbackCopy(address);
   }
 
   const label = btn.querySelector('.copy-label') || btn;
@@ -29,6 +51,21 @@ function copyIp(address, btn) {
     label.innerHTML = originalHtml;
     btn.classList.remove('border-emerald-500/50', 'text-emerald-400');
   }, 1500);
+}
+
+// Global query launcher
+function queryAddress(address) {
+  const input = document.getElementById('search-input');
+  const form = document.getElementById('search-form');
+  if (input) input.value = address;
+  if (form) {
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    } else {
+      form.submit();
+    }
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // 2. Catalog Category Filtering
@@ -94,15 +131,15 @@ function initAutocomplete() {
     dropdown.innerHTML = items.map((item, index) => `
       <div class="suggestion-item p-3 hover:bg-[#1c2233] cursor-pointer flex items-center justify-between gap-3 transition-colors ${index === 0 ? 'rounded-t-xl' : ''} ${index === items.length - 1 ? 'rounded-b-xl' : ''}" 
            data-index="${index}" 
-           data-address="${item.address}">
+           data-address="${escapeHtml(item.address)}">
         <div class="flex items-center gap-3 min-w-0">
-          <img src="${item.icon}" alt="${item.name}" class="w-8 h-8 rounded-lg bg-[#0c0f17] border border-[#273147] flex-shrink-0" />
+          <img src="${escapeHtml(item.icon)}" alt="${escapeHtml(item.name)}" class="w-8 h-8 rounded-lg bg-[#0c0f17] border border-[#273147] flex-shrink-0" />
           <div class="min-w-0 text-left">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-semibold text-white truncate">${item.name}</span>
-              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#273147] text-slate-300 font-medium">${item.category_label || item.category}</span>
+              <span class="text-xs font-semibold text-white truncate">${escapeHtml(item.name)}</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#273147] text-slate-300 font-medium">${escapeHtml(item.category_label || item.category)}</span>
             </div>
-            <p class="text-[11px] font-mono text-emerald-400 truncate">${item.address}</p>
+            <p class="text-[11px] font-mono text-emerald-400 truncate">${escapeHtml(item.address)}</p>
           </div>
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
@@ -139,8 +176,11 @@ function initAutocomplete() {
     }
   }
 
+  let originalTyped = '';
+
   input.addEventListener('input', () => {
     clearTimeout(debounceTimer);
+    originalTyped = input.value;
     const q = input.value.trim();
     debounceTimer = setTimeout(() => {
       fetchSuggestions(q);
@@ -148,6 +188,7 @@ function initAutocomplete() {
   });
 
   input.addEventListener('focus', () => {
+    originalTyped = input.value;
     fetchSuggestions(input.value.trim());
   });
 
@@ -158,21 +199,40 @@ function initAutocomplete() {
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      activeIndex = (activeIndex + 1) % items.length;
-      updateActiveItem(items);
+      if (activeIndex < items.length - 1) {
+        activeIndex++;
+        updateActiveItem(items);
+      } else {
+        activeIndex = -1;
+        input.value = originalTyped;
+        updateActiveItem(items);
+      }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      activeIndex = (activeIndex - 1 + items.length) % items.length;
-      updateActiveItem(items);
+      if (activeIndex > 0) {
+        activeIndex--;
+        updateActiveItem(items);
+      } else if (activeIndex === 0) {
+        activeIndex = -1;
+        input.value = originalTyped;
+        updateActiveItem(items);
+      } else {
+        activeIndex = items.length - 1;
+        updateActiveItem(items);
+      }
     } else if (e.key === 'Enter') {
       if (activeIndex >= 0 && items[activeIndex]) {
         e.preventDefault();
         const addr = items[activeIndex].getAttribute('data-address');
         selectSuggestion(addr);
+      } else {
+        dropdown.classList.add('hidden');
+        activeIndex = -1;
       }
     } else if (e.key === 'Escape') {
       dropdown.classList.add('hidden');
       activeIndex = -1;
+      input.value = originalTyped;
     }
   });
 
@@ -187,7 +247,14 @@ function initAutocomplete() {
     });
   }
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click or form submission
+  if (form) {
+    form.addEventListener('submit', () => {
+      dropdown.classList.add('hidden');
+      activeIndex = -1;
+    });
+  }
+
   document.addEventListener('click', (e) => {
     if (!input.contains(e.target) && !dropdown.contains(e.target)) {
       dropdown.classList.add('hidden');
