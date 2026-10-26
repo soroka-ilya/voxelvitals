@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.repository import ServerRepository
@@ -14,6 +14,12 @@ templates = Jinja2Templates(directory=str(templates_path))
 
 web_router = APIRouter(tags=["Web Pages"])
 repo = ServerRepository()
+
+
+@web_router.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Redirect default favicon request to static vector icon."""
+    return RedirectResponse(url="/static/favicon.svg")
 
 
 @web_router.get("/", response_class=HTMLResponse)
