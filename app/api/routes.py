@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.repository import ServerRepository
+from app.services.alias_service import get_curated_catalog, resolve_address
 from app.services.pinger import get_mock_server_status, query_server
 
 templates_path = Path(__file__).resolve().parent.parent / "templates"
@@ -31,6 +32,7 @@ async def home_page(request: Request):
         context={
             "featured_servers": settings.featured_servers,
             "app_name": settings.app_name,
+            "catalog": get_curated_catalog(),
         },
     )
 
@@ -43,7 +45,7 @@ async def server_page(
     mock: bool = Query(False),
 ):
     """Render server detail page with interactive history charts and player list."""
-    clean_addr = address.strip()
+    clean_addr = resolve_address(address.strip())
     if mock:
         status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if bedrock else "java")
     else:
@@ -72,7 +74,7 @@ async def partial_server_card(
     mock: bool = Query(False),
 ):
     """HTMX partial for rendering a single server card on search or live update."""
-    clean_addr = address.strip()
+    clean_addr = resolve_address(address.strip())
     if mock:
         status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if bedrock else "java")
     else:

@@ -1,14 +1,24 @@
 """REST JSON API and dynamic SVG badge endpoints."""
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Query, Response
 from app.domain.models import BadgeConfig, ServerStatus, TelemetryPoint
 from app.repository import ServerRepository
+from app.services.alias_service import search_suggestions
 from app.services.badge_service import generate_status_badge
 from app.services.pinger import get_mock_server_status, query_server
 
 api_router = APIRouter(prefix="/api", tags=["API"])
 repo = ServerRepository()
+
+
+@api_router.get("/suggestions", response_model=List[Dict[str, Any]])
+async def get_suggestions(
+    q: str = Query("", description="Search query string"),
+    limit: int = Query(5, ge=1, le=20, description="Max suggestions to return"),
+):
+    """Return autocomplete server suggestions matching query."""
+    return search_suggestions(q, limit=limit)
 
 
 @api_router.get("/status/{address}", response_model=ServerStatus)

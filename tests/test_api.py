@@ -18,11 +18,16 @@ async def client():
 
 @pytest.mark.asyncio
 async def test_home_page(client):
-    """Verify landing page renders successfully."""
+    """Verify landing page renders successfully with catalog and autocomplete."""
     response = await client.get("/")
     assert response.status_code == 200
     assert "VoxelVitals" in response.text
     assert "Live Explorer" in response.text
+    assert "Каталог серверов" in response.text
+    assert "autocomplete-dropdown" in response.text
+    assert "Копировать IP" in response.text
+    assert "2b2t" in response.text
+    assert "Hypixel" in response.text
 
 
 @pytest.mark.asyncio
