@@ -1,0 +1,1 @@
+"""VoxelVitals application package."""

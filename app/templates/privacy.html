@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - VoxelVitals{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <div class="border-b border-[#273147] pb-4">
+    <h1 class="text-2xl font-bold text-white tracking-tight">Privacy Policy</h1>
+    <p class="text-xs text-slate-400 mt-1">Last updated: October 2026</p>
+  </div>
+
+  <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+    <h2 class="text-base font-semibold text-white">1. Information We Collect</h2>
+    <p>
+      VoxelVitals provides public status monitoring for Minecraft multiplayer servers. We interact exclusively with publicly accessible network ports exposed by game server administrators via standard Server List Ping (TCP) and RakNet query (UDP).
+    </p>
+
+    <h2 class="text-base font-semibold text-white">2. Server Telemetry Data</h2>
+    <p>
+      When an address is submitted or tracked, we store:
+    </p>
+    <ul class="list-disc pl-5 space-y-1 text-slate-400">
+      <li>Server address, port, and detected edition (Java or Bedrock).</li>
+      <li>Concurrent player count and configured capacity.</li>
+      <li>Network ping latency in milliseconds.</li>
+      <li>Public MOTD message and server icon.</li>
+    </ul>
+
+    <h2 class="text-base font-semibold text-white">3. Visitor Privacy & Tracking</h2>
+    <p>
+      We do not use tracking cookies, analytics pixels, or commercial ad networks. We do not sell or trade user data. Server telemetry records are automatically pruned after 24 hours.
+    </p>
+
+    <h2 class="text-base font-semibold text-white">4. Contact & Inquiries</h2>
+    <p>
+      For privacy concerns or to request removal of a server address from public tracking, contact the repository maintainers on GitHub.
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}VoxelVitals - Real-Time Minecraft Telemetry{% endblock %}
+
+{% block content %}
+<div class="space-y-12">
+  <!-- Hero Section -->
+  <section class="max-w-3xl mx-auto text-center space-y-4 pt-4">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      Protocol v767 & Bedrock v1.21 Compatible
+    </div>
+
+    <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+      Minecraft Server Telemetry & Status
+    </h1>
+    <p class="text-slate-400 text-base max-w-xl mx-auto">
+      Query live players, latency, DNS SRV records, MOTD formatting, and export dynamic SVG status badges.
+    </p>
+
+    <!-- Search / Query Form -->
+    <div class="pt-4 max-w-xl mx-auto">
+      <form hx-get="/partials/server-card" 
+            hx-target="#search-result" 
+            hx-indicator="#search-skeleton" 
+            class="bg-[#161b26] border border-[#273147] rounded-xl p-2 flex flex-col sm:flex-row gap-2 shadow-lg focus-within:border-emerald-500/60 transition-colors">
+        <div class="flex-1 flex items-center px-3 gap-2">
+          <svg class="w-5 h-5 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" 
+                 name="address" 
+                 required 
+                 placeholder="e.g. mc.hypixel.net or play.server.com:19132" 
+                 class="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none font-mono" />
+        </div>
+
+        <div class="flex items-center justify-between sm:justify-end gap-3 px-2 py-1 border-t sm:border-t-0 sm:border-l border-[#273147]">
+          <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer select-none">
+            <input type="checkbox" name="bedrock" value="true" class="rounded bg-[#0c0f17] border-[#273147] text-emerald-500 focus:ring-0" />
+            <span class="font-mono">Bedrock</span>
+          </label>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs tracking-wide transition-colors flex items-center gap-1.5">
+            <span>Query Server</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Quick Server Chips -->
+      <div class="mt-3 flex items-center justify-center flex-wrap gap-2 text-xs">
+        <span class="text-slate-500">Quick test:</span>
+        {% for addr in featured_servers %}
+          <button type="button" 
+                  onclick="const input = document.querySelector('input[name=address]'); input.value = '{{ addr }}'; input.form.requestSubmit();" 
+                  class="font-mono px-2.5 py-1 rounded bg-[#161b26] border border-[#273147] hover:border-[#3b4866] text-slate-300 hover:text-white transition-colors">
+            {{ addr }}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Search Result Area with HTMX Loading State -->
+  <section class="max-w-2xl mx-auto w-full">
+    <div id="search-skeleton" class="htmx-indicator mb-6">
+      {% include "partials/skeleton.html" %}
+    </div>
+    <div id="search-result">
+      <!-- Replaced dynamically by HTMX -->
+    </div>
+  </section>
+
+  <!-- Featured Network Telemetry Grid -->
+  <section class="space-y-6 pt-4">
+    <div class="flex items-center justify-between border-b border-[#273147] pb-3">
+      <div>
+        <h2 class="text-lg font-semibold text-white">Tracked Infrastructure</h2>
+        <p class="text-xs text-slate-400">Live health indicators from verified public nodes</p>
+      </div>
+      <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+        Active Monitoring
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% for addr in featured_servers %}
+        <div hx-get="/partials/server-card?address={{ addr }}" 
+             hx-trigger="load" 
+             hx-swap="outerHTML">
+          {% include "partials/skeleton.html" %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

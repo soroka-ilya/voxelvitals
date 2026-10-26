@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service - VoxelVitals{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <div class="border-b border-[#273147] pb-4">
+    <h1 class="text-2xl font-bold text-white tracking-tight">Terms of Service</h1>
+    <p class="text-xs text-slate-400 mt-1">Last updated: October 2026</p>
+  </div>
+
+  <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+    <h2 class="text-base font-semibold text-white">1. Acceptance of Terms</h2>
+    <p>
+      By accessing VoxelVitals and utilizing its web interface, REST endpoints, or SVG badges, you agree to comply with these terms. If you disagree with any portion, do not use the service.
+    </p>
+
+    <h2 class="text-base font-semibold text-white">2. Acceptable Use Policy</h2>
+    <p>
+      VoxelVitals is designed for server administrators, community members, and open-source projects. You agree not to:
+    </p>
+    <ul class="list-disc pl-5 space-y-1 text-slate-400">
+      <li>Abuse API endpoints through automated denial of service or extreme polling frequencies.</li>
+      <li>Attempt to bypass rate limits or query private non-routable networks.</li>
+      <li>Use the service to distribute malicious URLs or harmful content in server names.</li>
+    </ul>
+
+    <h2 class="text-base font-semibold text-white">3. Third-Party Game Servers & Disclaimer</h2>
+    <p>
+      VoxelVitals is not affiliated with Mojang Studios or Microsoft Corporation. Status and ping metrics are subject to internet routing conditions and third-party host availability. The service is provided "as is" without warranty of continuous uptime.
+    </p>
+
+    <h2 class="text-base font-semibold text-white">4. Modifications</h2>
+    <p>
+      We reserve the right to modify these terms or adjust API rate limits to preserve service stability.
+    </p>
+  </div>
+</div>
+{% endblock %}

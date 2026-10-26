@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}VoxelVitals - Minecraft Server Telemetry & Status{% endblock %}</title>
+  <meta name="description" content="Real-time Minecraft Java & Bedrock server monitoring, latency tracking, 24-hour telemetry analytics, and dynamic SVG badges.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS & HTMX -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#0c0f17',
+            surface: '#161b26',
+            panel: '#1c2233',
+            borderline: '#273147',
+            emeraldaccent: '#10b981',
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="/static/js/chart_init.js"></script>
+</head>
+<body class="bg-[#0c0f17] text-slate-100 font-sans antialiased flex flex-col min-h-screen selection:bg-emerald-500/20 selection:text-emerald-300">
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-[#273147] bg-[#161b26]/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:border-emerald-500/60 transition-colors">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z"/>
+          </svg>
+        </div>
+        <span class="font-semibold text-lg tracking-tight text-white group-hover:text-emerald-400 transition-colors">Voxel<span class="text-emerald-400">Vitals</span></span>
+      </a>
+
+      <nav class="flex items-center gap-6 text-sm text-slate-300">
+        <a href="/" class="hover:text-emerald-400 transition-colors">Live Explorer</a>
+        <a href="/docs" target="_blank" class="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+          <span>API Reference</span>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Page Content -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Clean Engineered Footer -->
+  <footer class="border-t border-[#273147] bg-[#121622] text-xs text-slate-400 py-8">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>VoxelVitals Network Telemetry &copy; 2026. All rights reserved.</span>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <a href="/terms" class="hover:text-slate-200 transition-colors">Terms of Service</a>
+        <a href="/privacy" class="hover:text-slate-200 transition-colors">Privacy Policy</a>
+        <a href="/api/status/mc.hypixel.net" class="hover:text-slate-200 transition-colors">Direct JSON</a>
+        <span class="text-slate-600">|</span>
+        <span class="text-slate-500 font-mono">v1.0.0</span>
+      </div>
+    </div>
+  </footer>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

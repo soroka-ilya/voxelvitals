@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}{{ status.address }} - Telemetry & Status | VoxelVitals{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+  <!-- Breadcrumbs & Status Bar -->
+  <div class="flex items-center justify-between text-xs text-slate-400">
+    <div class="flex items-center gap-2">
+      <a href="/" class="hover:text-slate-200 transition-colors">Explorer</a>
+      <span>/</span>
+      <span class="text-slate-200 font-mono">{{ status.address }}</span>
+    </div>
+
+    <div>
+      <span class="text-slate-500">Updated:</span>
+      <span class="font-mono text-slate-300">{{ status.last_updated[:19].replace('T', ' ') }} UTC</span>
+    </div>
+  </div>
+
+  <!-- Server Header Banner -->
+  <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div class="flex items-center gap-4">
+        {% if status.icon_base64 %}
+          <img src="{{ status.icon_base64 }}" alt="{{ status.address }}" class="w-16 h-16 rounded-lg bg-[#0c0f17] border border-[#273147] object-contain flex-shrink-0" />
+        {% else %}
+          <div class="w-16 h-16 rounded-lg bg-[#0c0f17] border border-[#273147] flex items-center justify-center text-slate-500 flex-shrink-0">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+            </svg>
+          </div>
+        {% endif %}
+
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-white tracking-tight font-mono">{{ status.address }}</h1>
+            <span class="text-xs uppercase font-mono px-2 py-0.5 rounded bg-[#273147] text-slate-300 font-medium">
+              {{ status.edition }}
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 font-mono mt-1">
+            {{ status.version_name }} {% if status.version_protocol %}(Protocol {{ status.version_protocol }}){% endif %}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        {% if status.is_online %}
+          <div class="text-right">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Online · {{ status.latency_ms | int }} ms
+            </div>
+            <p class="text-xs text-slate-400 font-mono mt-1">
+              {{ "{:,}".format(status.players_online) }} / {{ "{:,}".format(status.players_max) }} online
+            </p>
+          </div>
+        {% else %}
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+            Offline
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MOTD Panel -->
+    <div class="mt-6 pt-6 border-t border-[#273147]">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Message of the Day</h3>
+      <div class="text-sm font-mono bg-[#0c0f17] p-4 rounded-lg border border-[#273147] overflow-x-auto whitespace-pre-wrap select-text leading-relaxed">
+        {% if status.is_online %}
+          {{ status.motd_html | safe }}
+        {% else %}
+          <span class="text-slate-500 italic">{{ status.error_message or 'Server unreachable' }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 24-Hour Telemetry History Chart -->
+  <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-[#273147] pb-3">
+      <div>
+        <h2 class="text-base font-semibold text-white">24-Hour Telemetry Activity</h2>
+        <p class="text-xs text-slate-400">Concurrent players and ping response timeline</p>
+      </div>
+      <span class="text-xs font-mono text-slate-400 bg-[#273147]/50 px-2.5 py-1 rounded">
+        {{ history | length }} Recorded Points
+      </span>
+    </div>
+
+    <div class="h-64 w-full relative">
+      <canvas id="telemetryChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Dynamic SVG Badge Embed Section -->
+  <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm space-y-4">
+    <div class="border-b border-[#273147] pb-3">
+      <h2 class="text-base font-semibold text-white">Embeddable Live Badge</h2>
+      <p class="text-xs text-slate-400">Dynamic SVG badge for your README, website, or Discord server</p>
+    </div>
+
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-lg bg-[#0c0f17] border border-[#273147]">
+      <div>
+        <span class="text-xs text-slate-400 block mb-1">Live Preview:</span>
+        <img src="/api/badge/{{ status.address }}.svg?bedrock={{ 'true' if status.edition == 'bedrock' else 'false' }}" alt="{{ status.address }} status badge" class="h-5" />
+      </div>
+
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <a href="/api/badge/{{ status.address }}.svg?bedrock={{ 'true' if status.edition == 'bedrock' else 'false' }}" target="_blank" class="text-xs font-medium text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded bg-[#273147] transition-colors">
+          Open Raw SVG
+        </a>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <label class="text-xs text-slate-400 block font-medium">Markdown Snippet:</label>
+      <div class="flex items-center gap-2">
+        <input type="text" readonly value="![{{ status.address }} Status](https://voxelvitals.com/api/badge/{{ status.address }}.svg)" class="w-full text-xs font-mono bg-[#0c0f17] border border-[#273147] rounded px-3 py-2 text-slate-300 focus:outline-none select-all" />
+        <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 1500);" class="text-xs px-3 py-2 rounded bg-[#273147] hover:bg-[#3b4866] text-white transition-colors flex-shrink-0">
+          Copy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player Sample (if available) -->
+  {% if status.players_sample %}
+  <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm space-y-4">
+    <div class="border-b border-[#273147] pb-3">
+      <h2 class="text-base font-semibold text-white">Online Player Sample</h2>
+      <p class="text-xs text-slate-400">Sample of currently active players reported by ping protocol</p>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {% for player in status.players_sample %}
+        <div class="flex items-center gap-2.5 p-2 rounded bg-[#0c0f17] border border-[#273147]">
+          <img src="https://mc-heads.net/avatar/{{ player.name }}/28" alt="{{ player.name }}" class="w-7 h-7 rounded flex-shrink-0 bg-[#161b26]" onerror="this.src='/static/avatar-placeholder.png';" />
+          <div class="min-w-0">
+            <span class="text-xs font-mono text-slate-200 block truncate">{{ player.name }}</span>
+            <span class="text-[10px] font-mono text-slate-500 block truncate">{{ player.id[:8] }}...</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const historyData = [
+    {% for point in history %}
+      {
+        timestamp: "{{ point.timestamp }}",
+        players_online: {{ point.players_online }},
+        players_max: {{ point.players_max }},
+        ping_ms: {{ point.ping_ms }},
+        is_online: {{ 'true' if point.is_online else 'false' }}
+      }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  // If history is empty, populate with current point for visual chart
+  if (historyData.length === 0) {
+    historyData.push({
+      timestamp: "{{ status.last_updated }}",
+      players_online: {{ status.players_online }},
+      players_max: {{ status.players_max }},
+      ping_ms: {{ status.latency_ms }},
+      is_online: {{ 'true' if status.is_online else 'false' }}
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderTelemetryChart('telemetryChart', historyData);
+  });
+</script>
+{% endblock %}
