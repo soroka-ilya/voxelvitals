@@ -42,15 +42,17 @@ function copyIp(address, btn) {
     fallbackCopy(address);
   }
 
-  const label = btn.querySelector('.copy-label') || btn;
-  const originalHtml = label.innerHTML;
-  label.innerText = 'Скопировано!';
-  btn.classList.add('border-emerald-500/50', 'text-emerald-400');
+  if (btn) {
+    const label = btn.querySelector('.copy-label') || btn;
+    const originalHtml = label.innerHTML;
+    label.innerText = 'Скопировано!';
+    btn.classList.add('border-emerald-500/50', 'text-emerald-400');
 
-  setTimeout(() => {
-    label.innerHTML = originalHtml;
-    btn.classList.remove('border-emerald-500/50', 'text-emerald-400');
-  }, 1500);
+    setTimeout(() => {
+      label.innerHTML = originalHtml;
+      btn.classList.remove('border-emerald-500/50', 'text-emerald-400');
+    }, 1500);
+  }
 }
 
 // Global query launcher
@@ -237,6 +239,9 @@ function initCatalogFilter() {
   if (resetBtn) {
     resetBtn.addEventListener('click', resetAllFilters);
   }
+
+  // Ensure initial labels and counts are synchronized
+  applyCatalogFilters();
 }
 
 // 3. Search Autocomplete Suggestions
@@ -413,7 +418,7 @@ function initAutocomplete() {
   document.body.addEventListener('htmx:beforeRequest', (evt) => {
     if (evt.detail.target && evt.detail.target.id === 'search-result') {
       evt.detail.target.innerHTML = `
-        <div class="rounded-xl border border-[#273147] bg-[#161b26] p-5 shadow-sm">
+        <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-5 shadow-sm">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-center gap-4 w-full">
               <div class="w-14 h-14 rounded-lg skeleton-box flex-shrink-0"></div>
@@ -424,7 +429,7 @@ function initAutocomplete() {
             </div>
             <div class="h-6 w-20 rounded skeleton-box flex-shrink-0"></div>
           </div>
-          <div class="mt-4 pt-4 border-t border-[#273147]/60 space-y-2">
+          <div class="mt-4 pt-4 border-t border-slate-200 dark:border-[#273147]/60 space-y-2">
             <div class="h-4 w-3/4 rounded skeleton-box"></div>
             <div class="h-4 w-1/2 rounded skeleton-box"></div>
           </div>
@@ -458,7 +463,7 @@ function showToast(message, duration = 3000) {
 }
 
 // 5. Quick Open in Launcher Protocol Handler
-function launchMinecraft(address, edition = 'java', customName = '') {
+function launchMinecraft(address, edition = 'java', customName = '', btn = null) {
   const isBedrock = edition === 'bedrock' || address.includes('bedrock') || address.includes('19132');
   let uri = '';
   if (isBedrock) {
@@ -472,10 +477,14 @@ function launchMinecraft(address, edition = 'java', customName = '') {
   }
 
   // Copy IP to clipboard as seamless companion
-  copyIp(address);
+  copyIp(address, btn);
 
-  // Trigger launcher URI
-  window.location.href = uri;
+  // Trigger launcher URI safely
+  try {
+    window.location.href = uri;
+  } catch (err) {
+    console.warn('Launcher URI trigger failed:', err);
+  }
   showToast(`Запуск через лаунчер... IP ${address} скопирован в буфер!`);
 }
 
@@ -489,6 +498,7 @@ function applyTheme(isDark) {
     document.documentElement.classList.add('light');
   }
   updateThemeIcons(isDark);
+  window.dispatchEvent(new CustomEvent('themechange', { detail: { isDark } }));
 }
 
 function updateThemeIcons(isDark) {
@@ -520,10 +530,11 @@ function initTheme() {
     applyTheme(prefersDark.matches);
   }
 
+  // React immediately to browser/system theme changes
   prefersDark.addEventListener('change', (e) => {
-    if (!localStorage.getItem('theme')) {
-      applyTheme(e.matches);
-    }
+    // If user hasn't explicitly overridden theme in current session, or system changes
+    applyTheme(e.matches);
+    localStorage.removeItem('theme'); // keep in sync with automatic browser preference
   });
 }
 

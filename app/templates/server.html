@@ -128,13 +128,13 @@
   </div>
 
   <!-- 24-Hour Telemetry History Chart -->
-  <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm space-y-4">
-    <div class="flex items-center justify-between border-b border-[#273147] pb-3">
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4 transition-colors">
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
       <div>
-        <h2 class="text-base font-semibold text-white">24-Hour Telemetry Activity</h2>
-        <p class="text-xs text-slate-400">Concurrent players and ping response timeline</p>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">24-Hour Telemetry Activity</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Concurrent players and ping response timeline</p>
       </div>
-      <span class="text-xs font-mono text-slate-400 bg-[#273147]/50 px-2.5 py-1 rounded">
+      <span class="text-xs font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#273147]/50 px-2.5 py-1 rounded border border-slate-200 dark:border-transparent">
         {{ history | length }} Recorded Points
       </span>
     </div>
@@ -194,13 +194,13 @@
 
   <!-- Player Sample (if available) -->
   {% if status.players_sample %}
-  <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm space-y-4">
-    <div class="flex items-center justify-between border-b border-[#273147] pb-3">
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4 transition-colors">
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
       <div>
-        <h2 class="text-base font-semibold text-white">Online Player Sample</h2>
-        <p class="text-xs text-slate-400">Sample of currently active players reported by ping protocol</p>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Online Player Sample</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Sample of currently active players reported by ping protocol</p>
       </div>
-      <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+      <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
         {{ status.players_sample | length }} Players
       </span>
     </div>
@@ -208,12 +208,12 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       {% for player in status.players_sample %}
         {% if player.name and player.name.strip() %}
-        <div class="flex items-center gap-2.5 p-2 rounded-lg bg-[#0c0f17] border border-[#273147] hover:border-emerald-500/40 transition-colors group">
-          <img src="https://mc-heads.net/avatar/{{ player.name }}/32" alt="{{ player.name }}" class="w-8 h-8 rounded-md flex-shrink-0 bg-[#161b26] border border-[#273147]" onerror="this.src='/static/favicon.svg';" />
+        <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] hover:border-emerald-500/40 transition-colors group">
+          <img src="https://mc-heads.net/avatar/{{ player.name }}/32" alt="{{ player.name }}" class="w-8 h-8 rounded-md flex-shrink-0 bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-[#273147]" onerror="this.src='/static/favicon.svg';" />
           <div class="min-w-0 flex-1">
-            <span class="text-xs font-mono text-slate-200 block truncate group-hover:text-emerald-400 transition-colors font-medium">{{ player.name }}</span>
+            <span class="text-xs font-mono text-slate-800 dark:text-slate-200 block truncate group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors font-medium">{{ player.name }}</span>
             <span class="text-[10px] text-slate-500 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               Активен
             </span>
           </div>

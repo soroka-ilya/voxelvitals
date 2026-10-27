@@ -50,9 +50,13 @@ body {
 }
 
 .skeleton-box {
-  background: linear-gradient(90deg, #182030 25%, #222d42 50%, #182030 75%);
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.8s infinite;
+}
+
+.dark .skeleton-box {
+  background: linear-gradient(90deg, #182030 25%, #222d42 50%, #182030 75%);
 }
 
 /* Authentic Minecraft Server Browser MOTD aesthetic */

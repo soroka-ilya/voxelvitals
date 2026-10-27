@@ -57,16 +57,16 @@ function renderTelemetryChart(canvasId, historyData) {
           display: true,
           position: 'top',
           labels: {
-            color: '#94a3b8',
+            color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569',
             font: { family: 'Plus Jakarta Sans', size: 12 },
             boxWidth: 12
           }
         },
         tooltip: {
-          backgroundColor: '#161b26',
-          titleColor: '#f1f5f9',
-          bodyColor: '#94a3b8',
-          borderColor: '#273147',
+          backgroundColor: document.documentElement.classList.contains('dark') ? '#161b26' : '#ffffff',
+          titleColor: document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a',
+          bodyColor: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569',
+          borderColor: document.documentElement.classList.contains('dark') ? '#273147' : '#e2e8f0',
           borderWidth: 1,
           padding: 10,
           displayColors: true,
@@ -75,7 +75,7 @@ function renderTelemetryChart(canvasId, historyData) {
       },
       scales: {
         x: {
-          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)' },
           ticks: { color: '#64748b', maxTicksLimit: 12, font: { size: 11 } }
         },
         yPlayers: {
@@ -83,7 +83,7 @@ function renderTelemetryChart(canvasId, historyData) {
           display: true,
           position: 'left',
           beginAtZero: true,
-          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)' },
           ticks: { color: '#10b981', font: { size: 11 } }
         },
         yPing: {

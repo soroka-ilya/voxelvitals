@@ -44,15 +44,17 @@ async def test_auth_workflow(client):
     )
     assert login_res.status_code == 200
     assert "session_token" in login_res.cookies
+    client.cookies.update(login_res.cookies)
 
     # 3. Check me endpoint
-    me_res = await client.get("/api/auth/me", cookies=login_res.cookies)
+    me_res = await client.get("/api/auth/me")
     assert me_res.status_code == 200
     assert me_res.json()["username"] == uname
 
     # 4. Logout
-    logout_res = await client.get("/api/auth/logout", cookies=login_res.cookies)
+    logout_res = await client.get("/api/auth/logout")
     assert logout_res.status_code == 200
+
 
 
 @pytest.mark.asyncio
@@ -69,6 +71,7 @@ async def test_server_reviews_and_news(client):
         "/api/auth/login",
         json={"username": r_uname, "password": "pass123456"},
     )
+    client.cookies.update(login_res.cookies)
 
     # Post a review
     rev_res = await client.post(
@@ -78,7 +81,6 @@ async def test_server_reviews_and_news(client):
             "rating": 5,
             "comment": "Отличный сервер, играем с друзьями каждый день!",
         },
-        cookies=login_res.cookies,
     )
     assert rev_res.status_code == 200
     rev_data = rev_res.json()
@@ -100,8 +102,8 @@ async def test_server_reviews_and_news(client):
             "content": "Добавлены новые карты для BedWars и SkyWars!",
             "tag": "Обновление",
         },
-        cookies=login_res.cookies,
     )
+
     assert news_res.status_code == 200
 
     # Get news for server
@@ -180,4 +182,47 @@ async def test_vote_and_auth_edge_cases(client):
     # 4. Access /api/auth/me without auth cookie
     unauth = await client.get("/api/auth/me")
     assert unauth.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_server_card_online_vs_offline_telemetry(client):
+    """Verify that offline server cards display diagnostic info and NOT fake TPS 20.0 or 99.9% uptime."""
+    from unittest.mock import patch
+    from app.domain.models import ServerStatus
+
+    offline_status = ServerStatus(
+        address="offline.server.test",
+        is_online=False,
+        error_message="Connection timed out after 3.0 seconds",
+        latency_ms=0.0,
+    )
+    with patch("app.api.routes.query_server", return_value=offline_status):
+        res = await client.get("/partials/server-card?address=offline.server.test")
+        assert res.status_code == 200
+        text = res.text
+        # Must not display fake TPS 20.0 or 99.9% uptime when offline!
+        assert "Стабильный TPS 20.0" not in text
+        assert "99.9%" not in text
+        # Must display offline diagnostics
+        assert "Offline" in text or "Недоступен" in text
+
+
+@pytest.mark.asyncio
+async def test_light_theme_tokens_contrast(client):
+    """Verify section titles on index and server pages have dark/light contrast classes."""
+    res_home = await client.get("/")
+    assert res_home.status_code == 200
+    home_html = res_home.text
+    # Section titles must be visible in light theme (not bare text-white)
+    assert '<h2 class="text-xl font-bold text-white' not in home_html
+    assert '<h2 class="text-lg font-semibold text-white' not in home_html
+
+    # Check server page
+    res_server = await client.get("/server/mc.hypixel.net?mock=true")
+    assert res_server.status_code == 200
+    server_html = res_server.text
+    assert '<h2 class="text-base font-semibold text-white">24-Hour Telemetry' not in server_html
+    assert '<h2 class="text-base font-semibold text-white">Online Player' not in server_html
+
+
 
