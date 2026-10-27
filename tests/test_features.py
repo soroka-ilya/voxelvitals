@@ -157,13 +157,15 @@ async def test_light_theme_and_cursor_card_classes(client):
 @pytest.mark.asyncio
 async def test_vote_and_auth_edge_cases(client):
     """Test vote deduplication, invalid credentials, and unauthorized access."""
+    import uuid
+    v_addr = f"vote-{uuid.uuid4().hex[:8]}.net"
     # 1. Vote once
-    v1 = await client.post("/api/vote", json={"server_address": "mc.hypixel.net"})
+    v1 = await client.post("/api/vote", json={"server_address": v_addr})
     assert v1.status_code == 200
     assert v1.json()["success"] is True
 
     # 2. Vote twice from same IP
-    v2 = await client.post("/api/vote", json={"server_address": "mc.hypixel.net"})
+    v2 = await client.post("/api/vote", json={"server_address": v_addr})
     assert v2.status_code == 200
     assert v2.json()["success"] is False
     assert "уже голосовали" in v2.json()["message"]
