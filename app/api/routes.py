@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.repository import ServerRepository
-from app.services.alias_service import get_curated_catalog, resolve_address
+from app.services.alias_service import get_curated_catalog, is_bedrock_address, resolve_address
 from app.services.pinger import get_mock_server_status, query_server
 
 templates_path = Path(__file__).resolve().parent.parent / "templates"
@@ -46,10 +46,11 @@ async def server_page(
 ):
     """Render server detail page with interactive history charts and player list."""
     clean_addr = resolve_address(address.strip())
+    effective_bedrock = bedrock or is_bedrock_address(clean_addr)
     if mock:
-        status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if bedrock else "java")
+        status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
     else:
-        status = await query_server(clean_addr, is_bedrock=bedrock)
+        status = await query_server(clean_addr, is_bedrock=effective_bedrock)
 
     server_id = await repo.get_or_create_server(clean_addr, edition=status.edition)
     await repo.record_telemetry(server_id, status)
@@ -75,10 +76,11 @@ async def partial_server_card(
 ):
     """HTMX partial for rendering a single server card on search or live update."""
     clean_addr = resolve_address(address.strip())
+    effective_bedrock = bedrock or is_bedrock_address(clean_addr)
     if mock:
-        status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if bedrock else "java")
+        status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
     else:
-        status = await query_server(clean_addr, is_bedrock=bedrock)
+        status = await query_server(clean_addr, is_bedrock=effective_bedrock)
 
     server_id = await repo.get_or_create_server(clean_addr, edition=status.edition)
     await repo.record_telemetry(server_id, status)

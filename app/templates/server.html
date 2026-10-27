@@ -65,15 +65,40 @@
       </div>
     </div>
 
-    <!-- MOTD Panel -->
+    <!-- Authentic Minecraft MultiPlayer MOTD Panel -->
     <div class="mt-6 pt-6 border-t border-[#273147]">
-      <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Message of the Day</h3>
-      <div class="text-sm font-mono bg-[#0c0f17] p-4 rounded-lg border border-[#273147] overflow-x-auto whitespace-pre-wrap select-text leading-relaxed">
-        {% if status.is_online %}
-          {{ status.motd_html | safe }}
-        {% else %}
-          <span class="text-slate-500 italic">{{ status.error_message or 'Server unreachable' }}</span>
-        {% endif %}
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span>Message of the Day (MultiPlayer Preview)</span>
+        </h3>
+        <button type="button" 
+                onclick="navigator.clipboard.writeText(document.querySelector('.mc-motd-content').innerText); this.innerText='Скопировано!'; setTimeout(() => this.innerText='Копировать MOTD', 1500);" 
+                class="text-[11px] font-mono text-slate-400 hover:text-emerald-400 px-2 py-0.5 rounded bg-[#1e293b]/70 border border-[#273147] transition-colors">
+          Копировать MOTD
+        </button>
+      </div>
+
+      <div class="mc-motd-frame rounded-xl p-4 relative overflow-hidden select-text">
+        <div class="flex items-center justify-between text-xs font-mono text-slate-400 pb-2 mb-2 border-b border-[#1e293b]/70">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-white font-medium">{{ status.address }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-[#161b26] border border-[#273147] text-[11px] text-emerald-400 font-mono">
+              {{ status.version_name or 'Minecraft 1.21.x' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="text-sm font-mono mc-motd-content whitespace-pre-wrap leading-relaxed py-1">
+          {% if status.is_online %}
+            {{ status.motd_html | safe }}
+          {% else %}
+            <span class="text-slate-500 italic">{{ status.error_message or 'Server unreachable or offline' }}</span>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
@@ -129,20 +154,30 @@
   <!-- Player Sample (if available) -->
   {% if status.players_sample %}
   <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm space-y-4">
-    <div class="border-b border-[#273147] pb-3">
-      <h2 class="text-base font-semibold text-white">Online Player Sample</h2>
-      <p class="text-xs text-slate-400">Sample of currently active players reported by ping protocol</p>
+    <div class="flex items-center justify-between border-b border-[#273147] pb-3">
+      <div>
+        <h2 class="text-base font-semibold text-white">Online Player Sample</h2>
+        <p class="text-xs text-slate-400">Sample of currently active players reported by ping protocol</p>
+      </div>
+      <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+        {{ status.players_sample | length }} Players
+      </span>
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       {% for player in status.players_sample %}
-        <div class="flex items-center gap-2.5 p-2 rounded bg-[#0c0f17] border border-[#273147]">
-          <img src="https://mc-heads.net/avatar/{{ player.name }}/28" alt="{{ player.name }}" class="w-7 h-7 rounded flex-shrink-0 bg-[#161b26]" onerror="this.src='/static/avatar-placeholder.png';" />
-          <div class="min-w-0">
-            <span class="text-xs font-mono text-slate-200 block truncate">{{ player.name }}</span>
-            <span class="text-[10px] font-mono text-slate-500 block truncate">{{ player.id[:8] }}...</span>
+        {% if player.name and player.name.strip() %}
+        <div class="flex items-center gap-2.5 p-2 rounded-lg bg-[#0c0f17] border border-[#273147] hover:border-emerald-500/40 transition-colors group">
+          <img src="https://mc-heads.net/avatar/{{ player.name }}/32" alt="{{ player.name }}" class="w-8 h-8 rounded-md flex-shrink-0 bg-[#161b26] border border-[#273147]" onerror="this.src='/static/favicon.svg';" />
+          <div class="min-w-0 flex-1">
+            <span class="text-xs font-mono text-slate-200 block truncate group-hover:text-emerald-400 transition-colors font-medium">{{ player.name }}</span>
+            <span class="text-[10px] text-slate-500 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Активен
+            </span>
           </div>
         </div>
+        {% endif %}
       {% endfor %}
     </div>
   </div>

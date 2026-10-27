@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Query, Response
 from app.domain.models import BadgeConfig, ServerStatus, TelemetryPoint
 from app.repository import ServerRepository
-from app.services.alias_service import resolve_address, search_suggestions
+from app.services.alias_service import is_bedrock_address, resolve_address, search_suggestions
 from app.services.badge_service import generate_status_badge
 from app.services.pinger import get_mock_server_status, query_server
 
@@ -29,14 +29,15 @@ async def get_server_status(
 ):
     """Query live server status and update telemetry history."""
     clean_addr = resolve_address(address.strip())
+    effective_bedrock = bedrock or is_bedrock_address(clean_addr)
     if mock:
-        status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if bedrock else "java")
+        status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
     else:
-        status = await query_server(clean_addr, is_bedrock=bedrock)
+        status = await query_server(clean_addr, is_bedrock=effective_bedrock)
 
     # Persist telemetry for tracking
     server_id = await repo.get_or_create_server(
-        address=clean_addr, edition="bedrock" if bedrock else "java"
+        address=clean_addr, edition="bedrock" if effective_bedrock else "java"
     )
     await repo.record_telemetry(server_id, status)
     return status

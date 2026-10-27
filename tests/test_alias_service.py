@@ -183,3 +183,31 @@ async def test_api_status_resolves_alias(client):
     data = response.json()
     assert data["address"] == "2b2t.org"
 
+
+def test_expanded_servers_resolution():
+    """Verify newly added popular CIS and worldwide servers resolve cleanly."""
+    assert resolve_address("reallyworld") == "mc.reallyworld.ru"
+    assert resolve_address("funtime") == "mc.funtime.su"
+    assert resolve_address("holyworld") == "mc.holyworld.ru"
+    assert resolve_address("hive") == "geo.hivebedrock.network"
+
+
+def test_dynamic_fallback_suggestion():
+    """Verify any arbitrary domain or query gets a valid dynamic suggestion."""
+    res_custom = search_suggestions("mycustomserver.gg")
+    assert len(res_custom) > 0
+    assert any("mycustomserver.gg" in item["address"] for item in res_custom)
+
+    res_unknown = search_suggestions("superunknownmine")
+    assert len(res_unknown) > 0
+    assert any("superunknownmine.net" in item["address"] for item in res_unknown)
+
+
+@pytest.mark.asyncio
+async def test_bedrock_flag_preservation(client):
+    """Verify partial card preserves bedrock flag in links."""
+    response = await client.get("/partials/server-card?address=donutsmp&bedrock=true&mock=true")
+    assert response.status_code == 200
+    assert "bedrock=true" in response.text
+
+

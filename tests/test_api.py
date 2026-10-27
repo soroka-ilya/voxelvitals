@@ -86,3 +86,38 @@ async def test_legal_pages(client):
     res_terms = await client.get("/terms")
     assert res_terms.status_code == 200
     assert "Terms of Service" in res_terms.text
+
+
+@pytest.mark.asyncio
+async def test_homepage_filter_toolbar_and_no_quicktest(client):
+    """Verify homepage has advanced filter toolbar and no quick test chips."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    # Quick test section should be removed
+    assert "Quick test:" not in response.text
+    # Advanced filter toolbar should be present
+    assert "edition-tab" in response.text
+    assert "category-dropdown-btn" in response.text
+    assert "version-dropdown-btn" in response.text
+    assert "1.21.x Tricky Trials" in response.text
+    assert "catalog-card-clickable" in response.text
+
+
+@pytest.mark.asyncio
+async def test_server_detail_bedrock_and_clean_players(client):
+    """Verify server detail correctly handles Bedrock and has clean player samples."""
+    # Test auto-detected Bedrock
+    res_bedrock = await client.get("/server/hive?mock=true")
+    assert res_bedrock.status_code == 200
+    assert "bedrock" in res_bedrock.text.lower()
+
+    # Test explicit Bedrock query on Java address
+    res_donut_bedrock = await client.get("/server/donutsmp?bedrock=true&mock=true")
+    assert res_donut_bedrock.status_code == 200
+    assert "bedrock" in res_donut_bedrock.text.lower()
+
+    # Test clean player sample (no 00000000... UUIDs)
+    assert "00000000..." not in res_donut_bedrock.text
+    assert "Активен" in res_donut_bedrock.text
+    assert "mc-motd-frame" in res_donut_bedrock.text
+
