@@ -28,6 +28,56 @@ CREATE TABLE IF NOT EXISTS telemetry_history (
 
 CREATE INDEX IF NOT EXISTS idx_servers_address ON servers(address);
 CREATE INDEX IF NOT EXISTS idx_telemetry_server_ts ON telemetry_history(server_id, timestamp);
+
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT,
+    password_hash TEXT NOT NULL,
+    mc_nickname TEXT,
+    role TEXT NOT NULL DEFAULT 'user',
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_sessions (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    expires_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS server_news (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    server_address TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    tag TEXT NOT NULL DEFAULT 'Обновление',
+    author TEXT NOT NULL DEFAULT 'Администрация',
+    published_at TEXT NOT NULL,
+    is_pinned INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS server_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    server_address TEXT NOT NULL,
+    user_id INTEGER,
+    author_name TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    likes INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS server_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    server_address TEXT NOT NULL,
+    ip_hash TEXT NOT NULL,
+    voted_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_server_news_addr ON server_news(server_address);
+CREATE INDEX IF NOT EXISTS idx_server_reviews_addr ON server_reviews(server_address);
 """
 
 

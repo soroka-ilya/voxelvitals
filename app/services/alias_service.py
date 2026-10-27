@@ -576,3 +576,105 @@ def search_suggestions(query: str, limit: int = 6) -> List[Dict[str, Any]]:
 
     return top_items
 
+
+# Server contacts & social links mapping
+SERVER_CONTACTS_MAP: Dict[str, Dict[str, str]] = {
+    "mc.hypixel.net": {
+        "website": "https://hypixel.net",
+        "discord": "https://discord.gg/hypixel",
+        "youtube": "https://youtube.com/@hypixel",
+    },
+    "2b2t.org": {
+        "website": "https://2b2t.org",
+        "discord": "https://discord.gg/2b2t",
+    },
+    "donutsmp.net": {
+        "website": "https://donutsmp.net",
+        "discord": "https://discord.gg/donut",
+        "youtube": "https://youtube.com/@donutsmp",
+    },
+    "mc.reallyworld.ru": {
+        "vk": "https://vk.com/reallyworld",
+        "telegram": "https://t.me/reallyworld_official",
+        "discord": "https://discord.gg/reallyworld",
+        "website": "https://reallyworld.ru",
+        "youtube": "https://youtube.com/@reallyworld",
+    },
+    "mc.funtime.su": {
+        "vk": "https://vk.com/funtime_mc",
+        "telegram": "https://t.me/funtime_official",
+        "discord": "https://discord.gg/funtime",
+        "website": "https://funtime.su",
+        "youtube": "https://youtube.com/@funtime_mc",
+    },
+    "mc.holyworld.ru": {
+        "vk": "https://vk.com/holyworld",
+        "telegram": "https://t.me/holyworld_ru",
+        "discord": "https://discord.gg/holyworld",
+        "website": "https://holyworld.ru",
+    },
+    "play.wynncraft.com": {
+        "website": "https://wynncraft.com",
+        "discord": "https://discord.gg/wynncraft",
+        "youtube": "https://youtube.com/@wynncraft",
+    },
+    "play.cubecraft.net": {
+        "website": "https://cubecraft.net",
+        "discord": "https://discord.gg/cubecraft",
+        "youtube": "https://youtube.com/@cubecraft",
+    },
+    "geo.hivebedrock.network": {
+        "website": "https://hivebedrock.network",
+        "discord": "https://discord.gg/hive",
+        "youtube": "https://youtube.com/@playthehive",
+    },
+    "play.nethergames.org": {
+        "website": "https://nethergames.org",
+        "discord": "https://discord.gg/nethergames",
+        "youtube": "https://youtube.com/@nethergames",
+    },
+}
+
+DEFAULT_SCREENSHOTS = [
+    {
+        "url": "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=1200&q=80",
+        "title": "Главный спавн и хаб сервера",
+    },
+    {
+        "url": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+        "title": "Соревновательная PvP арена и дуэли",
+    },
+    {
+        "url": "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?auto=format&fit=crop&w=1200&q=80",
+        "title": "Игровые биомы и кастомные постройки",
+    },
+    {
+        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+        "title": "Лобби мини-игр и ивентов",
+    },
+]
+
+
+def get_server_extra_info(address: str, edition: str = "java") -> Dict[str, Any]:
+    """Retrieve social contacts, screenshots gallery, and launcher deep-links."""
+    clean_addr = address.strip().lower()
+    contacts = SERVER_CONTACTS_MAP.get(clean_addr)
+    if not contacts:
+        contacts = {
+            "website": f"https://{clean_addr}",
+            "discord": f"https://discord.gg/{clean_addr.split('.')[0]}",
+        }
+
+    # Deep-link launcher protocol
+    if edition == "bedrock":
+        launcher_uri = f"minecraft://?addExternalServer=VoxelVitals|{clean_addr}:19132"
+    else:
+        launcher_uri = f"minecraft://connect/{clean_addr}"
+
+    return {
+        "contacts": contacts,
+        "screenshots": DEFAULT_SCREENSHOTS,
+        "launcher_uri": launcher_uri,
+    }
+
+

@@ -5,27 +5,27 @@
 {% block content %}
 <div class="space-y-8">
   <!-- Breadcrumbs & Status Bar -->
-  <div class="flex items-center justify-between text-xs text-slate-400">
+  <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
     <div class="flex items-center gap-2">
-      <a href="/" class="hover:text-slate-200 transition-colors">Explorer</a>
+      <a href="/" class="hover:text-emerald-500 transition-colors">Explorer</a>
       <span>/</span>
-      <span class="text-slate-200 font-mono">{{ status.address }}</span>
+      <span class="text-slate-800 dark:text-slate-200 font-mono">{{ status.address }}</span>
     </div>
 
     <div>
-      <span class="text-slate-500">Updated:</span>
-      <span class="font-mono text-slate-300">{{ status.last_updated[:19].replace('T', ' ') }} UTC</span>
+      <span class="text-slate-400 dark:text-slate-500">Обновлено:</span>
+      <span class="font-mono text-slate-700 dark:text-slate-300">{{ status.last_updated[:19].replace('T', ' ') }} UTC</span>
     </div>
   </div>
 
   <!-- Server Header Banner -->
-  <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm transition-colors">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
       <div class="flex items-center gap-4">
         {% if status.icon_base64 %}
-          <img src="{{ status.icon_base64 }}" alt="{{ status.address }}" class="w-16 h-16 rounded-lg bg-[#0c0f17] border border-[#273147] object-contain flex-shrink-0" />
+          <img src="{{ status.icon_base64 }}" alt="{{ status.address }}" class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] object-contain flex-shrink-0" />
         {% else %}
-          <div class="w-16 h-16 rounded-lg bg-[#0c0f17] border border-[#273147] flex items-center justify-center text-slate-500 flex-shrink-0">
+          <div class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] flex items-center justify-center text-slate-400 dark:text-slate-500 flex-shrink-0">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
             </svg>
@@ -34,31 +34,55 @@
 
         <div>
           <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-white tracking-tight font-mono">{{ status.address }}</h1>
-            <span class="text-xs uppercase font-mono px-2 py-0.5 rounded bg-[#273147] text-slate-300 font-medium">
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono">{{ status.address }}</h1>
+            <span class="text-xs uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-[#273147] text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-transparent">
               {{ status.edition }}
             </span>
+            <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              ★ {{ rating_stats.avg_rating if rating_stats else 5.0 }}
+            </span>
           </div>
-          <p class="text-xs text-slate-400 font-mono mt-1">
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">
             {{ status.version_name }} {% if status.version_protocol %}(Protocol {{ status.version_protocol }}){% endif %}
           </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
+      <!-- Action & Status Controls -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Quick Open in Launcher Button -->
+        <button type="button" 
+                onclick="launchMinecraft('{{ status.address }}', '{{ status.edition }}');" 
+                class="px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs tracking-wide transition-all shadow-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+          <span>Играть в лаунчере</span>
+        </button>
+
+        <!-- Copy IP Button -->
+        <button type="button" 
+                onclick="copyIp('{{ status.address }}', this);" 
+                class="px-3.5 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#273147] dark:hover:bg-[#3b4866] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-transparent text-xs font-medium transition-colors flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <span class="copy-label">Копировать IP</span>
+        </button>
+
+        <!-- Vote Button -->
+        <button type="button" 
+                id="vote-btn"
+                onclick="handleVote('{{ status.address }}', this);"
+                class="px-3.5 py-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-semibold transition-colors flex items-center gap-1.5">
+          <span>▲ Голосовать</span>
+          <span id="vote-count" class="font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-[10px]">{{ votes or 0 }}</span>
+        </button>
+
         {% if status.is_online %}
-          <div class="text-right">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Online · {{ status.latency_ms | int }} ms
-            </div>
-            <p class="text-xs text-slate-400 font-mono mt-1">
-              {{ "{:,}".format(status.players_online) }} / {{ "{:,}".format(status.players_max) }} online
-            </p>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+            Online · {{ status.latency_ms | int }} ms
           </div>
         {% else %}
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20">
+            <span class="w-2 h-2 rounded-full bg-red-500 dark:bg-red-400"></span>
             Offline
           </div>
         {% endif %}
@@ -120,36 +144,53 @@
     </div>
   </div>
 
-  <!-- Dynamic SVG Badge Embed Section -->
-  <div class="rounded-xl border border-[#273147] bg-[#161b26] p-6 shadow-sm space-y-4">
-    <div class="border-b border-[#273147] pb-3">
-      <h2 class="text-base font-semibold text-white">Embeddable Live Badge</h2>
-      <p class="text-xs text-slate-400">Dynamic SVG badge for your README, website, or Discord server</p>
-    </div>
-
-    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-lg bg-[#0c0f17] border border-[#273147]">
+  <!-- Server Contacts & Official Links -->
+  {% if extra_info and extra_info.contacts %}
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4">
+    <div class="border-b border-slate-200 dark:border-[#273147] pb-3 flex items-center justify-between">
       <div>
-        <span class="text-xs text-slate-400 block mb-1">Live Preview:</span>
-        <img src="/api/badge/{{ status.address }}.svg?bedrock={{ 'true' if status.edition == 'bedrock' else 'false' }}" alt="{{ status.address }} status badge" class="h-5" />
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Контакты и сообщество</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Официальные страницы проекта, Discord, соцсети и поддержка</p>
       </div>
-
-      <div class="flex items-center gap-2 w-full md:w-auto">
-        <a href="/api/badge/{{ status.address }}.svg?bedrock={{ 'true' if status.edition == 'bedrock' else 'false' }}" target="_blank" class="text-xs font-medium text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded bg-[#273147] transition-colors">
-          Open Raw SVG
-        </a>
-      </div>
+      <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+        Проверено
+      </span>
     </div>
 
-    <div class="space-y-2">
-      <label class="text-xs text-slate-400 block font-medium">Markdown Snippet:</label>
-      <div class="flex items-center gap-2">
-        <input type="text" readonly value="![{{ status.address }} Status](https://voxelvitals.com/api/badge/{{ status.address }}.svg)" class="w-full text-xs font-mono bg-[#0c0f17] border border-[#273147] rounded px-3 py-2 text-slate-300 focus:outline-none select-all" />
-        <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 1500);" class="text-xs px-3 py-2 rounded bg-[#273147] hover:bg-[#3b4866] text-white transition-colors flex-shrink-0">
-          Copy
-        </button>
-      </div>
+    <div class="flex flex-wrap items-center gap-3">
+      {% if extra_info.contacts.website %}
+        <a href="{{ extra_info.contacts.website }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#121622] dark:hover:bg-[#1c2233] border border-slate-200 dark:border-[#273147] text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-emerald-500 transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+          <span>Веб-сайт</span>
+        </a>
+      {% endif %}
+      {% if extra_info.contacts.discord %}
+        <a href="{{ extra_info.contacts.discord }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#121622] dark:hover:bg-[#1c2233] border border-slate-200 dark:border-[#273147] text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-indigo-400 transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.894.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          <span>Discord Сервер</span>
+        </a>
+      {% endif %}
+      {% if extra_info.contacts.vk %}
+        <a href="{{ extra_info.contacts.vk }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#121622] dark:hover:bg-[#1c2233] border border-slate-200 dark:border-[#273147] text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-blue-400 transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M15.684 0H8.316C2.992 0 0 2.992 0 8.316v7.368C0 21.008 2.992 24 8.316 24h7.368C21.008 24 24 21.008 24 15.684V8.316C24 2.992 21.008 0 15.684 0zm3.692 17.145h-1.744c-.66 0-.862-.525-2.05-1.714-1.033-.996-1.492-1.124-1.745-1.124-.356 0-.457.102-.457.593v1.543c0 .423-.135.686-1.253.686-1.846 0-3.896-1.118-5.336-3.193-2.16-3.04-2.753-5.328-2.753-5.793 0-.254.102-.491.593-.491h1.745c.44 0 .61.203.78.678.864 2.49 2.304 4.675 2.897 4.675.22 0 .322-.102.322-.66V11.23c-.068-1.203-.712-1.305-.712-1.73 0-.203.17-.406.44-.406h2.744c.373 0 .508.203.508.643v3.473c0 .373.17.508.288.508.22 0 .407-.135.814-.542 1.253-1.389 2.15-3.506 2.15-3.506.119-.254.339-.474.78-.474h1.745c.525 0 .644.271.525.644-.22 1.016-2.355 4.032-2.457 4.184-.203.322-.288.474 0 .847.203.288.88 864 1.338 1.406 1.084 1.22 1.897 2.253 2.117 2.964.22.712-.119 1.067-.78 1.067z"/></svg>
+          <span>ВКонтакте</span>
+        </a>
+      {% endif %}
+      {% if extra_info.contacts.telegram %}
+        <a href="{{ extra_info.contacts.telegram }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#121622] dark:hover:bg-[#1c2233] border border-slate-200 dark:border-[#273147] text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-sky-400 transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4 text-sky-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.197 1.006.128.832.966z"/></svg>
+          <span>Telegram Канал</span>
+        </a>
+      {% endif %}
+      {% if extra_info.contacts.youtube %}
+        <a href="{{ extra_info.contacts.youtube }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#121622] dark:hover:bg-[#1c2233] border border-slate-200 dark:border-[#273147] text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-red-500 transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          <span>YouTube Канал</span>
+        </a>
+      {% endif %}
     </div>
   </div>
+  {% endif %}
 
   <!-- Player Sample (if available) -->
   {% if status.players_sample %}
@@ -182,6 +223,175 @@
     </div>
   </div>
   {% endif %}
+
+  <!-- Server Screenshots Gallery -->
+  {% if extra_info and extra_info.screenshots %}
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Скриншоты с сервера</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Галерея игрового мира, спавна и ключевых локаций</p>
+      </div>
+      <span class="text-xs font-mono text-slate-500 dark:text-slate-400">
+        {{ extra_info.screenshots | length }} фото
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+      {% for shot in extra_info.screenshots %}
+      <div class="group relative rounded-lg overflow-hidden border border-slate-200 dark:border-[#273147] aspect-video bg-slate-100 dark:bg-[#0c0f17] cursor-pointer" onclick="window.open('{{ shot.url }}', '_blank')">
+        <img src="{{ shot.url }}" alt="{{ shot.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
+          <span class="text-[11px] text-white font-medium truncate">{{ shot.title }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Server News & Announcements -->
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Новости и обновления сервера</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Патчноуты, сезонные ивенты и объявления администрации</p>
+      </div>
+      <button type="button" onclick="document.getElementById('add-news-modal').classList.remove('hidden')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-[#273147] dark:hover:bg-[#3b4866] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Добавить новость</span>
+      </button>
+    </div>
+
+    <div class="space-y-3">
+      {% for item in news %}
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              {{ item.tag or 'Обновление' }}
+            </span>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ item.title }}</h3>
+          </div>
+          <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+            {{ item.published_at[:10] }} • {{ item.author or 'Администрация' }}
+          </span>
+        </div>
+        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+          {{ item.content }}
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Server Reviews & Ratings System -->
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#273147] pb-4">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Отзывы игроков и рейтинг</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Мнения реальных пользователей о качестве сервера и комьюнити</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+          <span class="text-base font-bold font-mono">★ {{ rating_stats.avg_rating }}</span>
+          <span class="text-xs text-slate-500 dark:text-slate-400">/ 5.0 ({{ rating_stats.total_count }} отзывов)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Review Form -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] space-y-3">
+      <h3 class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Оставить свой отзыв</h3>
+      <form id="review-form" onsubmit="submitReview(event, '{{ status.address }}')" class="space-y-3">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-600 dark:text-slate-300">Ваша оценка:</span>
+            <div class="flex items-center gap-1 text-amber-400 cursor-pointer" id="star-rating-select">
+              <span onclick="setRating(1)" class="star text-lg">★</span>
+              <span onclick="setRating(2)" class="star text-lg">★</span>
+              <span onclick="setRating(3)" class="star text-lg">★</span>
+              <span onclick="setRating(4)" class="star text-lg">★</span>
+              <span onclick="setRating(5)" class="star text-lg text-amber-500">★</span>
+            </div>
+            <input type="hidden" id="review-rating-val" value="5" />
+          </div>
+          {% if not current_user %}
+          <div class="flex-1 min-w-[200px]">
+            <input type="text" id="review-author" placeholder="Ваш никнейм в игре" required class="w-full px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none font-mono" />
+          </div>
+          {% endif %}
+        </div>
+        <div>
+          <textarea id="review-comment" required rows="2" placeholder="Напишите честный отзыв о геймплее, ТПС, администрации..." class="w-full px-3 py-2 rounded-lg text-xs bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"></textarea>
+        </div>
+        <div class="flex items-center justify-between">
+          <p id="review-status-msg" class="text-xs text-emerald-500 hidden"></p>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors flex items-center gap-1.5">
+            <span>Отправить отзыв</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="space-y-3" id="reviews-list-container">
+      {% for rev in reviews %}
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <img src="https://mc-heads.net/avatar/{{ rev.author_name }}/28" alt="{{ rev.author_name }}" class="w-7 h-7 rounded-md bg-slate-200 dark:bg-[#161b26] border border-slate-200 dark:border-[#273147]" onerror="this.src='/static/favicon.svg';" />
+            <div>
+              <span class="text-xs font-semibold text-slate-900 dark:text-white font-mono block">{{ rev.author_name }}</span>
+              <div class="flex items-center gap-0.5 text-amber-400 text-xs">
+                {% for _ in range(rev.rating) %}★{% endfor %}
+              </div>
+            </div>
+          </div>
+          <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">{{ rev.created_at[:10] }}</span>
+        </div>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pl-9">
+          {{ rev.comment }}
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Add News Modal Dialog -->
+  <div id="add-news-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] p-6 shadow-2xl relative">
+      <button type="button" onclick="document.getElementById('add-news-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-4">Опубликовать новость сервера</h3>
+      <form onsubmit="submitNews(event, '{{ status.address }}')" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Заголовок новости</label>
+          <input type="text" id="news-title" required class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="Например: Вайп анархии и новые руны" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Категория / Тег</label>
+          <select id="news-tag" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none">
+            <option value="Обновление">Обновление</option>
+            <option value="Ивент">Ивент</option>
+            <option value="Вайп">Вайп</option>
+            <option value="Техработы">Техработы</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Текст публикации</label>
+          <textarea id="news-content" required rows="4" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none" placeholder="Подробное описание изменений и нововведений..."></textarea>
+        </div>
+        <p id="news-modal-error" class="hidden text-xs text-red-500"></p>
+        <button type="submit" class="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
+          Опубликовать новость
+        </button>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -213,5 +423,97 @@
   document.addEventListener('DOMContentLoaded', () => {
     renderTelemetryChart('telemetryChart', historyData);
   });
+
+  // Star rating selector
+  function setRating(val) {
+    document.getElementById('review-rating-val').value = val;
+    const stars = document.querySelectorAll('#star-rating-select .star');
+    stars.forEach((s, idx) => {
+      s.classList.toggle('text-amber-500', idx < val);
+      s.classList.toggle('text-slate-400', idx >= val);
+    });
+  }
+
+  // Handle server upvote
+  async function handleVote(address, btn) {
+    try {
+      const res = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ server_address: address })
+      });
+      const data = await res.json();
+      showToast(data.message);
+      if (data.votes !== undefined) {
+        document.getElementById('vote-count').textContent = data.votes;
+      }
+    } catch (e) {
+      showToast('Ошибка при отправке голоса');
+    }
+  }
+
+  // Handle review submit
+  async function submitReview(e, address) {
+    e.preventDefault();
+    const rating = parseInt(document.getElementById('review-rating-val').value) || 5;
+    const comment = document.getElementById('review-comment').value.trim();
+    const authorEl = document.getElementById('review-author');
+    const author = authorEl ? authorEl.value.trim() : '';
+
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          server_address: address,
+          rating: rating,
+          comment: comment,
+          author_name: author
+        })
+      });
+      if (res.ok) {
+        showToast('Отзыв успешно добавлен!');
+        setTimeout(() => location.reload(), 800);
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Ошибка при отправке отзыва');
+      }
+    } catch (e) {
+      showToast('Ошибка сети');
+    }
+  }
+
+  // Handle news submit
+  async function submitNews(e, address) {
+    e.preventDefault();
+    const title = document.getElementById('news-title').value.trim();
+    const tag = document.getElementById('news-tag').value;
+    const content = document.getElementById('news-content').value.trim();
+    const err = document.getElementById('news-modal-error');
+
+    try {
+      const res = await fetch('/api/news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          server_address: address,
+          title: title,
+          tag: tag,
+          content: content
+        })
+      });
+      if (res.ok) {
+        showToast('Новость успешно опубликована!');
+        setTimeout(() => location.reload(), 800);
+      } else {
+        const data = await res.json();
+        err.textContent = data.detail || 'Ошибка при публикации';
+        err.classList.remove('hidden');
+      }
+    } catch (e) {
+      err.textContent = 'Ошибка сети';
+      err.classList.remove('hidden');
+    }
+  }
 </script>
 {% endblock %}

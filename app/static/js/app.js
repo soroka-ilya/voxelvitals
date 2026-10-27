@@ -321,13 +321,6 @@ function initAutocomplete() {
       }
     }
   }
-      if (typeof form.requestSubmit === 'function') {
-        form.requestSubmit();
-      } else {
-        form.submit();
-      }
-    }
-  }
 
   let originalTyped = '';
 
@@ -445,8 +438,99 @@ function initAutocomplete() {
   });
 }
 
+// 4. Toast Notification
+function showToast(message, duration = 3000) {
+  let toast = document.getElementById('voxel-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'voxel-toast';
+    toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl text-xs font-medium bg-[#161b26] border border-[#273147] text-slate-100 shadow-2xl transition-all duration-300 opacity-0 translate-y-3 pointer-events-none flex items-center gap-2';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${escapeHtml(message)}</span>`;
+  toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+  toast.classList.add('opacity-100', 'translate-y-0');
+
+  setTimeout(() => {
+    toast.classList.remove('opacity-100', 'translate-y-0');
+    toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+  }, duration);
+}
+
+// 5. Quick Open in Launcher Protocol Handler
+function launchMinecraft(address, edition = 'java', customName = '') {
+  const isBedrock = edition === 'bedrock' || address.includes('bedrock') || address.includes('19132');
+  let uri = '';
+  if (isBedrock) {
+    const parts = address.split(':');
+    const host = parts[0];
+    const port = parts[1] || '19132';
+    const serverName = encodeURIComponent(customName || host);
+    uri = `minecraft://?addExternalServer=${serverName}|${host}:${port}`;
+  } else {
+    uri = `minecraft://connect/${address}`;
+  }
+
+  // Copy IP to clipboard as seamless companion
+  copyIp(address);
+
+  // Trigger launcher URI
+  window.location.href = uri;
+  showToast(`Запуск через лаунчер... IP ${address} скопирован в буфер!`);
+}
+
+// 6. Theme Switcher (Dark / Light / Auto Browser Sync)
+function applyTheme(isDark) {
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+  }
+  updateThemeIcons(isDark);
+}
+
+function updateThemeIcons(isDark) {
+  const moon = document.getElementById('theme-icon-moon');
+  const sun = document.getElementById('theme-icon-sun');
+  if (moon && sun) {
+    moon.classList.toggle('hidden', !isDark);
+    sun.classList.toggle('hidden', isDark);
+  }
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.contains('dark');
+  const newDark = !isDark;
+  localStorage.setItem('theme', newDark ? 'dark' : 'light');
+  applyTheme(newDark);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  if (saved === 'dark') {
+    applyTheme(true);
+  } else if (saved === 'light') {
+    applyTheme(false);
+  } else {
+    // Follow browser/system setting automatically
+    applyTheme(prefersDark.matches);
+  }
+
+  prefersDark.addEventListener('change', (e) => {
+    if (!localStorage.getItem('theme')) {
+      applyTheme(e.matches);
+    }
+  });
+}
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   initCatalogFilter();
   initAutocomplete();
 });
+
