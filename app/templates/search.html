@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Поиск: {{ query }} - VoxelVitals{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+    <a href="/" class="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Explorer</a>
+    <span>/</span>
+    <span class="text-slate-800 dark:text-slate-200 font-mono">Поиск</span>
+    <span>/</span>
+    <span class="text-emerald-600 dark:text-emerald-400 font-mono font-semibold truncate max-w-xs">"{{ query }}"</span>
+  </div>
+
+  <!-- Search Header & Refine Bar -->
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-5 shadow-sm space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <span>Результаты поиска:</span>
+          <span class="text-emerald-600 dark:text-emerald-400 font-mono">"{{ query }}"</span>
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          {% if total_count > 0 %}
+            Найдено {{ total_count }} совпадений в каталоге игровых сетей
+          {% else %}
+            В каталоге не найдено точных совпадений по запросу
+          {% endif %}
+        </p>
+      </div>
+
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 self-start sm:self-auto">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        {{ total_count }} вариантов
+      </span>
+    </div>
+
+    <!-- Quick refine search form -->
+    <form action="/search" method="GET" class="flex flex-col sm:flex-row gap-2 pt-1">
+      <input type="hidden" name="bedrock" value="{{ 'true' if bedrock else 'false' }}" />
+      <div class="relative flex-1">
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input type="text" 
+               name="q" 
+               value="{{ query }}" 
+               required
+               placeholder="Уточнить поиск или ввести адрес сервера..." 
+               class="w-full pl-9 pr-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-[#273147] bg-slate-50 dark:bg-[#0c0f17] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500" />
+      </div>
+      <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5">
+        <span>Искать</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Direct Host Option (if available) -->
+  {% if resolved_fallback %}
+  <div class="rounded-xl border border-dashed border-emerald-500/40 bg-emerald-500/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 flex-shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div class="min-w-0">
+        <span class="text-xs font-semibold text-slate-900 dark:text-white block">Прямой опрос узла: <span class="font-mono text-emerald-600 dark:text-emerald-400">{{ resolved_fallback }}</span></span>
+        <span class="text-[11px] text-slate-500 dark:text-slate-400">Проверить отклик и онлайн произвольного хоста напрямую через DNS и пинг-протокол</span>
+      </div>
+    </div>
+    <a href="/server/{{ resolved_fallback }}{% if bedrock %}?bedrock=true{% endif %}" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold transition-colors flex items-center justify-center gap-1 flex-shrink-0">
+      <span>Опросить {{ resolved_fallback }}</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Results Grid -->
+  {% if results and results | length > 0 %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="search-grid">
+    {% for server in results %}
+      <div onclick="window.location.href='/server/{{ server.address }}{% if server.edition == 'bedrock' %}?bedrock=true{% endif %}';"
+           class="catalog-card-clickable cursor-pointer rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 flex flex-col justify-between hover:border-emerald-500/70 hover:shadow-xl hover:-translate-y-1 hover:ring-1 hover:ring-emerald-500/30 transition-all duration-200 group">
+        <div>
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <img src="{{ server.icon }}" alt="{{ server.name }}" onerror="this.src='{{ server.fallback_icon }}';" class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] object-contain flex-shrink-0" />
+              <div class="min-w-0">
+                <a href="/server/{{ server.address }}{% if server.edition == 'bedrock' %}?bedrock=true{% endif %}" 
+                   onclick="event.stopPropagation();"
+                   class="text-sm font-semibold text-slate-900 dark:text-white truncate block group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">
+                  {{ server.name }}
+                </a>
+                <span class="inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-[#273147] text-slate-700 dark:text-slate-300 font-medium mt-0.5 border border-slate-200 dark:border-transparent">
+                  {{ server.category_label }}
+                </span>
+              </div>
+            </div>
+            <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0c0f17] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#273147]/60">
+              {{ server.edition }}
+            </span>
+          </div>
+
+          <p class="text-xs text-slate-600 dark:text-slate-400 mt-3 line-clamp-2 leading-relaxed">
+            {{ server.description }}
+          </p>
+
+          <div class="mt-3 flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147]/60">
+            <span class="font-mono text-xs text-emerald-600 dark:text-emerald-400 truncate">{{ server.address }}</span>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <button type="button" 
+                      onclick="event.stopPropagation(); launchMinecraft('{{ server.address }}', '{{ server.edition }}', this);" 
+                      title="Играть в лаунчере"
+                      class="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium transition-colors flex items-center gap-1">
+                <span>В лаунчер</span>
+              </button>
+              <button type="button" 
+                      onclick="event.stopPropagation(); copyIp('{{ server.address }}', this);" 
+                      title="Копировать IP"
+                      class="px-2 py-1 rounded bg-white dark:bg-[#161b26] hover:bg-slate-100 dark:hover:bg-[#273147] border border-slate-200 dark:border-[#273147] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[11px] font-medium transition-colors flex items-center gap-1">
+                <span class="copy-label">Копировать</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-200 dark:border-[#273147]/60 flex items-center justify-between gap-2 text-xs">
+          <span class="text-[11px] font-mono text-slate-500 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            {{ server.latest_version or '1.21.x' }}
+          </span>
+          
+          <a href="/server/{{ server.address }}{% if server.edition == 'bedrock' %}?bedrock=true{% endif %}" 
+             onclick="event.stopPropagation();"
+             class="text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-500 dark:group-hover:text-emerald-300 font-medium flex items-center gap-1 transition-colors text-[11px]">
+            <span>Телеметрия 24ч</span>
+            <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Numbered Pagination -->
+  {% if total_pages > 1 %}
+  <div class="flex items-center justify-center gap-2 pt-4">
+    {% if current_page > 1 %}
+      <a href="/search?q={{ query }}&page={{ current_page - 1 }}{% if bedrock %}&bedrock=true{% endif %}" 
+         class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-700 dark:text-slate-300 hover:text-emerald-500 transition-colors">
+        ← Назад
+      </a>
+    {% endif %}
+
+    {% for p in range(1, total_pages + 1) %}
+      <a href="/search?q={{ query }}&page={{ p }}{% if bedrock %}&bedrock=true{% endif %}" 
+         class="px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors {% if p == current_page %}bg-emerald-500 text-slate-950 font-semibold shadow-sm{% else %}bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-700 dark:text-slate-300 hover:text-emerald-500{% endif %}">
+        {{ p }}
+      </a>
+    {% endfor %}
+
+    {% if current_page < total_pages %}
+      <a href="/search?q={{ query }}&page={{ current_page + 1 }}{% if bedrock %}&bedrock=true{% endif %}" 
+         class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-700 dark:text-slate-300 hover:text-emerald-500 transition-colors">
+        Вперед →
+      </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="rounded-xl border border-dashed border-slate-200 dark:border-[#273147] bg-white/50 dark:bg-[#161b26]/50 p-12 text-center space-y-3">
+    <p class="text-sm text-slate-600 dark:text-slate-400">По запросу <span class="font-mono text-emerald-500">"{{ query }}"</span> в каталоге ничего не найдено.</p>
+    <a href="/" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
+      <span>Вернуться ко всем серверам</span>
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

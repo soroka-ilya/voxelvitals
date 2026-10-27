@@ -105,17 +105,88 @@ function queryAddress(address) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// 2. Catalog Multi-Select & Edition Filtering
+// 2. Catalog Multi-Select, Edition Filtering & Client Pagination
 let currentEdition = 'all';
 const selectedCategories = new Set();
 const selectedVersions = new Set();
+let catalogCurrentPage = 1;
+const CATALOG_PAGE_SIZE = 6;
 
-function applyCatalogFilters() {
-  const cards = document.querySelectorAll('[data-catalog-card]');
+function renderCatalogPagination(totalPages) {
+  const container = document.getElementById('catalog-pagination');
+  if (!container) return;
+
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  const prevDisabled = catalogCurrentPage <= 1;
+  html += `
+    <button type="button" 
+            onclick="setCatalogPage(${catalogCurrentPage - 1})"
+            ${prevDisabled ? 'disabled' : ''}
+            class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-[#273147] transition-colors ${
+              prevDisabled 
+                ? 'opacity-40 cursor-not-allowed text-slate-400' 
+                : 'bg-white dark:bg-[#161b26] text-slate-700 dark:text-slate-300 hover:border-emerald-500/50'
+            }">
+      ← Назад
+    </button>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    const isActive = i === catalogCurrentPage;
+    html += `
+      <button type="button" 
+              data-page-btn="${i}"
+              onclick="setCatalogPage(${i})"
+              class="w-8 h-8 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors ${
+                isActive
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                  : 'bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }">
+        ${i}
+      </button>
+    `;
+  }
+
+  const nextDisabled = catalogCurrentPage >= totalPages;
+  html += `
+    <button type="button" 
+            onclick="setCatalogPage(${catalogCurrentPage + 1})"
+            ${nextDisabled ? 'disabled' : ''}
+            class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-[#273147] transition-colors ${
+              nextDisabled 
+                ? 'opacity-40 cursor-not-allowed text-slate-400' 
+                : 'bg-white dark:bg-[#161b26] text-slate-700 dark:text-slate-300 hover:border-emerald-500/50'
+            }">
+      Вперед →
+    </button>
+  `;
+
+  container.innerHTML = html;
+}
+
+function setCatalogPage(page) {
+  catalogCurrentPage = page;
+  applyCatalogFilters(false);
+  const catalogSection = document.getElementById('catalog-grid');
+  if (catalogSection) {
+    catalogSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function applyCatalogFilters(resetPage = true) {
+  if (resetPage) {
+    catalogCurrentPage = 1;
+  }
+  const cards = Array.from(document.querySelectorAll('[data-catalog-card]'));
   const emptyState = document.getElementById('catalog-empty-state');
   const resetBtn = document.getElementById('reset-filters-btn');
-  let visibleCount = 0;
 
+  const matchingCards = [];
   cards.forEach(card => {
     const cardEdition = card.getAttribute('data-edition') || 'java';
     const cardCategory = (card.getAttribute('data-category') || '').trim().toLowerCase();
@@ -138,16 +209,33 @@ function applyCatalogFilters() {
     const matchVersion = (selectedVersions.size === 0 || cardVersions.some(v => selectedVersions.has(v)));
 
     if (matchEdition && matchCategory && matchVersion) {
+      matchingCards.push(card);
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  const totalPages = Math.ceil(matchingCards.length / CATALOG_PAGE_SIZE) || 1;
+  if (catalogCurrentPage > totalPages) {
+    catalogCurrentPage = 1;
+  }
+
+  const startIndex = (catalogCurrentPage - 1) * CATALOG_PAGE_SIZE;
+  const endIndex = startIndex + CATALOG_PAGE_SIZE;
+
+  matchingCards.forEach((card, index) => {
+    if (index >= startIndex && index < endIndex) {
       card.style.display = '';
-      visibleCount++;
     } else {
       card.style.display = 'none';
     }
   });
 
   if (emptyState) {
-    emptyState.classList.toggle('hidden', visibleCount > 0);
+    emptyState.classList.toggle('hidden', matchingCards.length > 0);
   }
+
+  renderCatalogPagination(totalPages);
 
   // Update labels
   const catLabel = document.getElementById('category-filter-label');

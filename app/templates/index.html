@@ -21,9 +21,8 @@
     <!-- Search / Query Form -->
     <div class="pt-4 max-w-xl mx-auto">
       <form id="search-form"
-            hx-get="/partials/server-card" 
-            hx-target="#search-result" 
-            hx-indicator="#search-skeleton" 
+            action="/search" 
+            method="GET" 
             class="bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] rounded-xl p-2 flex flex-col sm:flex-row gap-2 shadow-lg focus-within:border-emerald-500/60 transition-colors">
         <input type="hidden" name="bedrock" id="search-bedrock-input" value="false" />
         <div class="relative flex-1 flex items-center px-3 gap-2">
@@ -32,7 +31,7 @@
           </svg>
           <input type="text" 
                  id="search-input"
-                 name="address" 
+                 name="q" 
                  autocomplete="off"
                  required 
                  placeholder="Например: 2b2t, hypixel, reallyworld, play.cubecraft.net" 
@@ -53,17 +52,8 @@
     </div>
   </section>
 
-  <!-- Search Result Area with In-Place Loading State (Zero Layout Shift) -->
-  <section class="max-w-2xl mx-auto w-full">
-    <div id="search-result" class="relative min-h-[0px] transition-all">
-      <div id="search-skeleton" class="htmx-indicator">
-        {% include "partials/skeleton.html" %}
-      </div>
-    </div>
-  </section>
-
   <!-- Curated Server Networks Catalog Showcase -->
-  <section class="space-y-6 pt-4">
+  <section class="space-y-6 mt-6">
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-[#273147] pb-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
@@ -245,6 +235,13 @@
           </div>
         </div>
       {% endfor %}
+    </div>
+
+    <!-- Catalog Pagination Controls -->
+    <div id="catalog-pagination" class="flex items-center justify-center gap-2 pt-6">
+      <button type="button" data-page-btn="1" onclick="setCatalogPage(1)" class="w-8 h-8 rounded-lg text-xs font-semibold flex items-center justify-center bg-emerald-500 text-slate-950 shadow-sm">1</button>
+      <button type="button" data-page-btn="2" onclick="setCatalogPage(2)" class="w-8 h-8 rounded-lg text-xs font-semibold flex items-center justify-center bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">2</button>
+      <button type="button" data-page-btn="3" onclick="setCatalogPage(3)" class="w-8 h-8 rounded-lg text-xs font-semibold flex items-center justify-center bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">3</button>
     </div>
 
     <!-- Empty Filter Results Message -->

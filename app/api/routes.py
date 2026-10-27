@@ -8,10 +8,13 @@ from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.repository import ServerRepository
 from app.services.alias_service import (
+    check_search_route,
+    get_catalog_page,
     get_curated_catalog,
     get_server_extra_info,
     is_bedrock_address,
     resolve_address,
+    search_servers_catalog,
 )
 from app.services.auth_service import get_current_user_from_request
 from app.services.pinger import get_mock_server_status, query_server
@@ -44,6 +47,58 @@ async def home_page(request: Request):
         },
     )
 
+
+@web_router.get("/search", response_class=HTMLResponse)
+async def search_page(
+    request: Request,
+    q: str = Query("", description="Search query string"),
+    address: str = Query("", description="Alternative address query parameter"),
+    bedrock: bool = Query(False),
+    category: Optional[str] = Query(None),
+    edition: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+):
+    """Smart search route: redirects on exact match, or renders dedicated results page."""
+    raw_query = q.strip() or address.strip()
+    if not raw_query:
+        return RedirectResponse(url="/", status_code=303)
+
+    route_type, target = check_search_route(raw_query, bedrock=bedrock)
+    if route_type == "direct":
+        effective_bedrock = bedrock or is_bedrock_address(target)
+        url = f"/server/{target}"
+        if effective_bedrock:
+            url += "?bedrock=true"
+        return RedirectResponse(url=url, status_code=303)
+
+    # Partial / Multi-match query -> Render dedicated search results page
+    eff_edition = "bedrock" if bedrock else (edition or "all")
+    results = search_servers_catalog(raw_query, category=category, edition=eff_edition)
+    page_items, total_pages, total_count = get_catalog_page(
+        page=page,
+        page_size=6,
+        servers=results,
+    )
+    current_user = await get_current_user_from_request(request, repo)
+    resolved_fallback = resolve_address(raw_query)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="search.html",
+        context={
+            "query": raw_query,
+            "results": page_items,
+            "total_count": total_count,
+            "total_pages": total_pages,
+            "current_page": page,
+            "bedrock": bedrock,
+            "category": category or "all",
+            "edition": eff_edition,
+            "resolved_fallback": resolved_fallback,
+            "app_name": settings.app_name,
+            "current_user": current_user,
+        },
+    )
 
 
 @web_router.get("/server/{address}", response_class=HTMLResponse)

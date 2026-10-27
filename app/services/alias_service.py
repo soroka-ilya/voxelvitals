@@ -438,6 +438,127 @@ def resolve_address(query: str, default_tld: str = ".net") -> str:
     return f"{fallback_host}:{port}" if port else fallback_host
 
 
+def check_search_route(query: str, bedrock: bool = False) -> tuple[str, str]:
+    """Determine whether search query is an exact match redirect or search results page.
+
+    Returns:
+        tuple[str, str]: ("direct", address) or ("search", query)
+    """
+    clean = normalize_query(query)
+    if not clean:
+        return "search", ""
+
+    host, port = _split_host_port(clean)
+    host_lower = host.lower()
+
+    # Generic search keywords that should open search page, not redirect
+    generic_keywords = {
+        "mine", "craft", "pvp", "smp", "world", "anarchy", "vanilla",
+        "minigames", "bedrock", "java", "server", "servers", "play",
+        "duels", "rpg", "hub", "lobby", "survival", "online", "game", "games"
+    }
+    if host_lower in generic_keywords:
+        return "search", clean
+
+    # Direct match in alias map (e.g. "hypixel", "2b2t", "donutsmp", "reallyworld")
+    if host_lower in ALIAS_MAP:
+        resolved = resolve_address(clean)
+        return "direct", resolved
+
+    # Direct match for ID or Address in curated catalog
+    for s in CURATED_SERVERS:
+        if host_lower == s["id"].lower() or host_lower == s["address"].lower():
+            resolved = resolve_address(clean)
+            return "direct", resolved
+
+    # Explicit domain name (contains a dot with TLD extension or port), or IP, or localhost
+    if "." in host or host_lower == "localhost" or host.startswith("[") or host.count(":") > 1:
+        parts = host.split(".")
+        if len(parts) >= 2 and len(parts[-1]) >= 2:
+            return "direct", clean
+
+    # Otherwise it's a partial query like "mine", "hyp", "donut" -> search page
+    return "search", clean
+
+
+def search_servers_catalog(
+    query: str,
+    category: Optional[str] = None,
+    edition: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """Search catalog servers with relevance scoring and optional filters."""
+    clean_q = normalize_query(query).lower()
+    compact_q = re.sub(r"[^a-z0-9]", "", clean_q)
+
+    results: List[tuple[int, Dict[str, Any]]] = []
+
+    for s in CURATED_SERVERS:
+        if edition and edition != "all" and s.get("edition", "java") != edition:
+            continue
+        if category and category != "all" and s.get("category") != category:
+            tags = [t.lower() for t in s.get("tags", [])]
+            if category not in tags:
+                continue
+
+        if not clean_q:
+            results.append((100, s))
+            continue
+
+        score = 0
+        name_lower = s["name"].lower()
+        addr_lower = s["address"].lower()
+        desc_lower = s.get("description", "").lower()
+        tags = [t.lower() for t in s.get("tags", [])]
+
+        if clean_q == addr_lower or clean_q == s["id"].lower():
+            score += 150
+        elif clean_q == name_lower:
+            score += 120
+        elif addr_lower.startswith(clean_q) or s["id"].lower().startswith(clean_q):
+            score += 100
+        elif name_lower.startswith(clean_q):
+            score += 90
+        elif clean_q in addr_lower or clean_q in name_lower:
+            score += 70
+        elif any(clean_q in t for t in tags):
+            score += 50
+        elif compact_q and any(compact_q in re.sub(r"[^a-z0-9]", "", t) for t in tags):
+            score += 40
+        elif clean_q in desc_lower:
+            score += 30
+
+        if score > 0:
+            results.append((score, s))
+
+    results.sort(key=lambda x: x[0], reverse=True)
+    return [item for _, item in results]
+
+
+def get_catalog_page(
+    page: int = 1,
+    page_size: int = 6,
+    category: Optional[str] = None,
+    edition: Optional[str] = None,
+    servers: Optional[List[Dict[str, Any]]] = None,
+) -> tuple[List[Dict[str, Any]], int, int]:
+    """Paginate list of servers, returning (page_items, total_pages, total_count)."""
+    import math
+    source = servers if servers is not None else get_curated_catalog(category)
+    if edition and edition != "all":
+        source = [s for s in source if s.get("edition", "java") == edition]
+
+    total_count = len(source)
+    if total_count == 0:
+        return [], 1, 0
+
+    total_pages = max(1, math.ceil(total_count / page_size))
+    current_page = max(1, min(page, total_pages))
+    start_idx = (current_page - 1) * page_size
+    end_idx = start_idx + page_size
+
+    return source[start_idx:end_idx], total_pages, total_count
+
+
 def is_bedrock_address(address: str) -> bool:
     """Check if address belongs to known Bedrock networks or Bedrock default port 19132."""
     addr_lower = address.lower().strip()
