@@ -13,6 +13,7 @@ function renderTelemetryChart(canvasId, historyData) {
     } catch (e) {
       // ignore
     }
+    currentTelemetryChart = null;
   }
 
   const labels = historyData.map(point => {
@@ -112,7 +113,7 @@ function renderTelemetryChart(canvasId, historyData) {
 }
 
 window.addEventListener('themechange', (e) => {
-  if (!currentTelemetryChart) return;
+  if (!currentTelemetryChart || !currentTelemetryChart.canvas || !document.body.contains(currentTelemetryChart.canvas)) return;
   const isDark = (e.detail && typeof e.detail.isDark === 'boolean')
     ? e.detail.isDark
     : document.documentElement.classList.contains('dark');

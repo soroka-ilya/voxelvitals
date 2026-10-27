@@ -55,6 +55,41 @@ function copyIp(address, btn) {
   }
 }
 
+// Universal text copy helper with clipboard fallback
+function copySnippet(text, btn) {
+  const fallbackCopy = (val) => {
+    const input = document.createElement('textarea');
+    input.value = val;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.focus();
+    input.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
+    document.body.removeChild(input);
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+
+  if (btn) {
+    const origText = btn.innerText;
+    btn.innerText = 'Скопировано!';
+    setTimeout(() => {
+      btn.innerText = origText;
+    }, 1500);
+  }
+}
+
 // Global query launcher
 function queryAddress(address) {
   const input = document.getElementById('search-input');
@@ -83,7 +118,7 @@ function applyCatalogFilters() {
 
   cards.forEach(card => {
     const cardEdition = card.getAttribute('data-edition') || 'java';
-    const cardCategory = card.getAttribute('data-category') || '';
+    const cardCategory = (card.getAttribute('data-category') || '').trim().toLowerCase();
     const cardTagsStr = card.getAttribute('data-tags') || '';
     const cardTags = cardTagsStr ? cardTagsStr.split(',').map(t => t.trim().toLowerCase()) : [];
     const cardVersionsStr = card.getAttribute('data-versions') || '';
@@ -96,7 +131,7 @@ function applyCatalogFilters() {
     const matchCategory = (
       selectedCategories.size === 0 || 
       selectedCategories.has(cardCategory) || 
-      cardTags.some(tag => selectedCategories.has(tag))
+      cardTags.some(tag => selectedCategories.has(tag) || (selectedCategories.has('survival') && (tag === 'smp' || tag === 'vanilla')))
     );
 
     // 3. Version multi-select check
@@ -280,7 +315,7 @@ function initAutocomplete() {
     }
 
     dropdown.innerHTML = items.map((item, index) => `
-      <div class="suggestion-item p-3 hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer flex items-center justify-between gap-3 transition-colors ${index === 0 ? 'rounded-t-xl' : ''} ${index === items.length - 1 ? 'rounded-b-xl' : ''}" 
+      <div class="suggestion-item p-3 hover:bg-slate-100 dark:hover:bg-[#1c2233] border-l-2 border-transparent cursor-pointer flex items-center justify-between gap-3 transition-colors ${index === 0 ? 'rounded-t-xl' : ''} ${index === items.length - 1 ? 'rounded-b-xl' : ''}" 
            data-index="${index}" 
            data-address="${escapeHtml(item.address)}"
            data-edition="${escapeHtml(item.edition || 'java')}">
@@ -397,10 +432,12 @@ function initAutocomplete() {
   function updateActiveItem(items) {
     items.forEach((item, idx) => {
       if (idx === activeIndex) {
-        item.classList.add('bg-slate-100', 'dark:bg-[#1c2233]', 'border-l-2', 'border-emerald-500');
+        item.classList.add('bg-slate-100', 'dark:bg-[#1c2233]', 'border-emerald-500');
+        item.classList.remove('border-transparent');
         input.value = item.getAttribute('data-address');
       } else {
-        item.classList.remove('bg-slate-100', 'dark:bg-[#1c2233]', 'border-l-2', 'border-emerald-500');
+        item.classList.remove('bg-slate-100', 'dark:bg-[#1c2233]', 'border-emerald-500');
+        item.classList.add('border-transparent');
       }
     });
   }

@@ -254,3 +254,12 @@ async def test_audit_enhancements(client):
     res_card = await client.get("/partials/server-card?address=mc.hypixel.net&mock=true")
     assert res_card.status_code == 200
     assert "flex-wrap gap-y-2" in res_card.text
+
+    # 4. Catalog cards contain survival tag for DonutSMP, 2b2t, ReallyWorld
+    assert 'data-tags="anarchy,survival,smp,hardcore,donutsmp,donut"' in res_home.text
+    assert 'data-tags="anarchy,survival,2b2t,2b,vanilla"' in res_home.text
+    assert 'data-tags="anarchy,survival,reallyworld,rw,really"' in res_home.text
+
+    # 5. Badge code copy uses safe copySnippet helper
+    assert "copySnippet(" in html
+

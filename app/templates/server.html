@@ -174,7 +174,7 @@
       <label class="text-xs text-slate-600 dark:text-slate-300 block font-medium">Код для вставки в Markdown:</label>
       <div class="flex items-center gap-2">
         <input type="text" readonly value="![{{ status.address }} Status](https://voxelvitals.com/api/badge/{{ status.address }}.svg{% if status.edition == 'bedrock' %}?bedrock=true{% endif %})" class="w-full text-xs font-mono bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 focus:outline-none select-all" />
-        <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.innerText='Скопировано!'; setTimeout(() => this.innerText='Копировать код', 1500);" class="text-xs px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold transition-colors flex-shrink-0">
+        <button type="button" onclick="copySnippet(this.previousElementSibling.value, this);" class="text-xs px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold transition-colors flex-shrink-0">
           Копировать код
         </button>
       </div>
