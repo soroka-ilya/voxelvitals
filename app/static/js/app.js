@@ -84,14 +84,20 @@ function applyCatalogFilters() {
   cards.forEach(card => {
     const cardEdition = card.getAttribute('data-edition') || 'java';
     const cardCategory = card.getAttribute('data-category') || '';
+    const cardTagsStr = card.getAttribute('data-tags') || '';
+    const cardTags = cardTagsStr ? cardTagsStr.split(',').map(t => t.trim().toLowerCase()) : [];
     const cardVersionsStr = card.getAttribute('data-versions') || '';
     const cardVersions = cardVersionsStr.split(',').map(v => v.trim());
 
     // 1. Edition check
     const matchEdition = (currentEdition === 'all' || cardEdition === currentEdition);
 
-    // 2. Category multi-select check
-    const matchCategory = (selectedCategories.size === 0 || selectedCategories.has(cardCategory));
+    // 2. Category multi-select check (matches category or tags)
+    const matchCategory = (
+      selectedCategories.size === 0 || 
+      selectedCategories.has(cardCategory) || 
+      cardTags.some(tag => selectedCategories.has(tag))
+    );
 
     // 3. Version multi-select check
     const matchVersion = (selectedVersions.size === 0 || cardVersions.some(v => selectedVersions.has(v)));
@@ -274,23 +280,23 @@ function initAutocomplete() {
     }
 
     dropdown.innerHTML = items.map((item, index) => `
-      <div class="suggestion-item p-3 hover:bg-[#1c2233] cursor-pointer flex items-center justify-between gap-3 transition-colors ${index === 0 ? 'rounded-t-xl' : ''} ${index === items.length - 1 ? 'rounded-b-xl' : ''}" 
+      <div class="suggestion-item p-3 hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer flex items-center justify-between gap-3 transition-colors ${index === 0 ? 'rounded-t-xl' : ''} ${index === items.length - 1 ? 'rounded-b-xl' : ''}" 
            data-index="${index}" 
            data-address="${escapeHtml(item.address)}"
            data-edition="${escapeHtml(item.edition || 'java')}">
         <div class="flex items-center gap-3 min-w-0">
-          <img src="${escapeHtml(item.icon)}" onerror="this.src='${escapeHtml(item.fallback_icon || '')}';" alt="${escapeHtml(item.name)}" class="w-8 h-8 rounded-lg bg-[#0c0f17] border border-[#273147] object-contain flex-shrink-0" />
+          <img src="${escapeHtml(item.icon)}" onerror="this.src='${escapeHtml(item.fallback_icon || '')}';" alt="${escapeHtml(item.name)}" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] object-contain flex-shrink-0" />
           <div class="min-w-0 text-left">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-semibold text-white truncate">${escapeHtml(item.name)}</span>
-              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#273147] text-slate-300 font-medium">${escapeHtml(item.category_label || item.category)}</span>
+              <span class="text-xs font-semibold text-slate-900 dark:text-white truncate">${escapeHtml(item.name)}</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#273147] text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-transparent">${escapeHtml(item.category_label || item.category)}</span>
             </div>
-            <p class="text-[11px] font-mono text-emerald-400 truncate">${escapeHtml(item.address)}</p>
+            <p class="text-[11px] font-mono text-emerald-500 dark:text-emerald-400 truncate">${escapeHtml(item.address)}</p>
           </div>
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
-          <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#0c0f17] text-slate-400 border border-[#273147]/60">${escapeHtml(item.edition || 'java')}</span>
-          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#0c0f17] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#273147]/60">${escapeHtml(item.edition || 'java')}</span>
+          <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
         </div>
@@ -313,8 +319,8 @@ function initAutocomplete() {
   function selectSuggestion(addr, edition = 'java') {
     input.value = addr;
     const bedrockInput = document.getElementById('search-bedrock-input');
-    if (bedrockInput && edition === 'bedrock') {
-      bedrockInput.value = 'true';
+    if (bedrockInput) {
+      bedrockInput.value = edition === 'bedrock' ? 'true' : 'false';
     }
     dropdown.innerHTML = '';
     dropdown.classList.add('hidden');
@@ -391,10 +397,10 @@ function initAutocomplete() {
   function updateActiveItem(items) {
     items.forEach((item, idx) => {
       if (idx === activeIndex) {
-        item.classList.add('bg-[#1c2233]', 'border-l-2', 'border-emerald-500');
+        item.classList.add('bg-slate-100', 'dark:bg-[#1c2233]', 'border-l-2', 'border-emerald-500');
         input.value = item.getAttribute('data-address');
       } else {
-        item.classList.remove('bg-[#1c2233]', 'border-l-2', 'border-emerald-500');
+        item.classList.remove('bg-slate-100', 'dark:bg-[#1c2233]', 'border-l-2', 'border-emerald-500');
       }
     });
   }
@@ -449,7 +455,7 @@ function showToast(message, duration = 3000) {
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'voxel-toast';
-    toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl text-xs font-medium bg-[#161b26] border border-[#273147] text-slate-100 shadow-2xl transition-all duration-300 opacity-0 translate-y-3 pointer-events-none flex items-center gap-2';
+    toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl text-xs font-medium bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 shadow-xl transition-all duration-300 opacity-0 translate-y-3 pointer-events-none flex items-center gap-2';
     document.body.appendChild(toast);
   }
   toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${escapeHtml(message)}</span>`;

@@ -180,6 +180,7 @@
       {% for server in catalog %}
         <div data-catalog-card 
              data-category="{{ server.category }}" 
+             data-tags="{{ (server.tags or []) | join(',') }}"
              data-edition="{{ server.edition }}"
              data-versions="{{ server.versions | join(',') if server.versions else '1.21.x' }}"
              onclick="window.location.href='/server/{{ server.address }}{% if server.edition == 'bedrock' %}?bedrock=true{% endif %}';"

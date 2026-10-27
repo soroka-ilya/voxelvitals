@@ -117,6 +117,12 @@ async def server_page(
         ]
 
     rating_stats = await repo.get_server_rating_stats(clean_addr)
+    if rating_stats.get("total_count", 0) == 0 and reviews:
+        avg_calc = round(sum(r["rating"] for r in reviews) / len(reviews), 1)
+        rating_stats = {
+            "avg_rating": avg_calc,
+            "total_count": len(reviews),
+        }
     votes = await repo.get_votes_count(clean_addr)
     current_user = await get_current_user_from_request(request, repo)
 

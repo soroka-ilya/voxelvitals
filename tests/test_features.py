@@ -225,4 +225,32 @@ async def test_light_theme_tokens_contrast(client):
     assert '<h2 class="text-base font-semibold text-white">Online Player' not in server_html
 
 
+@pytest.mark.asyncio
+async def test_audit_enhancements(client):
+    """Verify improvements from audit: data-tags, rating stats sync, badge preview, responsive header."""
+    # 1. Index page catalog cards have data-tags
+    res_home = await client.get("/")
+    assert res_home.status_code == 200
+    assert "data-tags=" in res_home.text
 
+    # 2. Server page header responsive break classes and rating sync
+    res_server = await client.get("/server/donutsmp.net?mock=true")
+    assert res_server.status_code == 200
+    html = res_server.text
+
+    # Header break-all sm:break-normal
+    assert "break-all sm:break-normal" in html
+
+    # Demo rating stats synchronized with demo reviews count (3 reviews, not 0)
+    assert "(3 отзывов)" in html
+    assert "(0 отзывов)" not in html
+
+    # Live status badge preview card present, without forbidden strings
+    assert "/api/badge/donutsmp.net.svg" in html
+    assert "Open Raw SVG" not in html
+    assert "Markdown Snippet" not in html
+
+    # 3. Server card partial responsive toolbar
+    res_card = await client.get("/partials/server-card?address=mc.hypixel.net&mock=true")
+    assert res_card.status_code == 200
+    assert "flex-wrap gap-y-2" in res_card.text

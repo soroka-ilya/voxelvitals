@@ -21,7 +21,7 @@
   <!-- Server Header Banner -->
   <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm transition-colors">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-      <div class="flex items-center gap-4">
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 min-w-0">
         {% if status.icon_base64 %}
           <img src="{{ status.icon_base64 }}" alt="{{ status.address }}" class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] object-contain flex-shrink-0" />
         {% else %}
@@ -32,9 +32,9 @@
           </div>
         {% endif %}
 
-        <div>
-          <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono">{{ status.address }}</h1>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-3">
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight font-mono break-all sm:break-normal">{{ status.address }}</h1>
             <span class="text-xs uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-[#273147] text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-transparent">
               {{ status.edition }}
             </span>
@@ -141,6 +141,43 @@
 
     <div class="h-64 w-full relative">
       <canvas id="telemetryChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Live Status Badge Card -->
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4 transition-colors">
+    <div class="border-b border-slate-200 dark:border-[#273147] pb-3 flex items-center justify-between">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Интерактивный статус-бейдж</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Динамический SVG виджет для мониторинга в README GitHub, на сайте или форуме</p>
+      </div>
+      <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+        Live SVG
+      </span>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147]">
+      <div>
+        <span class="text-xs text-slate-500 dark:text-slate-400 block mb-2 font-medium">Предпросмотр:</span>
+        <img src="/api/badge/{{ status.address }}.svg{% if status.edition == 'bedrock' %}?bedrock=true{% endif %}" alt="{{ status.address }} status badge" class="h-6 object-contain" />
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="/api/badge/{{ status.address }}.svg{% if status.edition == 'bedrock' %}?bedrock=true{% endif %}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-[#273147] hover:bg-slate-100 dark:hover:bg-[#3b4866] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-transparent transition-colors flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          <span>Прямая ссылка</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <label class="text-xs text-slate-600 dark:text-slate-300 block font-medium">Код для вставки в Markdown:</label>
+      <div class="flex items-center gap-2">
+        <input type="text" readonly value="![{{ status.address }} Status](https://voxelvitals.com/api/badge/{{ status.address }}.svg{% if status.edition == 'bedrock' %}?bedrock=true{% endif %})" class="w-full text-xs font-mono bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 focus:outline-none select-all" />
+        <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.innerText='Скопировано!'; setTimeout(() => this.innerText='Копировать код', 1500);" class="text-xs px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold transition-colors flex-shrink-0">
+          Копировать код
+        </button>
+      </div>
     </div>
   </div>
 

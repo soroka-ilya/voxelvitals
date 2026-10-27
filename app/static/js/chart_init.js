@@ -1,9 +1,19 @@
 /**
  * Chart.js initialization for Minecraft server telemetry
  */
+let currentTelemetryChart = null;
+
 function renderTelemetryChart(canvasId, historyData) {
   const ctx = document.getElementById(canvasId);
   if (!ctx || !historyData || historyData.length === 0) return;
+
+  if (currentTelemetryChart) {
+    try {
+      currentTelemetryChart.destroy();
+    } catch (e) {
+      // ignore
+    }
+  }
 
   const labels = historyData.map(point => {
     const d = new Date(point.timestamp);
@@ -12,8 +22,9 @@ function renderTelemetryChart(canvasId, historyData) {
 
   const playersData = historyData.map(point => point.players_online);
   const pingData = historyData.map(point => point.ping_ms);
+  const isDark = document.documentElement.classList.contains('dark');
 
-  new Chart(ctx, {
+  currentTelemetryChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
@@ -97,4 +108,30 @@ function renderTelemetryChart(canvasId, historyData) {
       }
     }
   });
+  return currentTelemetryChart;
 }
+
+window.addEventListener('themechange', (e) => {
+  if (!currentTelemetryChart) return;
+  const isDark = (e.detail && typeof e.detail.isDark === 'boolean')
+    ? e.detail.isDark
+    : document.documentElement.classList.contains('dark');
+
+  if (currentTelemetryChart.options.plugins?.legend?.labels) {
+    currentTelemetryChart.options.plugins.legend.labels.color = isDark ? '#94a3b8' : '#475569';
+  }
+  if (currentTelemetryChart.options.plugins?.tooltip) {
+    currentTelemetryChart.options.plugins.tooltip.backgroundColor = isDark ? '#161b26' : '#ffffff';
+    currentTelemetryChart.options.plugins.tooltip.titleColor = isDark ? '#f1f5f9' : '#0f172a';
+    currentTelemetryChart.options.plugins.tooltip.bodyColor = isDark ? '#94a3b8' : '#475569';
+    currentTelemetryChart.options.plugins.tooltip.borderColor = isDark ? '#273147' : '#e2e8f0';
+  }
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+  if (currentTelemetryChart.options.scales?.x?.grid) {
+    currentTelemetryChart.options.scales.x.grid.color = gridColor;
+  }
+  if (currentTelemetryChart.options.scales?.yPlayers?.grid) {
+    currentTelemetryChart.options.scales.yPlayers.grid.color = gridColor;
+  }
+  currentTelemetryChart.update();
+});
