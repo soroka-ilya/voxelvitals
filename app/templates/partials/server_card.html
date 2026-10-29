@@ -141,7 +141,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <!-- Quick Open in Launcher Button -->
       <button type="button"
-              onclick="event.stopPropagation(); launchMinecraft('{{ status.address }}', '{{ status.edition }}');"
+              onclick="event.stopPropagation(); launchMinecraft('{{ status.address }}', '{{ status.edition }}', '{{ status.name or status.address }}', this);"
               title="Запустить в лаунчере"
               class="px-2.5 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1 transition-colors">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>

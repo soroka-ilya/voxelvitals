@@ -292,7 +292,7 @@
       </div>
 
       <!-- Tabs Navigation -->
-      <div class="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-[#0c0f17] rounded-xl border border-slate-200 dark:border-[#273147] mb-3 text-[11px] font-semibold">
+      <div id="qc-tabs-nav" class="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-[#0c0f17] rounded-xl border border-slate-200 dark:border-[#273147] mb-3 text-[11px] font-semibold">
         <button type="button" id="qc-tab-btn-any" onclick="switchQuickConnectTab('any')" class="py-1.5 px-1 rounded-lg transition-colors text-center text-slate-900 dark:text-white bg-white dark:bg-[#161b26] shadow-sm">
           Любой MC
         </button>
@@ -331,6 +331,10 @@
               </div>
             </div>
           </div>
+          <button type="button" onclick="confirmAnyLauncher()" class="w-full py-2 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-sm">
+            <span>Скопировать IP и закрыть</span>
+            <span>➔</span>
+          </button>
         </div>
 
         <!-- Tab 2: Lunar Client -->
@@ -401,8 +405,12 @@
               </div>
             </div>
           </div>
+          <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2">
+            <span class="flex-shrink-0">💡</span>
+            <p class="leading-relaxed">Если игра открылась, но сервер не добавился автоматически (сбой передачи URI в Windows UWP) — скопируйте Хост и Порт выше и вставьте в меню «Добавить сервер».</p>
+          </div>
           <button type="button" onclick="triggerBedrockUri()" class="w-full py-2 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#1e293b] dark:hover:bg-[#334155] text-slate-800 dark:text-slate-200 font-medium text-xs transition-colors flex items-center justify-center gap-2">
-            <span>Запустить Minecraft Bedrock</span>
+            <span>Запустить Minecraft Bedrock (URI)</span>
             <span class="text-emerald-500">➔</span>
           </button>
         </div>
@@ -418,7 +426,7 @@
           <button type="button" id="qc-reset-btn" onclick="resetPreferredLauncher()" class="hidden text-[11px] text-slate-400 hover:text-red-400 transition-colors">
             Сбросить выбор
           </button>
-          <button type="button" onclick="closeQuickConnectModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
+          <button type="button" onclick="finishQuickConnectModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
             Готово
           </button>
         </div>

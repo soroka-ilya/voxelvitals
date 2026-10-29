@@ -52,13 +52,21 @@
 
       <!-- Action & Status Controls -->
       <div class="flex flex-wrap items-center gap-3">
-        <!-- Quick Open in Launcher Button -->
-        <button type="button" 
-                onclick="launchMinecraft('{{ status.address }}', '{{ status.edition }}');" 
-                class="px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs tracking-wide transition-all shadow-sm flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-          <span>Играть в лаунчере</span>
-        </button>
+        <!-- Quick Open in Launcher Button with Hub Options -->
+        <div class="inline-flex rounded-lg shadow-sm">
+          <button type="button" 
+                  onclick="launchMinecraft('{{ status.address }}', '{{ status.edition }}', '{{ status.name or status.address }}');" 
+                  class="px-4 py-2.5 rounded-l-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs tracking-wide transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+            <span>Играть в лаунчере</span>
+          </button>
+          <button type="button"
+                  onclick="openQuickConnectModal('{{ status.address }}', '{{ status.edition }}', '{{ status.name or status.address }}');"
+                  title="Параметры подключения и лаунчеры"
+                  class="px-2.5 py-2.5 rounded-r-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold text-xs transition-colors border-l border-emerald-400/40 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+        </div>
 
         <!-- Copy IP Button -->
         <button type="button" 

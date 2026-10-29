@@ -109,7 +109,7 @@
             <span class="font-mono text-xs text-emerald-600 dark:text-emerald-400 truncate">{{ server.address }}</span>
             <div class="flex items-center gap-1.5 flex-shrink-0">
               <button type="button" 
-                      onclick="event.stopPropagation(); launchMinecraft('{{ server.address }}', '{{ server.edition }}', this);" 
+                      onclick="event.stopPropagation(); launchMinecraft('{{ server.address }}', '{{ server.edition }}', '{{ server.name }}', this);" 
                       title="Играть в лаунчере"
                       class="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium transition-colors flex items-center gap-1">
                 <span>В лаунчер</span>

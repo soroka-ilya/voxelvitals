@@ -292,6 +292,10 @@ async def test_java_vs_bedrock_launcher_isolation(client):
     res_home = await client.get("/")
     assert res_home.status_code == 200
     assert "id=\"quick-connect-modal\"" in res_home.text
+    assert "id=\"qc-tabs-nav\"" in res_home.text
+    assert "qc-panel-any" in res_home.text
+    assert "confirmAnyLauncher" in res_home.text
+    assert "finishQuickConnectModal" in res_home.text
     assert "Lunar Client" in res_home.text
     assert "Badlion Client" in res_home.text
     assert "launchClient" in res_home.text
@@ -299,4 +303,11 @@ async def test_java_vs_bedrock_launcher_isolation(client):
     assert "qc-bedrock-port" in res_home.text
     assert "copyQuickHost" in res_home.text
     assert "copyQuickPort" in res_home.text
+
+    # 4. Server page contains options dropdown button for Quick Connect Hub
+    res_server = await client.get("/server/mc.hypixel.net")
+    assert res_server.status_code == 200
+    assert "openQuickConnectModal" in res_server.text
+    assert "launchMinecraft" in res_server.text
+
 

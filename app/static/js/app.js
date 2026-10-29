@@ -601,20 +601,26 @@ function initAutocomplete() {
 }
 
 // 4. Toast Notification
-function showToast(message, duration = 3000) {
+function showToast(message, duration = 3000, actionLabel = null, actionFn = null) {
   let toast = document.getElementById('voxel-toast');
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'voxel-toast';
-    toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl text-xs font-medium bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 shadow-xl transition-all duration-300 opacity-0 translate-y-3 pointer-events-none flex items-center gap-2';
+    toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl text-xs font-medium bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 shadow-xl transition-all duration-300 opacity-0 translate-y-3 pointer-events-none flex items-center gap-2.5';
     document.body.appendChild(toast);
   }
-  toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${escapeHtml(message)}</span>`;
+  let actionHtml = '';
+  if (actionLabel && typeof actionFn === 'function') {
+    window._lastToastAction = actionFn;
+    actionHtml = `<button type="button" onclick="if(window._lastToastAction){window._lastToastAction();}" class="underline text-emerald-500 hover:text-emerald-400 font-semibold ml-1 cursor-pointer pointer-events-auto">${escapeHtml(actionLabel)}</button>`;
+  }
+  toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span><span class="truncate">${escapeHtml(message)}</span>${actionHtml}`;
   toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
-  toast.classList.add('opacity-100', 'translate-y-0');
+  toast.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
 
-  setTimeout(() => {
-    toast.classList.remove('opacity-100', 'translate-y-0');
+  if (window._toastTimeout) clearTimeout(window._toastTimeout);
+  window._toastTimeout = setTimeout(() => {
+    toast.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
     toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
   }, duration);
 }
@@ -643,6 +649,53 @@ function closeJavaLauncherModal() {
   closeQuickConnectModal();
 }
 
+function copyTextToClipboard(text, onSuccess, onFail) {
+  if (!text) return;
+  const fallback = () => {
+    try {
+      const input = document.createElement('input');
+      input.value = text;
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.appendChild(input);
+      input.focus();
+      input.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(input);
+      if (successful) {
+        if (onSuccess) onSuccess();
+      } else {
+        if (onFail) onFail();
+      }
+    } catch (e) {
+      if (onFail) onFail(e);
+    }
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      if (onSuccess) onSuccess();
+    }).catch(() => {
+      fallback();
+    });
+  } else {
+    fallback();
+  }
+}
+
+function parseHostPort(address, edition = 'java') {
+  const clean = (address || '').trim();
+  const defaultPort = edition === 'bedrock' ? '19132' : '25565';
+  const lastColon = clean.lastIndexOf(':');
+  if (lastColon > 0 && lastColon < clean.length - 1) {
+    const potentialPort = clean.substring(lastColon + 1);
+    if (/^\d+$/.test(potentialPort)) {
+      return { host: clean.substring(0, lastColon), port: potentialPort };
+    }
+  }
+  return { host: clean, port: defaultPort };
+}
+
 function copyQuickAddress(btn = null) {
   if (currentQcAddress) {
     copyIp(currentQcAddress, btn);
@@ -655,30 +708,52 @@ function copyCurrentJavaIp(btn = null) {
 
 function copyQuickHost(btn = null) {
   if (!currentQcHost) return;
-  navigator.clipboard.writeText(currentQcHost).then(() => {
+  copyTextToClipboard(currentQcHost, () => {
     showToast(`Хост скопирован: ${currentQcHost}`);
     if (btn) {
       const orig = btn.textContent;
       btn.textContent = '✓ Скопирован';
       setTimeout(() => { btn.textContent = orig; }, 1800);
     }
-  }).catch(() => {
+  }, () => {
     showToast(`Хост: ${currentQcHost}`);
   });
 }
 
 function copyQuickPort(btn = null) {
   if (!currentQcPort) return;
-  navigator.clipboard.writeText(currentQcPort).then(() => {
+  copyTextToClipboard(currentQcPort, () => {
     showToast(`Порт скопирован: ${currentQcPort}`);
     if (btn) {
       const orig = btn.textContent;
       btn.textContent = '✓ Скопирован';
       setTimeout(() => { btn.textContent = orig; }, 1800);
     }
-  }).catch(() => {
+  }, () => {
     showToast(`Порт: ${currentQcPort}`);
   });
+}
+
+function confirmAnyLauncher() {
+  if (currentQcAddress) {
+    copyIp(currentQcAddress);
+  }
+  const remCb = document.getElementById('qc-remember-choice') || document.getElementById('java-remember-choice');
+  if (remCb?.checked) {
+    localStorage.setItem('preferred_minecraft_launcher', 'any');
+    localStorage.setItem('preferred_java_client', 'any');
+  }
+  showToast('IP скопирован! Вставьте в лаунчере через Ctrl+V');
+  closeQuickConnectModal();
+}
+
+function finishQuickConnectModal() {
+  const remCb = document.getElementById('qc-remember-choice') || document.getElementById('java-remember-choice');
+  if (remCb?.checked && currentQcEdition === 'java') {
+    localStorage.setItem('preferred_minecraft_launcher', currentQcActiveTab);
+    localStorage.setItem('preferred_java_client', currentQcActiveTab);
+  }
+  closeQuickConnectModal();
 }
 
 function switchQuickConnectTab(tabName) {
@@ -701,9 +776,9 @@ function switchQuickConnectTab(tabName) {
 
 function openQuickConnectModal(address, edition = 'java', customName = '', initialTab = null) {
   const cleanAddr = (address || '').trim();
-  const parts = cleanAddr.split(':');
-  currentQcHost = parts[0];
-  currentQcPort = parts[1] || (edition === 'bedrock' ? '19132' : '25565');
+  const hp = parseHostPort(cleanAddr, edition);
+  currentQcHost = hp.host;
+  currentQcPort = hp.port;
   currentQcAddress = cleanAddr;
   currentJavaAddress = cleanAddr;
   currentQcEdition = edition;
@@ -729,23 +804,30 @@ function openQuickConnectModal(address, edition = 'java', customName = '', initi
   const featBanner = document.getElementById('qc-bedrock-featured-banner');
   if (featBanner) featBanner.classList.toggle('hidden', !isFeatured);
 
+  // Tab navigation bar adaptation
+  const tabsNav = document.getElementById('qc-tabs-nav');
+  if (edition === 'bedrock') {
+    if (tabsNav) tabsNav.classList.add('hidden');
+    switchQuickConnectTab('bedrock');
+  } else {
+    if (tabsNav) tabsNav.classList.remove('hidden');
+    let targetTab = initialTab;
+    if (!targetTab) {
+      const savedPref = localStorage.getItem('preferred_minecraft_launcher') || localStorage.getItem('preferred_java_client');
+      if (savedPref === 'lunar' || savedPref === 'badlion') {
+        targetTab = savedPref;
+      } else {
+        targetTab = 'any';
+      }
+    }
+    switchQuickConnectTab(targetTab);
+  }
+
   const savedPref = localStorage.getItem('preferred_minecraft_launcher') || localStorage.getItem('preferred_java_client');
   const resetBtn = document.getElementById('qc-reset-btn');
   if (resetBtn) resetBtn.classList.toggle('hidden', !savedPref);
   const remCb = document.getElementById('qc-remember-choice') || document.getElementById('java-remember-choice');
   if (remCb) remCb.checked = !!savedPref;
-
-  let targetTab = initialTab;
-  if (!targetTab) {
-    if (edition === 'bedrock') {
-      targetTab = 'bedrock';
-    } else if (savedPref === 'lunar' || savedPref === 'badlion') {
-      targetTab = savedPref;
-    } else {
-      targetTab = 'any';
-    }
-  }
-  switchQuickConnectTab(targetTab);
 
   const modal = document.getElementById('quick-connect-modal') || document.getElementById('java-launcher-modal');
   if (modal) modal.classList.remove('hidden');
@@ -779,7 +861,7 @@ function triggerBedrockUri() {
   const uri = `minecraft://?addExternalServer=${sName}|${currentQcHost}:${currentQcPort}`;
   try {
     window.location.href = uri;
-    showToast('Запуск Minecraft Bedrock...');
+    showToast('Minecraft Bedrock запускается! Если сервер не добавился — скопируйте хост и порт.');
   } catch (e) {
     console.warn('Bedrock URI failed', e);
   }
@@ -805,7 +887,7 @@ function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = 
   }
 
   const cleanAddr = (address || '').trim();
-  const isBedrock = edition === 'bedrock' || cleanAddr.includes('bedrock') || cleanAddr.includes('19132');
+  const isBedrock = edition === 'bedrock' || (edition !== 'java' && (cleanAddr.includes('bedrock') || cleanAddr.includes('19132')));
 
   trackEvent('launch_client', cleanAddr, { edition: isBedrock ? 'bedrock' : 'java', custom_name: customName });
   copyIp(cleanAddr, triggerBtn);
@@ -814,19 +896,17 @@ function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = 
     const isFeatured = isFeaturedBedrock(cleanAddr);
     if (isFeatured) {
       openQuickConnectModal(cleanAddr, 'bedrock', customName, 'bedrock');
-      showToast(`Сервер встроен во вкладку «Серверы» Bedrock! IP скопирован.`);
+      showToast('Сервер встроен во вкладку «Серверы» Bedrock! IP скопирован.');
     } else {
-      const parts = cleanAddr.split(':');
-      const host = parts[0];
-      const port = parts[1] || '19132';
-      const sName = encodeURIComponent(customName || host);
+      const hp = parseHostPort(cleanAddr, 'bedrock');
+      const sName = encodeURIComponent(customName || hp.host);
       try {
-        window.location.href = `minecraft://?addExternalServer=${sName}|${host}:${port}`;
+        window.location.href = `minecraft://?addExternalServer=${sName}|${hp.host}:${hp.port}`;
       } catch (err) {
         console.warn('Bedrock URI trigger failed:', err);
       }
       openQuickConnectModal(cleanAddr, 'bedrock', customName, 'bedrock');
-      showToast(`Запуск Minecraft Bedrock... Хост и порт в окне подключения.`);
+      showToast('Запуск Minecraft Bedrock... Хост и порт в окне подключения.');
     }
     return;
   }
@@ -835,11 +915,23 @@ function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = 
   const preferred = localStorage.getItem('preferred_minecraft_launcher') || localStorage.getItem('preferred_java_client');
   if (preferred === 'lunar') {
     window.location.href = `lunarclient://play?serverAddress=${encodeURIComponent(cleanAddr)}`;
-    showToast(`Запуск Lunar Client... IP ${cleanAddr} скопирован в буфер!`);
+    showToast(`Запуск Lunar Client... IP скопирован!`, 4000, 'Сменить', () => {
+      resetPreferredLauncher();
+      openQuickConnectModal(cleanAddr, 'java', customName, 'any');
+    });
     return;
   } else if (preferred === 'badlion') {
     window.location.href = `badlion://join?server=${encodeURIComponent(cleanAddr)}`;
-    showToast(`Запуск Badlion Client... IP ${cleanAddr} скопирован в буфер!`);
+    showToast(`Запуск Badlion Client... IP скопирован!`, 4000, 'Сменить', () => {
+      resetPreferredLauncher();
+      openQuickConnectModal(cleanAddr, 'java', customName, 'any');
+    });
+    return;
+  } else if (preferred === 'any') {
+    showToast(`IP скопирован для прямого подключения (Ctrl+V)!`, 4000, 'Сменить', () => {
+      resetPreferredLauncher();
+      openQuickConnectModal(cleanAddr, 'java', customName, 'any');
+    });
     return;
   }
 
