@@ -259,6 +259,90 @@
     </div>
   </div>
 
+  <!-- Java Launcher Selector Modal -->
+  <div id="java-launcher-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] p-6 shadow-2xl relative text-slate-900 dark:text-slate-100">
+      <button type="button" onclick="closeJavaLauncherModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Подключение: Java Edition</h3>
+          <p id="java-modal-address" class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-medium">mc.hypixel.net</p>
+        </div>
+      </div>
+
+      <!-- Copy status banner -->
+      <div class="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+          <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span>IP скопирован в буфер!</span>
+        </div>
+        <button type="button" onclick="copyCurrentJavaIp(this)" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+          Копировать ещё раз
+        </button>
+      </div>
+
+      <div class="space-y-2.5">
+        <!-- Option 1: Vanilla / Custom Launchers -->
+        <div class="p-3.5 rounded-xl border border-slate-200 dark:border-[#273147] bg-slate-50 dark:bg-[#0c0f17] flex items-start gap-3">
+          <div class="w-7 h-7 rounded-lg bg-slate-200 dark:bg-[#1a2130] flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold flex-shrink-0 mt-0.5">
+            MC
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Любой лаунчер (Официальный, TLauncher, Prism)</h4>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+              Откройте игру ➔ «Сетевая игра» ➔ «Прямое подключение» и нажмите <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-[#1f283d] text-slate-700 dark:text-slate-300 font-mono text-[10px]">Ctrl+V</kbd>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Option 2: Lunar Client -->
+        <button type="button" onclick="launchJavaClient('lunar')" class="w-full p-3 rounded-xl border border-slate-200 dark:border-[#273147] hover:border-emerald-500/50 bg-white dark:bg-[#121622] hover:bg-slate-50 dark:hover:bg-[#1a2130] flex items-center justify-between gap-3 transition-colors text-left group">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs flex-shrink-0">
+              🌙
+            </div>
+            <div>
+              <span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Lunar Client</span>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Быстрый запуск и авто-вход на сервер</p>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-emerald-500 group-hover:translate-x-0.5 transition-transform">➔</span>
+        </button>
+
+        <!-- Option 3: Badlion Client -->
+        <button type="button" onclick="launchJavaClient('badlion')" class="w-full p-3 rounded-xl border border-slate-200 dark:border-[#273147] hover:border-emerald-500/50 bg-white dark:bg-[#121622] hover:bg-slate-50 dark:hover:bg-[#1a2130] flex items-center justify-between gap-3 transition-colors text-left group">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold text-xs flex-shrink-0">
+              🦁
+            </div>
+            <div>
+              <span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Badlion Client</span>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Прямое подключение через Badlion</p>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-emerald-500 group-hover:translate-x-0.5 transition-transform">➔</span>
+        </button>
+      </div>
+
+      <!-- Remember selection & Close -->
+      <div class="mt-4 pt-3 border-t border-slate-200 dark:border-[#273147] flex items-center justify-between gap-2">
+        <label class="flex items-center gap-2 cursor-pointer text-[11px] text-slate-500 dark:text-slate-400 select-none">
+          <input type="checkbox" id="java-remember-choice" class="rounded border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
+          <span>Запомнить клиент</span>
+        </label>
+        <button type="button" onclick="closeJavaLauncherModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
+          Готово
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function openAuthModal() {
       document.getElementById('auth-modal').classList.remove('hidden');

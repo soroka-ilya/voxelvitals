@@ -264,3 +264,26 @@ async def test_audit_enhancements(client):
     # 5. Badge preview removed from server detail page
     assert "статус-бейдж" not in html.lower()
 
+
+@pytest.mark.asyncio
+async def test_java_vs_bedrock_launcher_isolation(client):
+    """Verify that Java Edition servers do not use minecraft:// protocol which mistakenly opens Bedrock on Windows."""
+    from app.services.alias_service import get_server_extra_info
+
+    # 1. Java server extra info uses lunarclient protocol instead of minecraft://connect/
+    java_info = get_server_extra_info("mc.hypixel.net", edition="java")
+    assert "minecraft://" not in java_info["launcher_uri"]
+    assert "lunarclient://" in java_info["launcher_uri"]
+
+    # 2. Bedrock server uses official addExternalServer URI
+    bedrock_info = get_server_extra_info("geo.hivebedrock.network", edition="bedrock")
+    assert "minecraft://?addExternalServer=" in bedrock_info["launcher_uri"]
+
+    # 3. Base template contains the Java launcher modal with Lunar and Badlion
+    res_home = await client.get("/")
+    assert res_home.status_code == 200
+    assert "id=\"java-launcher-modal\"" in res_home.text
+    assert "Lunar Client" in res_home.text
+    assert "Badlion Client" in res_home.text
+    assert "launchJavaClient" in res_home.text
+

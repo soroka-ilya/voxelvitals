@@ -861,7 +861,8 @@ def get_server_extra_info(address: str, edition: str = "java") -> Dict[str, Any]
     if edition == "bedrock":
         launcher_uri = f"minecraft://?addExternalServer=VoxelVitals|{clean_addr}:19132"
     else:
-        launcher_uri = f"minecraft://connect/{clean_addr}"
+        # Java edition uses Lunar Client or direct clipboard IP connection
+        launcher_uri = f"lunarclient://play?serverAddress={clean_addr}"
 
     return {
         "contacts": contacts,

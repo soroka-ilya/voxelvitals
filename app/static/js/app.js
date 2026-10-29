@@ -619,31 +619,90 @@ function showToast(message, duration = 3000) {
   }, duration);
 }
 
-// 5. Quick Open in Launcher Protocol Handler
-function launchMinecraft(address, edition = 'java', customName = '', btn = null) {
-  const isBedrock = edition === 'bedrock' || address.includes('bedrock') || address.includes('19132');
-  let uri = '';
+// 5. Quick Open in Launcher Protocol Handler (Java vs Bedrock Isolation)
+let currentJavaAddress = '';
+
+function closeJavaLauncherModal() {
+  const modal = document.getElementById('java-launcher-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function copyCurrentJavaIp(btn) {
+  if (currentJavaAddress) {
+    copyIp(currentJavaAddress, btn);
+  }
+}
+
+function launchJavaClient(clientType) {
+  if (!currentJavaAddress) return;
+  const remember = document.getElementById('java-remember-choice')?.checked;
+  if (remember) {
+    localStorage.setItem('preferred_java_client', clientType);
+  }
+
+  if (clientType === 'lunar') {
+    window.location.href = `lunarclient://play?serverAddress=${encodeURIComponent(currentJavaAddress)}`;
+    showToast(`Запуск Lunar Client... IP ${currentJavaAddress} в буфере!`);
+  } else if (clientType === 'badlion') {
+    window.location.href = `badlion://join?server=${encodeURIComponent(currentJavaAddress)}`;
+    showToast(`Запуск Badlion Client... IP ${currentJavaAddress} в буфере!`);
+  }
+  closeJavaLauncherModal();
+}
+
+function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = null) {
+  let customName = '';
+  let triggerBtn = btn;
+  if (typeof customNameOrBtn === 'object' && customNameOrBtn !== null) {
+    triggerBtn = customNameOrBtn;
+  } else if (typeof customNameOrBtn === 'string') {
+    customName = customNameOrBtn;
+  }
+
+  const cleanAddr = (address || '').trim();
+  const isBedrock = edition === 'bedrock' || cleanAddr.includes('bedrock') || cleanAddr.includes('19132');
+
+  trackEvent('launch_client', cleanAddr, { edition: edition, custom_name: customName });
+  copyIp(cleanAddr, triggerBtn);
+
   if (isBedrock) {
-    const parts = address.split(':');
+    // Official Minecraft Bedrock URI protocol scheme
+    const parts = cleanAddr.split(':');
     const host = parts[0];
     const port = parts[1] || '19132';
     const serverName = encodeURIComponent(customName || host);
-    uri = `minecraft://?addExternalServer=${serverName}|${host}:${port}`;
+    const uri = `minecraft://?addExternalServer=${serverName}|${host}:${port}`;
+    try {
+      window.location.href = uri;
+    } catch (err) {
+      console.warn('Bedrock URI trigger failed:', err);
+    }
+    showToast(`Запуск Minecraft Bedrock... IP ${cleanAddr} скопирован в буфер!`);
+    return;
+  }
+
+  // Java Edition: NEVER invoke minecraft:// because on Windows minecraft:// launches Bedrock!
+  const preferred = localStorage.getItem('preferred_java_client');
+  if (preferred === 'lunar') {
+    window.location.href = `lunarclient://play?serverAddress=${encodeURIComponent(cleanAddr)}`;
+    showToast(`Запуск Lunar Client... IP ${cleanAddr} скопирован в буфер!`);
+    return;
+  } else if (preferred === 'badlion') {
+    window.location.href = `badlion://join?server=${encodeURIComponent(cleanAddr)}`;
+    showToast(`Запуск Badlion Client... IP ${cleanAddr} скопирован в буфер!`);
+    return;
+  }
+
+  // Open Java Launcher Modal with instructions and client launchers
+  currentJavaAddress = cleanAddr;
+  const modal = document.getElementById('java-launcher-modal');
+  const addrEl = document.getElementById('java-modal-address');
+  if (addrEl) addrEl.textContent = cleanAddr;
+  if (modal) {
+    modal.classList.remove('hidden');
   } else {
-    uri = `minecraft://connect/${address}`;
+    showToast(`IP ${cleanAddr} скопирован! Вставьте в сетевой игре Minecraft Java (Ctrl+V)`);
   }
-
-  // Copy IP to clipboard as seamless companion
-  trackEvent('launch_client', address, { edition: edition, custom_name: customName });
-  copyIp(address, btn);
-
-  // Trigger launcher URI safely
-  try {
-    window.location.href = uri;
-  } catch (err) {
-    console.warn('Launcher URI trigger failed:', err);
-  }
-  showToast(`Запуск через лаунчер... IP ${address} скопирован в буфер!`);
 }
 
 // 6. Theme Switcher (Dark / Light / Auto Browser Sync)
