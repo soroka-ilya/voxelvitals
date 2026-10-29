@@ -259,86 +259,169 @@
     </div>
   </div>
 
-  <!-- Java Launcher Selector Modal -->
-  <div id="java-launcher-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-    <div class="w-full max-w-md rounded-2xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] p-6 shadow-2xl relative text-slate-900 dark:text-slate-100">
-      <button type="button" onclick="closeJavaLauncherModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+  <!-- Quick Connect Hub Modal (Any Launcher + Bedrock Support) -->
+  <div id="quick-connect-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="w-full max-w-lg rounded-2xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] p-5 sm:p-6 shadow-2xl relative text-slate-900 dark:text-slate-100 flex flex-col max-h-[90vh]">
+      <button type="button" onclick="closeQuickConnectModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
 
-      <div class="flex items-center gap-3 mb-4">
+      <!-- Header -->
+      <div class="flex items-center gap-3 mb-3">
         <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 flex-shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
         </div>
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">Подключение: Java Edition</h3>
-          <p id="java-modal-address" class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-medium">mc.hypixel.net</p>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white truncate">Подключение к серверу</h3>
+            <span id="qc-modal-edition-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Java</span>
+          </div>
+          <p id="qc-modal-address" class="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-medium truncate">mc.hypixel.net</p>
         </div>
       </div>
 
       <!-- Copy status banner -->
-      <div class="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+      <div class="mb-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 font-medium truncate">
           <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          <span>IP скопирован в буфер!</span>
+          <span class="truncate">IP скопирован в буфер!</span>
         </div>
-        <button type="button" onclick="copyCurrentJavaIp(this)" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
-          Копировать ещё раз
+        <button type="button" onclick="copyQuickAddress(this)" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex-shrink-0">
+          Копировать снова
         </button>
       </div>
 
-      <div class="space-y-2.5">
-        <!-- Option 1: Vanilla / Custom Launchers -->
-        <div class="p-3.5 rounded-xl border border-slate-200 dark:border-[#273147] bg-slate-50 dark:bg-[#0c0f17] flex items-start gap-3">
-          <div class="w-7 h-7 rounded-lg bg-slate-200 dark:bg-[#1a2130] flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold flex-shrink-0 mt-0.5">
-            MC
-          </div>
-          <div class="flex-1 min-w-0">
-            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Любой лаунчер (Официальный, TLauncher, Prism)</h4>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-              Откройте игру ➔ «Сетевая игра» ➔ «Прямое подключение» и нажмите <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-[#1f283d] text-slate-700 dark:text-slate-300 font-mono text-[10px]">Ctrl+V</kbd>.
-            </p>
+      <!-- Tabs Navigation -->
+      <div class="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-[#0c0f17] rounded-xl border border-slate-200 dark:border-[#273147] mb-3 text-[11px] font-semibold">
+        <button type="button" id="qc-tab-btn-any" onclick="switchQuickConnectTab('any')" class="py-1.5 px-1 rounded-lg transition-colors text-center text-slate-900 dark:text-white bg-white dark:bg-[#161b26] shadow-sm">
+          Любой MC
+        </button>
+        <button type="button" id="qc-tab-btn-lunar" onclick="switchQuickConnectTab('lunar')" class="py-1.5 px-1 rounded-lg transition-colors text-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          Lunar
+        </button>
+        <button type="button" id="qc-tab-btn-badlion" onclick="switchQuickConnectTab('badlion')" class="py-1.5 px-1 rounded-lg transition-colors text-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          Badlion
+        </button>
+        <button type="button" id="qc-tab-btn-bedrock" onclick="switchQuickConnectTab('bedrock')" class="py-1.5 px-1 rounded-lg transition-colors text-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          Bedrock
+        </button>
+      </div>
+
+      <!-- Tab Contents Container -->
+      <div class="space-y-2.5 flex-1 text-xs">
+        <!-- Tab 1: Any Java Launcher -->
+        <div id="qc-panel-any" class="space-y-2.5">
+          <div class="p-3 rounded-xl border border-slate-200 dark:border-[#273147] bg-slate-50 dark:bg-[#0c0f17]">
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white mb-1.5 flex items-center gap-1.5">
+              <span>🎮</span>
+              <span>Любой лаунчер (TLauncher, Mojang, Prism, Modrinth)</span>
+            </h4>
+            <div class="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+              <div class="flex items-start gap-2">
+                <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">1</span>
+                <span>Запустите Minecraft в любом лаунчере.</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">2</span>
+                <span>«Сетевая игра» ➔ «Прямое подключение».</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">3</span>
+                <span>Нажмите <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-[#1f283d] text-slate-800 dark:text-slate-200 font-mono text-[10px] font-bold">Ctrl+V</kbd> ➔ «Подключиться».</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Option 2: Lunar Client -->
-        <button type="button" onclick="launchJavaClient('lunar')" class="w-full p-3 rounded-xl border border-slate-200 dark:border-[#273147] hover:border-emerald-500/50 bg-white dark:bg-[#121622] hover:bg-slate-50 dark:hover:bg-[#1a2130] flex items-center justify-between gap-3 transition-colors text-left group">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs flex-shrink-0">
-              🌙
+        <!-- Tab 2: Lunar Client -->
+        <div id="qc-panel-lunar" class="hidden space-y-2.5">
+          <button type="button" onclick="launchClient('lunar')" class="w-full p-3 rounded-xl border border-slate-200 dark:border-[#273147] hover:border-emerald-500/50 bg-white dark:bg-[#121622] hover:bg-slate-50 dark:hover:bg-[#1a2130] flex items-center justify-between gap-3 transition-colors text-left group">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs flex-shrink-0">
+                🌙
+              </div>
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Lunar Client</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Быстрый запуск и авто-вход на сервер</p>
+              </div>
             </div>
-            <div>
-              <span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Lunar Client</span>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Быстрый запуск и авто-вход на сервер</p>
-            </div>
-          </div>
-          <span class="text-xs font-semibold text-emerald-500 group-hover:translate-x-0.5 transition-transform">➔</span>
-        </button>
+            <span class="text-xs font-semibold text-emerald-500 group-hover:translate-x-0.5 transition-transform">➔</span>
+          </button>
+        </div>
 
-        <!-- Option 3: Badlion Client -->
-        <button type="button" onclick="launchJavaClient('badlion')" class="w-full p-3 rounded-xl border border-slate-200 dark:border-[#273147] hover:border-emerald-500/50 bg-white dark:bg-[#121622] hover:bg-slate-50 dark:hover:bg-[#1a2130] flex items-center justify-between gap-3 transition-colors text-left group">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold text-xs flex-shrink-0">
-              🦁
+        <!-- Tab 3: Badlion Client -->
+        <div id="qc-panel-badlion" class="hidden space-y-2.5">
+          <button type="button" onclick="launchClient('badlion')" class="w-full p-3 rounded-xl border border-slate-200 dark:border-[#273147] hover:border-emerald-500/50 bg-white dark:bg-[#121622] hover:bg-slate-50 dark:hover:bg-[#1a2130] flex items-center justify-between gap-3 transition-colors text-left group">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold text-xs flex-shrink-0">
+                🦁
+              </div>
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Badlion Client</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Прямое подключение через Badlion</p>
+              </div>
             </div>
-            <div>
-              <span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">Badlion Client</span>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Прямое подключение через Badlion</p>
+            <span class="text-xs font-semibold text-emerald-500 group-hover:translate-x-0.5 transition-transform">➔</span>
+          </button>
+        </div>
+
+        <!-- Tab 4: Bedrock / MCPE -->
+        <div id="qc-panel-bedrock" class="hidden space-y-2.5">
+          <div id="qc-bedrock-featured-banner" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs">
+            <div class="font-bold flex items-center gap-1.5 mb-1">
+              <span>🌟</span>
+              <span>Официальный сервер-партнёр Bedrock</span>
+            </div>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-normal">
+              Сервер уже встроен в игру! Перейдите в <strong>«Играть» ➔ вкладка «Серверы»</strong> и выберите его в списке.
+            </p>
+          </div>
+          <div class="p-2.5 rounded-xl border border-slate-200 dark:border-[#273147] bg-slate-50 dark:bg-[#0c0f17] space-y-2">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              Для добавления вручную в меню <strong>«Серверы» ➔ «Добавить сервер»</strong>:
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="p-2 rounded-lg bg-white dark:bg-[#121622] border border-slate-200 dark:border-[#273147] flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Хост</span>
+                  <span id="qc-bedrock-host" class="font-mono text-xs font-bold text-slate-900 dark:text-white truncate block">geo.hivebedrock.network</span>
+                </div>
+                <button type="button" onclick="copyQuickHost(this)" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-[#1a2130] text-emerald-500 font-semibold text-[11px] transition-colors flex-shrink-0">
+                  Копировать
+                </button>
+              </div>
+              <div class="p-2 rounded-lg bg-white dark:bg-[#121622] border border-slate-200 dark:border-[#273147] flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <span class="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Порт</span>
+                  <span id="qc-bedrock-port" class="font-mono text-xs font-bold text-emerald-500 truncate block">19132</span>
+                </div>
+                <button type="button" onclick="copyQuickPort(this)" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-[#1a2130] text-emerald-500 font-semibold text-[11px] transition-colors flex-shrink-0">
+                  Копировать
+                </button>
+              </div>
             </div>
           </div>
-          <span class="text-xs font-semibold text-emerald-500 group-hover:translate-x-0.5 transition-transform">➔</span>
-        </button>
+          <button type="button" onclick="triggerBedrockUri()" class="w-full py-2 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#1e293b] dark:hover:bg-[#334155] text-slate-800 dark:text-slate-200 font-medium text-xs transition-colors flex items-center justify-center gap-2">
+            <span>Запустить Minecraft Bedrock</span>
+            <span class="text-emerald-500">➔</span>
+          </button>
+        </div>
       </div>
 
       <!-- Remember selection & Close -->
-      <div class="mt-4 pt-3 border-t border-slate-200 dark:border-[#273147] flex items-center justify-between gap-2">
+      <div class="mt-3 pt-3 border-t border-slate-200 dark:border-[#273147] flex items-center justify-between gap-2">
         <label class="flex items-center gap-2 cursor-pointer text-[11px] text-slate-500 dark:text-slate-400 select-none">
-          <input type="checkbox" id="java-remember-choice" class="rounded border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
+          <input type="checkbox" id="qc-remember-choice" class="rounded border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
           <span>Запомнить клиент</span>
         </label>
-        <button type="button" onclick="closeJavaLauncherModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
-          Готово
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" id="qc-reset-btn" onclick="resetPreferredLauncher()" class="hidden text-[11px] text-slate-400 hover:text-red-400 transition-colors">
+            Сбросить выбор
+          </button>
+          <button type="button" onclick="closeQuickConnectModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
+            Готово
+          </button>
+        </div>
       </div>
     </div>
   </div>

@@ -286,6 +286,7 @@ CURATED_SERVERS: List[Dict[str, Any]] = [
         "versions": ["1.21.x", "1.20.x"],
         "latest_version": "Bedrock 1.21.x",
         "tags": ["bedrock", "minigames", "hive", "the hive", "hivemc"],
+        "is_featured_bedrock": True,
     },
     {
         "id": "nethergames",
@@ -300,6 +301,7 @@ CURATED_SERVERS: List[Dict[str, Any]] = [
         "versions": ["1.21.x"],
         "latest_version": "Bedrock 1.21.x",
         "tags": ["bedrock", "pvp", "minigames", "nethergames", "ng"],
+        "is_featured_bedrock": False,
     },
 ]
 
@@ -638,6 +640,14 @@ def is_bedrock_address(address: str) -> bool:
     return False
 
 
+def is_featured_bedrock(address: str) -> bool:
+    """Check if address is an official featured partner server on Bedrock Edition (The Hive, CubeCraft, Lifeboat, etc.)."""
+    addr_lower = address.lower().strip()
+    host, _ = _split_host_port(addr_lower)
+    featured_keywords = ["hive", "hivebedrock", "cubecraft", "lbsg.net", "lifeboat", "galaxite", "mineville", "inpvp"]
+    return any(k in host for k in featured_keywords)
+
+
 def get_curated_catalog(category: Optional[str] = None) -> List[Dict[str, Any]]:
     """Return list of curated Minecraft servers, optionally filtered by genre category."""
     if not category or category == "all":
@@ -842,8 +852,13 @@ DEFAULT_SCREENSHOTS = [
 
 
 def get_server_extra_info(address: str, edition: str = "java") -> Dict[str, Any]:
-    """Retrieve social contacts, brand icon, and launcher deep-links."""
+    """Retrieve social contacts, brand icon, host/port connection info, and launcher deep-links."""
     clean_addr = address.strip().lower()
+    host, explicit_port = _split_host_port(clean_addr)
+    default_port = 19132 if edition == "bedrock" else 25565
+    port = explicit_port if explicit_port is not None else default_port
+    featured_bedrock = is_featured_bedrock(host) if edition == "bedrock" else False
+
     curated = next(
         (s for s in CURATED_SERVERS if s["address"].lower() == clean_addr or s["id"] == clean_addr),
         None,
@@ -853,13 +868,13 @@ def get_server_extra_info(address: str, edition: str = "java") -> Dict[str, Any]
     contacts = SERVER_CONTACTS_MAP.get(clean_addr)
     if not contacts:
         contacts = {
-            "website": f"https://{clean_addr}",
-            "discord": f"https://discord.gg/{clean_addr.split('.')[0]}",
+            "website": f"https://{host}",
+            "discord": f"https://discord.gg/{host.split('.')[0]}",
         }
 
     # Deep-link launcher protocol
     if edition == "bedrock":
-        launcher_uri = f"minecraft://?addExternalServer=VoxelVitals|{clean_addr}:19132"
+        launcher_uri = f"minecraft://?addExternalServer=VoxelVitals|{host}:{port}"
     else:
         # Java edition uses Lunar Client or direct clipboard IP connection
         launcher_uri = f"lunarclient://play?serverAddress={clean_addr}"
@@ -869,6 +884,9 @@ def get_server_extra_info(address: str, edition: str = "java") -> Dict[str, Any]
         "screenshots": [],
         "icon": icon,
         "launcher_uri": launcher_uri,
+        "host": host,
+        "port": port,
+        "is_featured_bedrock": featured_bedrock,
     }
 
 

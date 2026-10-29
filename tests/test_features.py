@@ -267,23 +267,36 @@ async def test_audit_enhancements(client):
 
 @pytest.mark.asyncio
 async def test_java_vs_bedrock_launcher_isolation(client):
-    """Verify that Java Edition servers do not use minecraft:// protocol which mistakenly opens Bedrock on Windows."""
-    from app.services.alias_service import get_server_extra_info
+    """Verify Quick Connect Hub, Bedrock Host/Port separation, and launcher isolation."""
+    from app.services.alias_service import get_server_extra_info, is_featured_bedrock
 
-    # 1. Java server extra info uses lunarclient protocol instead of minecraft://connect/
+    # 1. Java server extra info uses lunarclient protocol instead of minecraft://
     java_info = get_server_extra_info("mc.hypixel.net", edition="java")
     assert "minecraft://" not in java_info["launcher_uri"]
     assert "lunarclient://" in java_info["launcher_uri"]
+    assert java_info["host"] == "mc.hypixel.net"
+    assert java_info["port"] == 25565
+    assert java_info["is_featured_bedrock"] is False
 
-    # 2. Bedrock server uses official addExternalServer URI
+    # 2. Bedrock server uses official addExternalServer URI and detects featured servers
     bedrock_info = get_server_extra_info("geo.hivebedrock.network", edition="bedrock")
     assert "minecraft://?addExternalServer=" in bedrock_info["launcher_uri"]
+    assert bedrock_info["host"] == "geo.hivebedrock.network"
+    assert bedrock_info["port"] == 19132
+    assert bedrock_info["is_featured_bedrock"] is True
+    assert is_featured_bedrock("geo.hivebedrock.network") is True
+    assert is_featured_bedrock("play.cubecraft.net") is True
+    assert is_featured_bedrock("play.nethergames.org") is False
 
-    # 3. Base template contains the Java launcher modal with Lunar and Badlion
+    # 3. Base template contains the Quick Connect Hub modal with Any Launcher, Lunar, Badlion, Bedrock Host/Port
     res_home = await client.get("/")
     assert res_home.status_code == 200
-    assert "id=\"java-launcher-modal\"" in res_home.text
+    assert "id=\"quick-connect-modal\"" in res_home.text
     assert "Lunar Client" in res_home.text
     assert "Badlion Client" in res_home.text
-    assert "launchJavaClient" in res_home.text
+    assert "launchClient" in res_home.text
+    assert "qc-bedrock-host" in res_home.text
+    assert "qc-bedrock-port" in res_home.text
+    assert "copyQuickHost" in res_home.text
+    assert "copyQuickPort" in res_home.text
 

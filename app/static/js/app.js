@@ -619,35 +619,180 @@ function showToast(message, duration = 3000) {
   }, duration);
 }
 
-// 5. Quick Open in Launcher Protocol Handler (Java vs Bedrock Isolation)
+// 5. Quick Connect Hub & Launcher Protocol Handler
+let currentQcAddress = '';
+let currentQcHost = '';
+let currentQcPort = '';
+let currentQcEdition = 'java';
+let currentQcName = '';
+let currentQcActiveTab = 'any';
 let currentJavaAddress = '';
 
-function closeJavaLauncherModal() {
-  const modal = document.getElementById('java-launcher-modal');
+function isFeaturedBedrock(address) {
+  const clean = (address || '').toLowerCase();
+  const featured = ['hive', 'hivebedrock', 'cubecraft', 'lbsg', 'lifeboat', 'galaxite', 'mineville', 'inpvp'];
+  return featured.some(k => clean.includes(k));
+}
+
+function closeQuickConnectModal() {
+  const modal = document.getElementById('quick-connect-modal') || document.getElementById('java-launcher-modal');
   if (modal) modal.classList.add('hidden');
 }
 
-function copyCurrentJavaIp(btn) {
-  if (currentJavaAddress) {
-    copyIp(currentJavaAddress, btn);
+function closeJavaLauncherModal() {
+  closeQuickConnectModal();
+}
+
+function copyQuickAddress(btn = null) {
+  if (currentQcAddress) {
+    copyIp(currentQcAddress, btn);
   }
 }
 
-function launchJavaClient(clientType) {
-  if (!currentJavaAddress) return;
-  const remember = document.getElementById('java-remember-choice')?.checked;
-  if (remember) {
+function copyCurrentJavaIp(btn = null) {
+  copyQuickAddress(btn);
+}
+
+function copyQuickHost(btn = null) {
+  if (!currentQcHost) return;
+  navigator.clipboard.writeText(currentQcHost).then(() => {
+    showToast(`Хост скопирован: ${currentQcHost}`);
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Скопирован';
+      setTimeout(() => { btn.textContent = orig; }, 1800);
+    }
+  }).catch(() => {
+    showToast(`Хост: ${currentQcHost}`);
+  });
+}
+
+function copyQuickPort(btn = null) {
+  if (!currentQcPort) return;
+  navigator.clipboard.writeText(currentQcPort).then(() => {
+    showToast(`Порт скопирован: ${currentQcPort}`);
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Скопирован';
+      setTimeout(() => { btn.textContent = orig; }, 1800);
+    }
+  }).catch(() => {
+    showToast(`Порт: ${currentQcPort}`);
+  });
+}
+
+function switchQuickConnectTab(tabName) {
+  currentQcActiveTab = tabName;
+  const tabs = ['any', 'lunar', 'badlion', 'bedrock'];
+  tabs.forEach(t => {
+    const panel = document.getElementById(`qc-panel-${t}`);
+    const btn = document.getElementById(`qc-tab-btn-${t}`);
+    const isActive = t === tabName;
+    if (panel) panel.classList.toggle('hidden', !isActive);
+    if (btn) {
+      if (isActive) {
+        btn.className = 'py-1.5 px-1 rounded-lg transition-colors text-center text-slate-900 dark:text-white bg-white dark:bg-[#161b26] shadow-sm';
+      } else {
+        btn.className = 'py-1.5 px-1 rounded-lg transition-colors text-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+      }
+    }
+  });
+}
+
+function openQuickConnectModal(address, edition = 'java', customName = '', initialTab = null) {
+  const cleanAddr = (address || '').trim();
+  const parts = cleanAddr.split(':');
+  currentQcHost = parts[0];
+  currentQcPort = parts[1] || (edition === 'bedrock' ? '19132' : '25565');
+  currentQcAddress = cleanAddr;
+  currentJavaAddress = cleanAddr;
+  currentQcEdition = edition;
+  currentQcName = customName || currentQcHost;
+
+  const addrEl = document.getElementById('qc-modal-address') || document.getElementById('java-modal-address');
+  if (addrEl) addrEl.textContent = cleanAddr;
+
+  const badge = document.getElementById('qc-modal-edition-badge');
+  if (badge) {
+    badge.textContent = edition === 'bedrock' ? 'Bedrock' : 'Java';
+    badge.className = edition === 'bedrock'
+      ? 'px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-amber-500/10 text-amber-500 border border-amber-500/20'
+      : 'px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
+  }
+
+  const hostEl = document.getElementById('qc-bedrock-host');
+  if (hostEl) hostEl.textContent = currentQcHost;
+  const portEl = document.getElementById('qc-bedrock-port');
+  if (portEl) portEl.textContent = currentQcPort;
+
+  const isFeatured = isFeaturedBedrock(currentQcHost);
+  const featBanner = document.getElementById('qc-bedrock-featured-banner');
+  if (featBanner) featBanner.classList.toggle('hidden', !isFeatured);
+
+  const savedPref = localStorage.getItem('preferred_minecraft_launcher') || localStorage.getItem('preferred_java_client');
+  const resetBtn = document.getElementById('qc-reset-btn');
+  if (resetBtn) resetBtn.classList.toggle('hidden', !savedPref);
+  const remCb = document.getElementById('qc-remember-choice') || document.getElementById('java-remember-choice');
+  if (remCb) remCb.checked = !!savedPref;
+
+  let targetTab = initialTab;
+  if (!targetTab) {
+    if (edition === 'bedrock') {
+      targetTab = 'bedrock';
+    } else if (savedPref === 'lunar' || savedPref === 'badlion') {
+      targetTab = savedPref;
+    } else {
+      targetTab = 'any';
+    }
+  }
+  switchQuickConnectTab(targetTab);
+
+  const modal = document.getElementById('quick-connect-modal') || document.getElementById('java-launcher-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function launchClient(clientType) {
+  if (!currentQcAddress && !currentJavaAddress) return;
+  const targetAddr = currentQcAddress || currentJavaAddress;
+  const remCb = document.getElementById('qc-remember-choice') || document.getElementById('java-remember-choice');
+  if (remCb?.checked) {
+    localStorage.setItem('preferred_minecraft_launcher', clientType);
     localStorage.setItem('preferred_java_client', clientType);
   }
 
   if (clientType === 'lunar') {
-    window.location.href = `lunarclient://play?serverAddress=${encodeURIComponent(currentJavaAddress)}`;
-    showToast(`Запуск Lunar Client... IP ${currentJavaAddress} в буфере!`);
+    window.location.href = `lunarclient://play?serverAddress=${encodeURIComponent(targetAddr)}`;
+    showToast(`Запуск Lunar Client... IP ${targetAddr} в буфере!`);
   } else if (clientType === 'badlion') {
-    window.location.href = `badlion://join?server=${encodeURIComponent(currentJavaAddress)}`;
-    showToast(`Запуск Badlion Client... IP ${currentJavaAddress} в буфере!`);
+    window.location.href = `badlion://join?server=${encodeURIComponent(targetAddr)}`;
+    showToast(`Запуск Badlion Client... IP ${targetAddr} в буфере!`);
   }
-  closeJavaLauncherModal();
+  closeQuickConnectModal();
+}
+
+function launchJavaClient(clientType) {
+  launchClient(clientType);
+}
+
+function triggerBedrockUri() {
+  const sName = encodeURIComponent(currentQcName || currentQcHost);
+  const uri = `minecraft://?addExternalServer=${sName}|${currentQcHost}:${currentQcPort}`;
+  try {
+    window.location.href = uri;
+    showToast('Запуск Minecraft Bedrock...');
+  } catch (e) {
+    console.warn('Bedrock URI failed', e);
+  }
+}
+
+function resetPreferredLauncher() {
+  localStorage.removeItem('preferred_minecraft_launcher');
+  localStorage.removeItem('preferred_java_client');
+  const remCb = document.getElementById('qc-remember-choice');
+  if (remCb) remCb.checked = false;
+  const resetBtn = document.getElementById('qc-reset-btn');
+  if (resetBtn) resetBtn.classList.add('hidden');
+  showToast('Сохраненный лаунчер сброшен');
 }
 
 function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = null) {
@@ -662,27 +807,32 @@ function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = 
   const cleanAddr = (address || '').trim();
   const isBedrock = edition === 'bedrock' || cleanAddr.includes('bedrock') || cleanAddr.includes('19132');
 
-  trackEvent('launch_client', cleanAddr, { edition: edition, custom_name: customName });
+  trackEvent('launch_client', cleanAddr, { edition: isBedrock ? 'bedrock' : 'java', custom_name: customName });
   copyIp(cleanAddr, triggerBtn);
 
   if (isBedrock) {
-    // Official Minecraft Bedrock URI protocol scheme
-    const parts = cleanAddr.split(':');
-    const host = parts[0];
-    const port = parts[1] || '19132';
-    const serverName = encodeURIComponent(customName || host);
-    const uri = `minecraft://?addExternalServer=${serverName}|${host}:${port}`;
-    try {
-      window.location.href = uri;
-    } catch (err) {
-      console.warn('Bedrock URI trigger failed:', err);
+    const isFeatured = isFeaturedBedrock(cleanAddr);
+    if (isFeatured) {
+      openQuickConnectModal(cleanAddr, 'bedrock', customName, 'bedrock');
+      showToast(`Сервер встроен во вкладку «Серверы» Bedrock! IP скопирован.`);
+    } else {
+      const parts = cleanAddr.split(':');
+      const host = parts[0];
+      const port = parts[1] || '19132';
+      const sName = encodeURIComponent(customName || host);
+      try {
+        window.location.href = `minecraft://?addExternalServer=${sName}|${host}:${port}`;
+      } catch (err) {
+        console.warn('Bedrock URI trigger failed:', err);
+      }
+      openQuickConnectModal(cleanAddr, 'bedrock', customName, 'bedrock');
+      showToast(`Запуск Minecraft Bedrock... Хост и порт в окне подключения.`);
     }
-    showToast(`Запуск Minecraft Bedrock... IP ${cleanAddr} скопирован в буфер!`);
     return;
   }
 
-  // Java Edition: NEVER invoke minecraft:// because on Windows minecraft:// launches Bedrock!
-  const preferred = localStorage.getItem('preferred_java_client');
+  // Java Edition: check preferred launcher
+  const preferred = localStorage.getItem('preferred_minecraft_launcher') || localStorage.getItem('preferred_java_client');
   if (preferred === 'lunar') {
     window.location.href = `lunarclient://play?serverAddress=${encodeURIComponent(cleanAddr)}`;
     showToast(`Запуск Lunar Client... IP ${cleanAddr} скопирован в буфер!`);
@@ -693,16 +843,8 @@ function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = 
     return;
   }
 
-  // Open Java Launcher Modal with instructions and client launchers
-  currentJavaAddress = cleanAddr;
-  const modal = document.getElementById('java-launcher-modal');
-  const addrEl = document.getElementById('java-modal-address');
-  if (addrEl) addrEl.textContent = cleanAddr;
-  if (modal) {
-    modal.classList.remove('hidden');
-  } else {
-    showToast(`IP ${cleanAddr} скопирован! Вставьте в сетевой игре Minecraft Java (Ctrl+V)`);
-  }
+  // Open Quick Connect Hub for any launcher / instructions
+  openQuickConnectModal(cleanAddr, 'java', customName, 'any');
 }
 
 // 6. Theme Switcher (Dark / Light / Auto Browser Sync)
