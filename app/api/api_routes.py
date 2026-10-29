@@ -1,6 +1,7 @@
 """REST JSON API and dynamic SVG badge endpoints."""
 
-from typing import Any, Dict, List, Optional
+import json
+from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
 from app.domain.models import BadgeConfig, ServerStatus, TelemetryPoint
@@ -64,18 +65,23 @@ class NewsCreateRequest(BaseModel):
 class AnalyticsEventRequest(BaseModel):
     event_type: str = Field(..., min_length=1, max_length=50)
     target: Optional[str] = None
-    metadata: Optional[str] = None
+    metadata: Optional[Union[Dict[str, Any], str]] = None
 
 
 @api_router.post("/analytics/event")
 async def track_event(request: Request, payload: AnalyticsEventRequest):
     """Record interactive client-side telemetry event."""
     vid = getattr(request.state, "visitor_id", None) or request.cookies.get("vv_vid") or "unknown"
+    meta_str = (
+        json.dumps(payload.metadata, ensure_ascii=False)
+        if isinstance(payload.metadata, dict)
+        else payload.metadata
+    )
     await repo.record_event(
         visitor_id=vid,
         event_type=payload.event_type,
         target=payload.target,
-        metadata=payload.metadata,
+        metadata=meta_str,
     )
     return {"status": "ok"}
 
@@ -122,6 +128,15 @@ async def get_server_history(
     server_id = await repo.get_or_create_server(clean_addr)
     history = await repo.get_24h_history(server_id, hours=hours)
     return history
+
+
+@api_router.get("/telemetry/{address}", response_model=List[TelemetryPoint])
+async def get_server_telemetry(
+    address: str,
+    hours: int = Query(24, ge=1, le=168, description="History window in hours"),
+):
+    """Retrieve time-series telemetry points for graphing (alias for /history)."""
+    return await get_server_history(address=address, hours=hours)
 
 
 @api_router.get("/badge/{filename}")
@@ -244,6 +259,13 @@ async def get_reviews(address: str = Query(..., description="Server address")):
     clean_addr = resolve_address(address.strip())
     reviews = await repo.get_reviews_for_server(clean_addr)
     return reviews
+
+
+@api_router.get("/reviews/{address}")
+async def get_reviews_by_path(address: str):
+    """Get reviews for a server by path parameter."""
+    clean_addr = resolve_address(address.strip())
+    return await repo.get_reviews_for_server(clean_addr)
 
 
 @api_router.post("/reviews")
