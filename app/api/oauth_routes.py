@@ -21,19 +21,17 @@ repo = ServerRepository()
 async def google_login(request: Request, mock: bool = Query(False)):
     """Initiate Google OAuth 2.0 login flow."""
     state = secrets.token_urlsafe(16)
-    if mock or not GoogleOAuthService.is_configured():
-        if mock:
-            # Dev / test mock flow
-            response = RedirectResponse(
-                url=f"/api/auth/google/callback?code=mock_google_code&state={state}&mock=true",
-                status_code=302,
-            )
-            response.set_cookie("oauth_state_google", state, max_age=600, httponly=True, samesite="lax")
-            return response
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Google OAuth не настроен. Укажите GOOGLE_CLIENT_ID и GOOGLE_CLIENT_SECRET в файле .env (см. OAUTH_SETUP.md).",
+    if mock:
+        # Dev / test mock flow
+        response = RedirectResponse(
+            url=f"/api/auth/google/callback?code=mock_google_code&state={state}&mock=true",
+            status_code=302,
         )
+        response.set_cookie("oauth_state_google", state, max_age=600, httponly=True, samesite="lax")
+        return response
+
+    if not GoogleOAuthService.is_configured():
+        return RedirectResponse(url="/?auth_notice=google_setup", status_code=303)
 
     auth_url = GoogleOAuthService.get_auth_url(state)
     response = RedirectResponse(url=auth_url, status_code=302)
@@ -102,18 +100,16 @@ async def google_callback(
 async def microsoft_login(request: Request, mock: bool = Query(False)):
     """Initiate Microsoft OAuth 2.0 login flow with Xbox Live."""
     state = secrets.token_urlsafe(16)
-    if mock or not MicrosoftOAuthService.is_configured():
-        if mock:
-            response = RedirectResponse(
-                url=f"/api/auth/microsoft/callback?code=mock_ms_code&state={state}&mock=true",
-                status_code=302,
-            )
-            response.set_cookie("oauth_state_microsoft", state, max_age=600, httponly=True, samesite="lax")
-            return response
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Microsoft OAuth не настроен. Укажите MICROSOFT_CLIENT_ID и MICROSOFT_CLIENT_SECRET в файле .env (см. OAUTH_SETUP.md).",
+    if mock:
+        response = RedirectResponse(
+            url=f"/api/auth/microsoft/callback?code=mock_ms_code&state={state}&mock=true",
+            status_code=302,
         )
+        response.set_cookie("oauth_state_microsoft", state, max_age=600, httponly=True, samesite="lax")
+        return response
+
+    if not MicrosoftOAuthService.is_configured():
+        return RedirectResponse(url="/?auth_notice=microsoft_setup", status_code=303)
 
     auth_url = MicrosoftOAuthService.get_auth_url(state)
     response = RedirectResponse(url=auth_url, status_code=302)

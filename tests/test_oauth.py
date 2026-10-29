@@ -128,17 +128,17 @@ async def test_microsoft_oauth_minecraft_verification(oauth_env):
 
 
 @pytest.mark.asyncio
-async def test_unconfigured_oauth_returns_503(oauth_env):
-    """Verify attempting to login without configured keys returns informative 503 error."""
+async def test_unconfigured_oauth_redirects_with_notice(oauth_env):
+    """Verify attempting to login without configured keys redirects with notice for developer."""
     client, repo = oauth_env
-    # Without mock=true and without real keys in env
-    res_google = await client.get("/api/auth/google/login")
-    assert res_google.status_code == 503
-    assert "Google OAuth не настроен" in res_google.json()["detail"]
+    # Without mock=true and without real keys in env -> friendly redirect with notice
+    res_google = await client.get("/api/auth/google/login", follow_redirects=False)
+    assert res_google.status_code in (302, 303, 307)
+    assert "auth_notice=google_setup" in res_google.headers["location"]
 
-    res_ms = await client.get("/api/auth/microsoft/login")
-    assert res_ms.status_code == 503
-    assert "Microsoft OAuth не настроен" in res_ms.json()["detail"]
+    res_ms = await client.get("/api/auth/microsoft/login", follow_redirects=False)
+    assert res_ms.status_code in (302, 303, 307)
+    assert "auth_notice=microsoft_setup" in res_ms.headers["location"]
 
 
 @pytest.mark.asyncio
