@@ -245,8 +245,9 @@ async def test_audit_enhancements(client):
     assert "(3 отзывов)" in html
     assert "(0 отзывов)" not in html
 
-    # Live status badge preview card present, without forbidden strings
-    assert "/api/badge/donutsmp.net.svg" in html
+    # Live status badge preview card removed per design request
+    assert "/api/badge/donutsmp.net.svg" not in html
+    assert "статус-бейдж" not in html.lower()
     assert "Open Raw SVG" not in html
     assert "Markdown Snippet" not in html
 
@@ -260,6 +261,6 @@ async def test_audit_enhancements(client):
     assert 'data-tags="anarchy,survival,2b2t,2b,vanilla"' in res_home.text
     assert 'data-tags="anarchy,survival,reallyworld,rw,really"' in res_home.text
 
-    # 5. Badge code copy uses safe copySnippet helper
-    assert "copySnippet(" in html
+    # 5. Badge preview removed from server detail page
+    assert "статус-бейдж" not in html.lower()
 
