@@ -84,6 +84,13 @@ app = FastAPI(
 )
 
 
+@app.get("/healthz")
+@app.get("/health")
+async def healthz_check():
+    """Render and Kubernetes root healthcheck endpoint."""
+    return {"status": "ok", "version": "1.0.0"}
+
+
 @app.middleware("http")
 async def analytics_middleware(request: Request, call_next):
     """Automatic visitor telemetry tracking middleware."""

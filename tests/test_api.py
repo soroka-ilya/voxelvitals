@@ -124,11 +124,16 @@ async def test_server_detail_bedrock_and_clean_players(client):
 
 @pytest.mark.asyncio
 async def test_health_endpoint(client):
-    """Verify /api/health returns 200 OK and database connectivity."""
+    """Verify /api/health and /healthz return 200 OK."""
     response = await client.get("/api/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
     assert data["database"] == "connected"
     assert "version" in data
+
+    # Render root healthcheck
+    res_hz = await client.get("/healthz")
+    assert res_hz.status_code == 200
+    assert res_hz.json()["status"] == "ok"
 
