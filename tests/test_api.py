@@ -121,3 +121,14 @@ async def test_server_detail_bedrock_and_clean_players(client):
     assert "Активен" in res_donut_bedrock.text
     assert "mc-motd-frame" in res_donut_bedrock.text
 
+
+@pytest.mark.asyncio
+async def test_health_endpoint(client):
+    """Verify /api/health returns 200 OK and database connectivity."""
+    response = await client.get("/api/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["database"] == "connected"
+    assert "version" in data
+

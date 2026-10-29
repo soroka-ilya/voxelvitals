@@ -19,6 +19,21 @@ api_router = APIRouter(prefix="/api", tags=["API"])
 repo = ServerRepository()
 
 
+@api_router.get("/health")
+async def health_check():
+    """Service health and database readiness check for Docker / Cloud orchestrators."""
+    try:
+        await repo.get_all_servers()
+        db_status = "connected"
+    except Exception as exc:
+        db_status = f"unhealthy: {exc}"
+    return {
+        "status": "ok" if db_status == "connected" else "degraded",
+        "version": "1.0.0",
+        "database": db_status,
+    }
+
+
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=30)
     password: str = Field(..., min_length=6)
@@ -44,6 +59,25 @@ class NewsCreateRequest(BaseModel):
     content: str = Field(..., min_length=5, max_length=5000)
     tag: str = "Обновление"
     author: Optional[str] = "Администрация"
+
+
+class AnalyticsEventRequest(BaseModel):
+    event_type: str = Field(..., min_length=1, max_length=50)
+    target: Optional[str] = None
+    metadata: Optional[str] = None
+
+
+@api_router.post("/analytics/event")
+async def track_event(request: Request, payload: AnalyticsEventRequest):
+    """Record interactive client-side telemetry event."""
+    vid = getattr(request.state, "visitor_id", None) or request.cookies.get("vv_vid") or "unknown"
+    await repo.record_event(
+        visitor_id=vid,
+        event_type=payload.event_type,
+        target=payload.target,
+        metadata=payload.metadata,
+    )
+    return {"status": "ok"}
 
 
 

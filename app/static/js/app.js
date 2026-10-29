@@ -16,8 +16,33 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+// Telemetry & Visitor Interaction Tracking Beacon
+function trackEvent(eventType, target, metadata = {}) {
+  try {
+    const payload = JSON.stringify({
+      event_type: eventType,
+      target: String(target || window.location.pathname),
+      metadata: metadata || {}
+    });
+    if (navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: 'application/json' });
+      navigator.sendBeacon('/api/analytics/event', blob);
+    } else {
+      fetch('/api/analytics/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true
+      }).catch(() => {});
+    }
+  } catch (e) {
+    // silently fail
+  }
+}
+
 // 1. One-click IP Copy Helper with fallback
 function copyIp(address, btn) {
+  trackEvent('copy_ip', address, { source: btn ? 'card_or_detail' : 'direct' });
   const fallbackCopy = (text) => {
     const input = document.createElement('input');
     input.value = text;
@@ -171,6 +196,7 @@ function renderCatalogPagination(totalPages) {
 
 function setCatalogPage(page) {
   catalogCurrentPage = page;
+  trackEvent('catalog_pagination', `page_${page}`, { page });
   applyCatalogFilters(false);
   const catalogSection = document.getElementById('catalog-grid');
   if (catalogSection) {
@@ -608,6 +634,7 @@ function launchMinecraft(address, edition = 'java', customName = '', btn = null)
   }
 
   // Copy IP to clipboard as seamless companion
+  trackEvent('launch_client', address, { edition: edition, custom_name: customName });
   copyIp(address, btn);
 
   // Trigger launcher URI safely
@@ -646,6 +673,7 @@ function toggleTheme() {
   const newDark = !isDark;
   localStorage.setItem('theme', newDark ? 'dark' : 'light');
   applyTheme(newDark);
+  trackEvent('toggle_theme', newDark ? 'dark' : 'light', {});
 }
 
 function initTheme() {

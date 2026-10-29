@@ -296,3 +296,194 @@ class ServerRepository:
             )
             row = await cursor.fetchone()
             return int(row["cnt"]) if row else 0
+
+    # ----------------- Site Analytics & Visitor Telemetry -----------------
+    async def record_pageview(
+        self,
+        visitor_id: str,
+        path: str,
+        server_address: Optional[str] = None,
+        page_title: str = "",
+        referrer: str = "",
+        device_type: str = "desktop",
+        browser: str = "Other",
+        ip_hash: str = "",
+    ) -> int:
+        """Log visitor page view."""
+        now = datetime.now(timezone.utc).isoformat()
+        clean_server = server_address.strip().lower() if server_address else None
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                INSERT INTO analytics_pageviews
+                (visitor_id, path, server_address, page_title, referrer, device_type, browser, ip_hash, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (visitor_id, path, clean_server, page_title, referrer, device_type, browser, ip_hash, now),
+            )
+            await conn.commit()
+            return cursor.lastrowid
+
+    async def record_search(
+        self,
+        visitor_id: str,
+        query: str,
+        edition: str = "java",
+        results_count: int = 0,
+        matched_server: Optional[str] = None,
+    ) -> int:
+        """Log visitor search query."""
+        now = datetime.now(timezone.utc).isoformat()
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                INSERT INTO analytics_searches
+                (visitor_id, query, edition, results_count, matched_server, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (visitor_id, query.strip(), edition, results_count, matched_server, now),
+            )
+            await conn.commit()
+            return cursor.lastrowid
+
+    async def record_event(
+        self,
+        visitor_id: str,
+        event_type: str,
+        target: Optional[str] = None,
+        metadata: Optional[str] = None,
+    ) -> int:
+        """Log client-side user interactive action."""
+        now = datetime.now(timezone.utc).isoformat()
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                INSERT INTO analytics_events
+                (visitor_id, event_type, target, metadata, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (visitor_id, event_type.strip(), target, metadata, now),
+            )
+            await conn.commit()
+            return cursor.lastrowid
+
+    async def get_analytics_summary(self, hours: int = 24) -> dict:
+        """Calculate high-level KPI metrics for the specified timeframe."""
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                SELECT COUNT(*) as total_pv, COUNT(DISTINCT visitor_id) as uniq_visitors
+                FROM analytics_pageviews
+                WHERE created_at >= ?
+                """,
+                (cutoff,),
+            )
+            pv_row = await cursor.fetchone()
+            total_pv = int(pv_row["total_pv"]) if pv_row else 0
+            uniq_visitors = int(pv_row["uniq_visitors"]) if pv_row else 0
+
+            cursor = await conn.execute(
+                "SELECT COUNT(*) as total_searches FROM analytics_searches WHERE created_at >= ?",
+                (cutoff,),
+            )
+            s_row = await cursor.fetchone()
+            total_searches = int(s_row["total_searches"]) if s_row else 0
+
+            cursor = await conn.execute(
+                """
+                SELECT COUNT(*) as conversions FROM analytics_events 
+                WHERE created_at >= ? AND event_type IN ('copy_ip', 'launch_client')
+                """,
+                (cutoff,),
+            )
+            c_row = await cursor.fetchone()
+            conversions = int(c_row["conversions"]) if c_row else 0
+
+            return {
+                "total_pageviews": total_pv,
+                "unique_visitors": uniq_visitors,
+                "total_searches": total_searches,
+                "total_conversions": conversions,
+            }
+
+    async def get_top_searches(self, limit: int = 20, hours: int = 24) -> list:
+        """Fetch most frequently searched queries with hit counts."""
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                SELECT query, COUNT(*) as count, MAX(created_at) as last_searched, MAX(matched_server) as matched_server
+                FROM analytics_searches
+                WHERE created_at >= ?
+                GROUP BY LOWER(query)
+                ORDER BY count DESC
+                LIMIT ?
+                """,
+                (cutoff, limit),
+            )
+            rows = await cursor.fetchall()
+            return [dict(r) for r in rows]
+
+    async def get_top_viewed_servers(self, limit: int = 10, hours: int = 24) -> list:
+        """Fetch most viewed server detail pages."""
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                SELECT server_address, COUNT(*) as view_count, MAX(created_at) as last_viewed
+                FROM analytics_pageviews
+                WHERE server_address IS NOT NULL AND server_address != '' AND created_at >= ?
+                GROUP BY LOWER(server_address)
+                ORDER BY view_count DESC
+                LIMIT ?
+                """,
+                (cutoff, limit),
+            )
+            rows = await cursor.fetchall()
+            return [dict(r) for r in rows]
+
+    async def get_recent_activity_stream(self, limit: int = 30) -> list:
+        """Fetch unified chronological visitor activity stream."""
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                SELECT 'pageview' as category, path as item, server_address as extra, visitor_id, device_type, browser, created_at
+                FROM analytics_pageviews
+                UNION ALL
+                SELECT 'search' as category, query as item, matched_server as extra, visitor_id, edition as device_type, '' as browser, created_at
+                FROM analytics_searches
+                UNION ALL
+                SELECT 'event' as category, event_type as item, target as extra, visitor_id, metadata as device_type, '' as browser, created_at
+                FROM analytics_events
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (limit,),
+            )
+            rows = await cursor.fetchall()
+            return [dict(r) for r in rows]
+
+    async def get_device_and_browser_stats(self, hours: int = 24) -> dict:
+        """Fetch device and browser distributions."""
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        async with get_db_connection(self.db_path) as conn:
+            c1 = await conn.execute(
+                "SELECT device_type, COUNT(*) as cnt FROM analytics_pageviews WHERE created_at >= ? GROUP BY device_type",
+                (cutoff,),
+            )
+            devices = [dict(r) for r in await c1.fetchall()]
+
+            c2 = await conn.execute(
+                "SELECT browser, COUNT(*) as cnt FROM analytics_pageviews WHERE created_at >= ? GROUP BY browser",
+                (cutoff,),
+            )
+            browsers = [dict(r) for r in await c2.fetchall()]
+
+            c3 = await conn.execute(
+                "SELECT event_type, COUNT(*) as cnt FROM analytics_events WHERE created_at >= ? GROUP BY event_type ORDER BY cnt DESC",
+                (cutoff,),
+            )
+            events = [dict(r) for r in await c3.fetchall()]
+
+            return {"devices": devices, "browsers": browsers, "events": events}

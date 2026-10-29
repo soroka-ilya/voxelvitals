@@ -1,0 +1,27 @@
+services:
+  voxelvitals:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voxelvitals-web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DB_PATH=/app/data/voxelvitals.db
+      - POLL_INTERVAL_SECONDS=300
+      - QUERY_TIMEOUT_SECONDS=5.0
+    volumes:
+      - voxelvitals_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  voxelvitals_data:
+    driver: local

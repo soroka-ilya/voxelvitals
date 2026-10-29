@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Аналитика и телеметрия | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+  <!-- Header & Timeframe Selector -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#273147] pb-6">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+          Admin Only
+        </span>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Телеметрия и активность сайта</h1>
+      </div>
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        Мониторинг поисковых запросов пользователей, просмотров серверов и взаимодействия с интерфейсом.
+      </p>
+    </div>
+
+    <!-- Timeframe Filters -->
+    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-[#121622] rounded-lg border border-slate-200 dark:border-[#273147] self-start md:self-auto text-xs font-medium">
+      <a href="/analytics?hours=24" 
+         class="px-3 py-1.5 rounded-md transition-colors {% if hours == 24 %}bg-emerald-500 text-slate-950 font-semibold shadow-sm{% else %}text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        24 часа
+      </a>
+      <a href="/analytics?hours=168" 
+         class="px-3 py-1.5 rounded-md transition-colors {% if hours == 168 %}bg-emerald-500 text-slate-950 font-semibold shadow-sm{% else %}text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        7 дней
+      </a>
+      <a href="/analytics?hours=720" 
+         class="px-3 py-1.5 rounded-md transition-colors {% if hours == 720 %}bg-emerald-500 text-slate-950 font-semibold shadow-sm{% else %}text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        30 дней
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Grid -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Metric 1: Pageviews -->
+    <div class="p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Просмотры</span>
+        <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-mono text-slate-900 dark:text-white">{{ summary.total_pageviews }}</div>
+      <div class="text-xs text-slate-400 mt-1">Переходов по страницам</div>
+    </div>
+
+    <!-- Metric 2: Unique Visitors -->
+    <div class="p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Посетители</span>
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-mono text-slate-900 dark:text-white">{{ summary.unique_visitors }}</div>
+      <div class="text-xs text-slate-400 mt-1">Уникальных визитов</div>
+    </div>
+
+    <!-- Metric 3: Total Searches -->
+    <div class="p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Поисковые запросы</span>
+        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-mono text-slate-900 dark:text-white">{{ summary.total_searches }}</div>
+      <div class="text-xs text-slate-400 mt-1">Что вбивают в поиск</div>
+    </div>
+
+    <!-- Metric 4: Interactive Events -->
+    <div class="p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Действия</span>
+        <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-mono text-slate-900 dark:text-white">{{ summary.total_events }}</div>
+      <div class="text-xs text-slate-400 mt-1">Клики, копирование, запуск</div>
+    </div>
+  </div>
+
+  <!-- Detailed Statistics: Top Searches & Top Viewed Servers -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Left Column: Search Queries -->
+    <div class="p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Что вбивают пользователи</span>
+            <span class="text-xs font-normal text-slate-400">({{ top_searches|length }})</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Популярные запросы в поисковой строке каталога</p>
+        </div>
+      </div>
+
+      {% if top_searches %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 dark:border-[#273147] text-slate-400 uppercase">
+              <tr>
+                <th class="py-2.5 font-medium">Запрос</th>
+                <th class="py-2.5 font-medium text-center">Найдено</th>
+                <th class="py-2.5 font-medium text-right">Поисков</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-[#273147]/50">
+              {% for s in top_searches %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-[#1f2637] transition-colors">
+                  <td class="py-2.5 font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                    <a href="/search?q={{ s.query }}" class="hover:underline flex items-center gap-1.5">
+                      <span>{{ s.query }}</span>
+                    </a>
+                  </td>
+                  <td class="py-2.5 text-center text-slate-500 font-mono">
+                    {{ s.last_results_count }}
+                  </td>
+                  <td class="py-2.5 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-[#121622] border border-slate-200 dark:border-[#273147]">
+                      {{ s.search_count }}
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="py-12 text-center text-slate-400 text-sm">
+          За выбранный период поисковых запросов пока не зафиксировано.
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Top Viewed Servers -->
+    <div class="p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Что смотрят (Популярные серверы)</span>
+            <span class="text-xs font-normal text-slate-400">({{ top_servers|length }})</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Серверы с наибольшим числом открытий карточек</p>
+        </div>
+      </div>
+
+      {% if top_servers %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 dark:border-[#273147] text-slate-400 uppercase">
+              <tr>
+                <th class="py-2.5 font-medium">Адрес сервера</th>
+                <th class="py-2.5 font-medium text-right">Просмотров</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-[#273147]/50">
+              {% for s in top_servers %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-[#1f2637] transition-colors">
+                  <td class="py-2.5 font-mono text-slate-800 dark:text-slate-200 font-medium">
+                    <a href="/servers/{{ s.server_address }}" class="hover:text-emerald-400 hover:underline flex items-center gap-1.5">
+                      <span class="text-emerald-500">▶</span>
+                      <span>{{ s.server_address }}</span>
+                    </a>
+                  </td>
+                  <td class="py-2.5 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-[#121622] border border-slate-200 dark:border-[#273147]">
+                      {{ s.view_count }}
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="py-12 text-center text-slate-400 text-sm">
+          За выбранный период просмотров страниц серверов пока нет.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Devices, Browsers & Activity Stream -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Devices & Browsers (1 column) -->
+    <div class="space-y-6">
+      <!-- Devices card -->
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Устройства</h3>
+        {% if device_stats.devices %}
+          <div class="space-y-2">
+            {% for dev in device_stats.devices %}
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-600 dark:text-slate-400 font-mono">{{ dev.device_type or 'Desktop' }}</span>
+                <span class="font-mono font-medium text-slate-800 dark:text-slate-200">{{ dev.cnt }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-xs text-slate-400">Нет данных</div>
+        {% endif %}
+      </div>
+
+      <!-- Browsers card -->
+      <div class="p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Браузеры</h3>
+        {% if device_stats.browsers %}
+          <div class="space-y-2">
+            {% for b in device_stats.browsers %}
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-600 dark:text-slate-400 font-mono">{{ b.browser or 'Other' }}</span>
+                <span class="font-mono font-medium text-slate-800 dark:text-slate-200">{{ b.cnt }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-xs text-slate-400">Нет данных</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Live Activity Stream (2 columns) -->
+    <div class="lg:col-span-2 p-5 rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Живой поток действий</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Последние события посещения и интерактива</p>
+        </div>
+      </div>
+
+      {% if recent_activity %}
+        <div class="overflow-x-auto max-h-[460px] overflow-y-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 dark:border-[#273147] text-slate-400 uppercase sticky top-0 bg-white dark:bg-[#161b26]">
+              <tr>
+                <th class="py-2 font-medium">Категория</th>
+                <th class="py-2 font-medium">Элемент / Цель</th>
+                <th class="py-2 font-medium">Посетитель</th>
+                <th class="py-2 font-medium text-right">Время (UTC)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-[#273147]/50 font-mono">
+              {% for item in recent_activity %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-[#1f2637] transition-colors">
+                  <td class="py-2 whitespace-nowrap">
+                    {% if item.category == 'search' %}
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-500 border border-amber-500/30">
+                        поиск
+                      </span>
+                    {% elif item.category == 'event' %}
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-500 border border-purple-500/30">
+                        {{ item.item }}
+                      </span>
+                    {% else %}
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-500 border border-blue-500/30">
+                        просмотр
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="py-2 text-slate-700 dark:text-slate-300">
+                    <span class="truncate max-w-xs block" title="{{ item.item or item.extra }}">
+                      {{ item.item or item.extra }}
+                      {% if item.extra and item.item != item.extra %}
+                        <span class="text-slate-400 text-[10px] ml-1">({{ item.extra }})</span>
+                      {% endif %}
+                    </span>
+                  </td>
+                  <td class="py-2 text-slate-400 text-[11px]">
+                    {{ item.visitor_id[:8] if item.visitor_id else 'unknown' }}
+                  </td>
+                  <td class="py-2 text-right text-slate-400 text-[11px] whitespace-nowrap">
+                    {{ item.created_at[:19].replace('T', ' ') if item.created_at else '' }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="py-12 text-center text-slate-400 text-sm">
+          Пока нет зарегистрированных событий.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -78,6 +78,45 @@ CREATE TABLE IF NOT EXISTS server_votes (
 
 CREATE INDEX IF NOT EXISTS idx_server_news_addr ON server_news(server_address);
 CREATE INDEX IF NOT EXISTS idx_server_reviews_addr ON server_reviews(server_address);
+
+CREATE TABLE IF NOT EXISTS analytics_pageviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_id TEXT NOT NULL,
+    path TEXT NOT NULL,
+    server_address TEXT,
+    page_title TEXT,
+    referrer TEXT,
+    device_type TEXT NOT NULL DEFAULT 'desktop',
+    browser TEXT NOT NULL DEFAULT 'Other',
+    ip_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS analytics_searches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_id TEXT NOT NULL,
+    query TEXT NOT NULL,
+    edition TEXT NOT NULL DEFAULT 'java',
+    results_count INTEGER NOT NULL DEFAULT 0,
+    matched_server TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS analytics_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    target TEXT,
+    metadata TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_pv_time ON analytics_pageviews(created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_pv_server ON analytics_pageviews(server_address);
+CREATE INDEX IF NOT EXISTS idx_analytics_search_time ON analytics_searches(created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_search_query ON analytics_searches(query);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_time ON analytics_events(created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON analytics_events(event_type);
 """
 
 

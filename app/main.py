@@ -4,13 +4,18 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from app.api.api_routes import api_router
 from app.api.routes import web_router
 from app.config import settings
 from app.database import init_db
 from app.repository import ServerRepository
+from app.services.analytics_service import (
+    get_or_create_visitor_id,
+    hash_ip,
+    parse_device_and_browser,
+)
 from app.services.pinger import query_server
 
 logging.basicConfig(
@@ -76,6 +81,57 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def analytics_middleware(request: Request, call_next):
+    """Automatic visitor telemetry tracking middleware."""
+    vid, is_new = get_or_create_visitor_id(request)
+    request.state.visitor_id = vid
+
+    response = await call_next(request)
+
+    if is_new or not request.cookies.get("vv_vid"):
+        response.set_cookie(
+            key="vv_vid",
+            value=vid,
+            max_age=365 * 86400,
+            httponly=False,
+            samesite="lax",
+            path="/",
+        )
+
+    path = request.url.path
+    if not (
+        path.startswith("/static")
+        or path.startswith("/api")
+        or path.endswith(".ico")
+        or path.endswith(".svg")
+    ):
+        client_ip = request.client.host if request.client else "127.0.0.1"
+        ip_h = hash_ip(client_ip)
+        ua = request.headers.get("user-agent", "")
+        dev_type, browser = parse_device_and_browser(ua)
+        ref = request.headers.get("referer", "")
+
+        server_addr = None
+        if path.startswith("/server/"):
+            server_addr = path.split("/server/")[1].split("?")[0].strip()
+
+        asyncio.create_task(
+            repo.record_pageview(
+                visitor_id=vid,
+                path=path,
+                server_address=server_addr,
+                page_title=path,
+                referrer=ref,
+                device_type=dev_type,
+                browser=browser,
+                ip_hash=ip_h,
+            )
+        )
+
+    return response
 
 # Static files directory
 static_dir = Path(__file__).resolve().parent / "static"
