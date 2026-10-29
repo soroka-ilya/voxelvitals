@@ -24,6 +24,8 @@
       <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 min-w-0">
         {% if status.icon_base64 %}
           <img src="{{ status.icon_base64 }}" alt="{{ status.address }}" class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] object-contain flex-shrink-0" />
+        {% elif extra_info and extra_info.icon %}
+          <img src="{{ extra_info.icon }}" alt="{{ status.address }}" class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] object-contain flex-shrink-0" />
         {% else %}
           <div class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] flex items-center justify-center text-slate-400 dark:text-slate-500 flex-shrink-0">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,31 +263,7 @@
   </div>
   {% endif %}
 
-  <!-- Server Screenshots Gallery -->
-  {% if extra_info and extra_info.screenshots %}
-  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4">
-    <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
-      <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Скриншоты с сервера</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Галерея игрового мира, спавна и ключевых локаций</p>
-      </div>
-      <span class="text-xs font-mono text-slate-500 dark:text-slate-400">
-        {{ extra_info.screenshots | length }} фото
-      </span>
-    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-      {% for shot in extra_info.screenshots %}
-      <div class="group relative rounded-lg overflow-hidden border border-slate-200 dark:border-[#273147] aspect-video bg-slate-100 dark:bg-[#0c0f17] cursor-pointer" onclick="window.open('{{ shot.url }}', '_blank')">
-        <img src="{{ shot.url }}" alt="{{ shot.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
-          <span class="text-[11px] text-white font-medium truncate">{{ shot.title }}</span>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
 
   <!-- Server News & Announcements -->
   <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4">

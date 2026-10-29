@@ -137,8 +137,8 @@ async def test_server_page_new_elements_and_removed_elements(client):
     # Reviews section
     assert "отзыв" in html.lower() or "review" in html.lower()
 
-    # Screenshots section
-    assert "скриншот" in html.lower() or "screenshot" in html.lower()
+    # Screenshots section removed per design request
+    assert "скриншот" not in html.lower()
 
 
 @pytest.mark.asyncio

@@ -18,9 +18,74 @@ def _make_svg_icon(text: str, bg_color: str, fg_color: str = "#ffffff") -> str:
     return f"data:image/svg+xml;base64,{b64}"
 
 
-def _get_server_icon_url(address: str) -> str:
-    """Return real public server favicon URL from high-performance proxy."""
-    clean_host = address.split(":")[0]
+def _make_hive_icon() -> str:
+    """High-res official brand SVG icon for The Hive Bedrock Network."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">'
+        '<defs>'
+        '<linearGradient id="hiveG" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#f59e0b"/>'
+        '<stop offset="100%" stop-color="#b45309"/>'
+        '</linearGradient>'
+        '</defs>'
+        '<rect width="64" height="64" rx="14" fill="url(#hiveG)"/>'
+        '<polygon points="32,10 48,19 48,37 32,46 16,37 16,19" fill="#fbbf24" stroke="#fef3c7" stroke-width="2"/>'
+        '<text x="32" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="900" fill="#1e1b4b" text-anchor="middle" dominant-baseline="central">H</text>'
+        '<rect x="22" y="49" width="20" height="4" rx="2" fill="#fef3c7" opacity="0.9"/>'
+        '</svg>'
+    )
+    return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode('utf-8')).decode('ascii')}"
+
+
+def _make_nethergames_icon() -> str:
+    """High-res official brand SVG icon for NetherGames Bedrock Network."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">'
+        '<defs>'
+        '<linearGradient id="ngG" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#dc2626"/>'
+        '<stop offset="100%" stop-color="#450a0a"/>'
+        '</linearGradient>'
+        '<linearGradient id="flameG" x1="0%" y1="100%" x2="0%" y2="0%">'
+        '<stop offset="0%" stop-color="#f97316"/>'
+        '<stop offset="100%" stop-color="#fde047"/>'
+        '</linearGradient>'
+        '</defs>'
+        '<rect width="64" height="64" rx="14" fill="url(#ngG)"/>'
+        '<path d="M32 10 L48 18 L48 38 C48 48 32 54 32 54 C32 54 16 48 16 38 L16 18 Z" fill="#1c1917" stroke="#ef4444" stroke-width="2"/>'
+        '<text x="32" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="900" fill="url(#flameG)" text-anchor="middle" dominant-baseline="central">NG</text>'
+        '</svg>'
+    )
+    return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode('utf-8')).decode('ascii')}"
+
+
+def _make_bedrock_generic_icon(label: str = "MCPE") -> str:
+    """High-res brand SVG icon for generic Bedrock edition servers."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">'
+        '<defs>'
+        '<linearGradient id="brG" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#1e293b"/>'
+        '<stop offset="100%" stop-color="#0f172a"/>'
+        '</linearGradient>'
+        '</defs>'
+        '<rect width="64" height="64" rx="14" fill="url(#brG)"/>'
+        '<rect x="12" y="12" width="40" height="40" rx="8" fill="#334155" stroke="#10b981" stroke-width="2"/>'
+        f'<text x="32" y="32" font-family="JetBrains Mono, monospace" font-size="12" font-weight="800" fill="#10b981" text-anchor="middle" dominant-baseline="central">{label}</text>'
+        '</svg>'
+    )
+    return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode('utf-8')).decode('ascii')}"
+
+
+def _get_server_icon_url(address: str, edition: str = "java") -> str:
+    """Return real public server favicon URL. Uses specialized brand SVGs for Bedrock servers."""
+    clean_host = address.strip().lower().split(":")[0]
+    if "hive" in clean_host:
+        return _make_hive_icon()
+    if "nethergames" in clean_host:
+        return _make_nethergames_icon()
+    if "bedrock" in clean_host or edition == "bedrock":
+        return _make_bedrock_generic_icon()
     return f"https://api.mcstatus.io/v2/icon/{clean_host}"
 
 
@@ -215,8 +280,8 @@ CURATED_SERVERS: List[Dict[str, Any]] = [
         "category": "minigames",
         "category_label": "Bedrock Мини-игры",
         "description": "Главная сеть мини-игр для Bedrock Edition: Treasure Wars, Hide and Seek, Survival Games",
-        "icon": _get_server_icon_url("geo.hivebedrock.network"),
-        "fallback_icon": _make_svg_icon("HIVE", "#f59e0b", "#fffbeb"),
+        "icon": _make_hive_icon(),
+        "fallback_icon": _make_hive_icon(),
         "edition": "bedrock",
         "versions": ["1.21.x", "1.20.x"],
         "latest_version": "Bedrock 1.21.x",
@@ -229,8 +294,8 @@ CURATED_SERVERS: List[Dict[str, Any]] = [
         "category": "pvp",
         "category_label": "Bedrock PvP",
         "description": "Крупнейшая соревновательная сеть Bedrock: Bedwars, Duels, Skywars, Factions",
-        "icon": _get_server_icon_url("play.nethergames.org"),
-        "fallback_icon": _make_svg_icon("NG", "#dc2626", "#fef2f2"),
+        "icon": _make_nethergames_icon(),
+        "fallback_icon": _make_nethergames_icon(),
         "edition": "bedrock",
         "versions": ["1.21.x"],
         "latest_version": "Bedrock 1.21.x",
@@ -777,8 +842,14 @@ DEFAULT_SCREENSHOTS = [
 
 
 def get_server_extra_info(address: str, edition: str = "java") -> Dict[str, Any]:
-    """Retrieve social contacts, screenshots gallery, and launcher deep-links."""
+    """Retrieve social contacts, brand icon, and launcher deep-links."""
     clean_addr = address.strip().lower()
+    curated = next(
+        (s for s in CURATED_SERVERS if s["address"].lower() == clean_addr or s["id"] == clean_addr),
+        None,
+    )
+    icon = curated.get("icon") if curated else _get_server_icon_url(clean_addr, edition=edition)
+
     contacts = SERVER_CONTACTS_MAP.get(clean_addr)
     if not contacts:
         contacts = {
@@ -794,7 +865,8 @@ def get_server_extra_info(address: str, edition: str = "java") -> Dict[str, Any]
 
     return {
         "contacts": contacts,
-        "screenshots": DEFAULT_SCREENSHOTS,
+        "screenshots": [],
+        "icon": icon,
         "launcher_uri": launcher_uri,
     }
 
