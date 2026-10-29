@@ -33,9 +33,13 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     email TEXT,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
     mc_nickname TEXT,
     role TEXT NOT NULL DEFAULT 'user',
+    google_id TEXT UNIQUE,
+    microsoft_id TEXT UNIQUE,
+    avatar_url TEXT,
+    is_verified_license INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL
 );
 
@@ -132,7 +136,18 @@ async def get_db_connection(db_path: str = None) -> AsyncGenerator[aiosqlite.Con
 
 
 async def init_db(db_path: str = None) -> None:
-    """Create tables and indexes if they do not exist."""
+    """Create tables and indexes if they do not exist, and apply schema migrations."""
     async with get_db_connection(db_path) as conn:
         await conn.executescript(CREATE_TABLES_SQL)
+        # Migrate existing database if OAuth columns are missing
+        cursor = await conn.execute("PRAGMA table_info(users)")
+        existing_cols = {row["name"] for row in await cursor.fetchall()}
+        if "google_id" not in existing_cols:
+            await conn.execute("ALTER TABLE users ADD COLUMN google_id TEXT")
+        if "microsoft_id" not in existing_cols:
+            await conn.execute("ALTER TABLE users ADD COLUMN microsoft_id TEXT")
+        if "avatar_url" not in existing_cols:
+            await conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
+        if "is_verified_license" not in existing_cols:
+            await conn.execute("ALTER TABLE users ADD COLUMN is_verified_license INTEGER NOT NULL DEFAULT 0")
         await conn.commit()

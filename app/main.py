@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from app.api.api_routes import api_router
+from app.api.oauth_routes import oauth_router
 from app.api.routes import web_router
 from app.config import settings
 from app.database import init_db
@@ -141,3 +142,4 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 # Mount Routers
 app.include_router(web_router)
 app.include_router(api_router)
+app.include_router(oauth_router)

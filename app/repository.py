@@ -175,6 +175,124 @@ class ServerRepository:
             await conn.execute("DELETE FROM user_sessions WHERE token = ?", (token,))
             await conn.commit()
 
+    async def get_user_by_google_id(self, google_id: str) -> Optional[dict]:
+        """Fetch user by Google provider ID."""
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute("SELECT * FROM users WHERE google_id = ?", (str(google_id),))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def get_user_by_microsoft_id(self, microsoft_id: str) -> Optional[dict]:
+        """Fetch user by Microsoft/Xbox provider ID."""
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute("SELECT * FROM users WHERE microsoft_id = ?", (str(microsoft_id),))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def get_user_by_email(self, email: str) -> Optional[dict]:
+        """Fetch user by case-insensitive email."""
+        if not email:
+            return None
+        async with get_db_connection(self.db_path) as conn:
+            cursor = await conn.execute("SELECT * FROM users WHERE LOWER(email) = ?", (email.strip().lower(),))
+            row = await cursor.fetchone()
+            return dict(row) if row else None
+
+    async def create_or_link_oauth_user(
+        self,
+        provider: str,
+        provider_id: str,
+        email: str = "",
+        name: str = "",
+        mc_nickname: str = "",
+        avatar_url: str = "",
+        is_verified_license: bool = False,
+    ) -> dict:
+        """Find existing user by provider_id or email, or create a new linked account."""
+        now = datetime.now(timezone.utc).isoformat()
+        clean_email = email.strip().lower() if email else ""
+        col_id = "google_id" if provider == "google" else "microsoft_id"
+        license_flag = 1 if is_verified_license else 0
+
+        async with get_db_connection(self.db_path) as conn:
+            # 1. Check if user already exists by provider_id
+            cursor = await conn.execute(
+                f"SELECT * FROM users WHERE {col_id} = ?", (str(provider_id),)
+            )
+            row = await cursor.fetchone()
+            if row:
+                user_id = row["id"]
+                await conn.execute(
+                    f"""
+                    UPDATE users SET 
+                        avatar_url = COALESCE(NULLIF(?, ''), avatar_url),
+                        mc_nickname = CASE WHEN ? != '' THEN ? ELSE mc_nickname END,
+                        is_verified_license = MAX(is_verified_license, ?)
+                    WHERE id = ?
+                    """,
+                    (avatar_url, mc_nickname, mc_nickname, license_flag, user_id),
+                )
+                await conn.commit()
+                return await self.get_user_by_id(user_id)
+
+            # 2. Check if user exists by email
+            if clean_email:
+                cursor = await conn.execute(
+                    "SELECT * FROM users WHERE LOWER(email) = ?", (clean_email,)
+                )
+                row = await cursor.fetchone()
+                if row:
+                    user_id = row["id"]
+                    await conn.execute(
+                        f"""
+                        UPDATE users SET 
+                            {col_id} = ?,
+                            avatar_url = COALESCE(NULLIF(avatar_url, ''), ?),
+                            mc_nickname = CASE WHEN ? != '' THEN ? ELSE mc_nickname END,
+                            is_verified_license = MAX(is_verified_license, ?)
+                        WHERE id = ?
+                        """,
+                        (str(provider_id), avatar_url, mc_nickname, mc_nickname, license_flag, user_id),
+                    )
+                    await conn.commit()
+                    return await self.get_user_by_id(user_id)
+
+            # 3. Create new user account
+            base_name = mc_nickname or name or (clean_email.split("@")[0] if clean_email else f"{provider}_user")
+            clean_username = "".join(c for c in base_name if c.isalnum() or c in ("_", "-")).strip() or "user"
+            username = clean_username[:24]
+
+            suffix = 0
+            while True:
+                candidate = username if suffix == 0 else f"{username}_{suffix}"
+                c = await conn.execute("SELECT id FROM users WHERE LOWER(username) = ?", (candidate.lower(),))
+                if not await c.fetchone():
+                    username = candidate
+                    break
+                suffix += 1
+
+            cursor = await conn.execute(
+                f"""
+                INSERT INTO users (
+                    username, email, password_hash, mc_nickname, role, 
+                    {col_id}, avatar_url, is_verified_license, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    username,
+                    clean_email or None,
+                    f"oauth_{provider}",
+                    mc_nickname or username,
+                    "user",
+                    str(provider_id),
+                    avatar_url or "",
+                    license_flag,
+                    now,
+                ),
+            )
+            await conn.commit()
+            return await self.get_user_by_id(cursor.lastrowid)
+
     # ----------------- Server News -----------------
     async def add_news(
         self, server_address: str, title: str, content: str, tag: str = "Обновление", author: str = "Администрация"
