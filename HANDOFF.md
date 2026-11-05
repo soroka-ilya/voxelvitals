@@ -1,7 +1,7 @@
 # 📋 Project Handoff — VoxelVitals
 
-**Дата обновления:** 2026-11-05 22:50  
-**Текущая цель:** Развертывание (деплой) проекта VoxelVitals на купленный VPS сервер FirstByte с привязкой домена `voxelvitals.ru` (Timeweb) и выпуском бесплатного SSL-сертификата (HTTPS).
+**Дата обновления:** 2026-11-05 23:15  
+**Текущая цель:** Деплой VoxelVitals на VPS FirstByte **успешно завершен**! Сервер работает в продакшене. Остался последний шаг: направить DNS A-записи в Timeweb и запустить скрипт выпуска SSL.
 
 ---
 
@@ -42,93 +42,33 @@
 
 ---
 
-## 4. Следующие шаги для деплоя (Next Steps)
+## 4. Текущий статус деплоя и следующие шаги
 
-### Шаг 1: Настройка DNS на Timeweb
-В панели управления доменом на Timeweb прописать 2 A-записи, указывающие на VPS:
-- `@` ➔ `45.144.65.27`
-- `www` ➔ `45.144.65.27`
+### ✅ Что уже выполнено на сервере (Автоматизировано):
+1. **VPS инициализирован**: Ubuntu 22.04 LTS на FirstByte (`45.144.65.27`).
+2. **Системные зависимости**: `python3-pip`, `python3-venv`, `nginx`, `certbot`, `git` установлены.
+3. **Репозиторий**: склонирован в `/var/www/voxelvitals`, развернут venv, установлены все библиотеки из `requirements.txt`.
+4. **Демон Systemd**: создан и активен `/etc/systemd/system/voxelvitals.service` (автозапуск при ребуте, 2 воркера Uvicorn).
+5. **Nginx Reverse Proxy**: настроен и активен `/etc/nginx/sites-available/voxelvitals`, проксирует трафик на `127.0.0.1:8000`.
+6. **Сайт в онлайне**: доступен прямо сейчас по публичному IP `http://45.144.65.27`! Эндпоинт `/api/health` возвращает `{"status":"ok","version":"1.0.0","database":"connected"}`.
+7. **Подготовлен скрипт SSL**: на сервере создан `/root/issue_ssl.sh`.
 
-### Шаг 2: Первичное подключение к серверу по SSH
-```bash
-ssh root@45.144.65.27
-# Ввести пароль: ClBkh4u$/,1~X?:,
-```
-
-### Шаг 3: Установка пакетов на сервере
-```bash
-apt update && apt upgrade -y
-apt install -y git curl python3-pip python3-venv nginx certbot python3-certbot-nginx
-```
-
-### Шаг 4: Клонирование и настройка VoxelVitals
-```bash
-mkdir -p /var/www/voxelvitals
-git clone https://github.com/soroka-ilya/voxelvitals.git /var/www/voxelvitals
-cd /var/www/voxelvitals
-
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### Шаг 5: Настройка Systemd сервиса для автозапуска
-Создать `/etc/systemd/system/voxelvitals.service`:
-```ini
-[Unit]
-Description=VoxelVitals Minecraft Server Status & Analytics Engine
-After=network.target
-
-[Service]
-User=root
-WorkingDirectory=/var/www/voxelvitals
-Environment="PATH=/var/www/voxelvitals/.venv/bin"
-Environment="HOST=127.0.0.1"
-Environment="PORT=8000"
-Environment="DB_PATH=/var/www/voxelvitals/voxelvitals.db"
-Environment="BASE_URL=https://voxelvitals.ru"
-ExecStart=/var/www/voxelvitals/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-Активировать сервис:
-```bash
-systemctl daemon-reload
-systemctl enable --now voxelvitals
-systemctl status voxelvitals
-```
-
-### Шаг 6: Настройка Nginx и SSL (HTTPS)
-Создать конфиг `/etc/nginx/sites-available/voxelvitals`:
-```nginx
-server {
-    server_name voxelvitals.ru www.voxelvitals.ru;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-Активировать сайт и выпустить сертификат:
-```bash
-ln -s /etc/nginx/sites-available/voxelvitals /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-nginx -t && systemctl reload nginx
-certbot --nginx -d voxelvitals.ru -d www.voxelvitals.ru --non-interactive --agree-tos -m ilya010s@mail.ru
-```
-
-### Шаг 7: Верификация
-Проверить открытие `https://voxelvitals.ru` и `https://voxelvitals.ru/api/health` в браузере.
+### ⏳ Что осталось сделать:
+1. **Направить A-запись в панели Timeweb**:
+   - Зайти в личный кабинет Timeweb ➔ «Домены и поддомены» ➔ Выбрать `voxelvitals.ru` ➔ «Настройки DNS».
+   - Изменить существующие или добавить A-записи:
+     - `@` (или пустое имя) ➔ `45.144.65.27`
+     - `www` ➔ `45.144.65.27`
+   *(Сейчас домен временно указывает на парковочный IP Timeweb `92.53.96.223`)*.
+2. **Выпуск SSL-сертификата (HTTPS)**:
+   - Как только DNS обновится (обычно 5–15 минут после изменения A-записи), на сервере достаточно выполнить команду:
+     ```bash
+     /root/issue_ssl.sh
+     ```
+   - Либо агент может выполнить её автоматически по запросу пользователя.
 
 ---
 
-## 🚀 Промпт для нового чата (Скопируйте в новый диалог):
-> Прочитай файл HANDOFF.md в корне проекта и приступай к развертыванию сайта на VPS FirstByte (45.144.65.27) с доменом voxelvitals.ru по шагам из раздела "Следующие шаги для деплоя".
+## 🚀 Проверка работы
+- Прямой доступ по IP: [http://45.144.65.27](http://45.144.65.27)
+- Проверка здоровья API: [http://45.144.65.27/api/health](http://45.144.65.27/api/health)
