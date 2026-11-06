@@ -160,41 +160,7 @@ async def server_page(
         ]
 
     reviews = await repo.get_reviews_for_server(clean_addr)
-    if not reviews:
-        reviews = [
-            {
-                "id": 1,
-                "author_name": "CraftMaster",
-                "rating": 5,
-                "comment": "Отличный сервер, стабильный ТПС 20.0, отзывчивая администрация и честная экономика без P2W элементов.",
-                "created_at": "2026-10-26T18:40:00Z",
-                "likes": 12,
-            },
-            {
-                "id": 2,
-                "author_name": "EndermanPro",
-                "rating": 5,
-                "comment": "Играем всем кланом уже полгода. Очень крутые кастомные ивенты и удобный лаунчер для входа в один клик.",
-                "created_at": "2026-10-24T11:20:00Z",
-                "likes": 7,
-            },
-            {
-                "id": 3,
-                "author_name": "PixelHero",
-                "rating": 4,
-                "comment": "Пинг радует, онлайн огромный. Единственное — иногда очереди по вечерам, но модерация на высшем уровне.",
-                "created_at": "2026-10-21T09:15:00Z",
-                "likes": 4,
-            },
-        ]
-
     rating_stats = await repo.get_server_rating_stats(clean_addr)
-    if rating_stats.get("total_count", 0) == 0 and reviews:
-        avg_calc = round(sum(r["rating"] for r in reviews) / len(reviews), 1)
-        rating_stats = {
-            "avg_rating": avg_calc,
-            "total_count": len(reviews),
-        }
     votes = await repo.get_votes_count(clean_addr)
     current_user = await get_current_user_from_request(request, repo)
 

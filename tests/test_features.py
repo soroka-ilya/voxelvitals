@@ -241,9 +241,10 @@ async def test_audit_enhancements(client):
     # Header break-all sm:break-normal
     assert "break-all sm:break-normal" in html
 
-    # Demo rating stats synchronized with demo reviews count (3 reviews, not 0)
-    assert "(3 отзывов)" in html
-    assert "(0 отзывов)" not in html
+    # Rating stats reflect real reviews only (0 reviews, not hardcoded fake reviews)
+    assert "(0 отзывов)" in html
+    assert "no-reviews-msg" in html
+    assert "CraftMaster" not in html
 
     # Live status badge preview card removed per design request
     assert "/api/badge/donutsmp.net.svg" not in html
@@ -309,5 +310,24 @@ async def test_java_vs_bedrock_launcher_isolation(client):
     assert res_server.status_code == 200
     assert "openQuickConnectModal" in res_server.text
     assert "launchMinecraft" in res_server.text
+
+
+@pytest.mark.asyncio
+async def test_mobile_chart_and_no_oauth_buttons(client):
+    """Verify Google/Microsoft OAuth buttons are removed, and chart has spacious mobile scrolling."""
+    # 1. Base template no longer has Google/Microsoft OAuth buttons
+    res_home = await client.get("/")
+    assert res_home.status_code == 200
+    assert "Продолжить с Google" not in res_home.text
+    assert "Войти через Microsoft" not in res_home.text
+    assert "oauth-dev-notice" not in res_home.text
+
+    # 2. Server page chart container has spacious mobile responsiveness
+    res_server = await client.get("/server/mc.hypixel.net?mock=true")
+    assert res_server.status_code == 200
+    assert "min-w-[560px] sm:min-w-0" in res_server.text
+    assert "overflow-x-auto" in res_server.text
+    assert "Прокрутите" in res_server.text
+
 
 
