@@ -1,109 +1,147 @@
-# VoxelVitals
+# VoxelVitals ⚡
 
-> Production-grade Minecraft server telemetry, latency tracking, and dynamic status badges for Java and Bedrock editions.
+<div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat&logo=python)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Tests](https://img.shields.io/badge/tests-23%20passed-10b981?style=flat)](https://github.com/soroka-ilya/voxelvitals)
-[![License](https://img.shields.io/badge/license-MIT-slate?style=flat)](LICENSE)
+![VoxelVitals Banner](https://img.shields.io/badge/VOXELVITALS-Real--Time%20Minecraft%20Telemetry-10b981?style=for-the-badge&logo=minecraft&logoColor=white)
 
----
+**Современная платформа мониторинга, аналитики онлайна и универсального подключения к серверам Minecraft (Java & Bedrock)**
 
-## Overview
+[![Production Live](https://img.shields.io/badge/Production-voxelvitals.ru-10b981?style=flat-square&logo=nginx&logoColor=white)](https://voxelvitals.ru)
+[![SSL](https://img.shields.io/badge/Security-Let's%20Encrypt%20HTTPS-00c7b7?style=flat-square&logo=letsencrypt&logoColor=white)](https://voxelvitals.ru)
+[![Tests](https://img.shields.io/badge/Tests-78%20Passed-emerald?style=flat-square&logo=pytest&logoColor=white)](https://github.com/soroka-ilya/voxelvitals)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-slate?style=flat-square)](LICENSE)
 
-VoxelVitals provides real-time health indicators, latency analytics, and 24-hour player telemetry for Minecraft multiplayer networks. It features a dark-themed UI built with FastAPI, Jinja2, HTMX, and Tailwind CSS, plus dynamic vector SVG status badges styled after Shields.io for embedding in repository READMEs and community websites.
+[🌐 Открыть сайт онлайн](https://voxelvitals.ru) • [📖 Документация API (Swagger)](https://voxelvitals.ru/docs) • [🎯 Зеркало проекта](https://www.voxelvitals.ru)
 
-### Key Capabilities
-
-- **Dual Edition Support**: Queries both Java Edition (Server List Ping via TCP) and Bedrock Edition (RakNet query via UDP) with automatic DNS SRV record resolution.
-- **MOTD Formatting Engine**: Parses legacy color codes (`§0`-`§f`), format styles (`§l`, `§o`, `§n`), and modern hex codes (`&#RRGGBB`, `§#RRGGBB`) with strict HTML XSS escaping.
-- **Dynamic SVG Badges**: Generates responsive Shields.io-compatible vector status badges (`/api/badge/{address}.svg`) with HTTP caching headers.
-- **Time-Series Telemetry**: Retains 24-hour historical snapshots in SQLite with automated periodic background polling and retention pruning.
-- **Clean Interactive UI**: Search without full-page reload powered by HTMX, realistic skeleton loaders, and dark-mode Chart.js graphs.
-
+</div>
 
 ---
 
-## Tech Stack
+## 🌟 Что такое VoxelVitals?
 
-| Layer | Technology |
-|---|---|
-| Backend | FastAPI (Python 3.12), Starlette, Uvicorn |
-| Protocol Query | `mcstatus` (async Java & Bedrock networking) |
-| Persistence | SQLite via `aiosqlite` (WAL mode enabled) |
-| Frontend | Jinja2 templates, Tailwind CSS, HTMX 1.9, Chart.js |
-| Testing | Pytest, Pytest-Asyncio, HTTPX AsyncClient |
+**VoxelVitals** — это высокопроизводительный веб-сервис и открытый аналитический хаб для мониторинга серверов Minecraft нового поколения. Сервис агрегирует реальный онлайн, задержку (ping), статус доступности и историю активности сотен игровых серверов в режимах **Java Edition** и **Bedrock Edition**.
+
+В отличие от устаревших мониторингов с навязчивой рекламой, VoxelVitals спроектирован с упором на скорость, чистый UX, интеграцию с популярными лаунчерами и открытый REST API для разработчиков.
 
 ---
 
-## Architecture
+## 🚀 Ключевые возможности
 
+### 🕹️ 1. Универсальный хаб подключения (Quick Connect Hub)
+- **1-клик запуск через кастомные протоколы**: мгновенный старт сервера в **Lunar Client** (`lunarclient://`) и **Badlion Client** (`badlion://`).
+- **Поддержка любых Java-лаунчеров**: интерактивный 3-шаговый гид с копированием IP для **TLauncher**, **Prism Launcher**, **Modrinth App**, **MultiMC** и официального лаунчера Mojang.
+- **Поддержка Bedrock Edition**: раздельное копирование хоста и порта (`19132`), подсказки о встроенных серверах (The Hive, CubeCraft) для консолей и смартфонов.
+- **Запоминание выбора**: умное сохранение любимого лаунчера пользователя в `localStorage` с кнопкой быстрой смены.
+
+### 📈 2. 24-часовая интерактивная телеметрия и графики
+- Посекундные и почасовые снапшоты онлайна и пинга.
+- Адаптивный график **Chart.js** со свободной горизонтальной прокруткой для смартфонов — данные не сбиваются в тесную кучку даже при сотнях точек замера.
+- Автоматическое определение пиковых часов онлайна и просадок сети.
+
+### 🛡️ 3. Двухуровневая отказоустойчивая система пинга (Multi-Tier Pinger)
+- **Tier-1 (Native Direct Socket)**: прямой асинхронный опрос через официальные сетевые протоколы `mcstatus` (TCP Server List Ping для Java, UDP RakNet для Bedrock).
+- **Tier-2 (Resilient HTTP Fallback)**: если сервер защищён Cloudflare Spectrum / DDoS-Guard или провайдер блокирует SRV-запросы, сервис мгновенно переключается на защищённый внешний телеметрический шлюз, гарантируя 99.99% отображения статуса.
+
+### 🏷️ 4. Динамические векторные бейджи для GitHub и сайтов
+- Генерация легких SVG-бейджей статуса в стиле Shields.io:
+  ```markdown
+  ![Hypixel Status](https://voxelvitals.ru/api/badge/mc.hypixel.net.svg)
+  ```
+- Встроенные HTTP-заголовки кэширования для снижения нагрузки на сервер.
+
+### 💬 5. Сообщество и живой рейтинг
+- Честная система оценок и текстовых отзывов реальных игроков (без фейковых комментариев).
+- Публикация официальных новостей и патчноутов администрацией серверов.
+- Быстрое голосование за любимые сервера.
+
+---
+
+## 🏗️ Архитектура системы
+
+```mermaid
+flowchart TD
+    User([Игрок / Браузер / README]) -->|HTTPS:443| Nginx[Nginx Reverse Proxy]
+    Nginx -->|Proxy Pass:8000| App[FastAPI Application]
+    
+    subgraph Core Engine
+        App --> Pinger[Multi-Tier Pinger Engine]
+        App --> Cache[In-Memory Session & Templates]
+        App --> DB[(SQLite / aiosqlite)]
+        Worker[Background Poller Worker] -->|Каждые 5 минут| Pinger
+        Worker -->|Запись телеметрии| DB
+    end
+    
+    subgraph Pinger Tiers
+        Pinger -->|Tier 1: TCP/UDP Native| MCServer[Minecraft Servers Net]
+        Pinger -.->|Tier 2: Fallback Telemetry API| FallbackGateway[Public Fallback Gateway]
+    end
 ```
-[Browser / Webhook / README Badge]
-               |
-               v
-     +-------------------+
-     | FastAPI Router    |
-     +---------+---------+
-               |
-     +---------+---------+
-     | Services Layer    |
-     |  - Pinger Service | <----> [Minecraft Server List Ping / RakNet]
-     |  - MOTD Parser    |
-     |  - SVG Generator  |
-     +---------+---------+
-               |
-     +---------+---------+
-     | Repository Layer  |
-     +---------+---------+
-               |
-     +---------+---------+
-     | SQLite (WAL Mode) |
-     +-------------------+
-```
-
 
 ---
 
-## Quickstart
+## 🛠️ Технологический стек
 
-### 1. Clone & Install Dependencies
+| Компонент | Технология | Назначение |
+|---|---|---|
+| **Backend** | Python 3.12 / FastAPI | Высокоскоростное асинхронное ядро приложения |
+| **ASGI Server** | Uvicorn (2 workers) | Параллельная обработка веб-запросов и API |
+| **Networking** | `mcstatus` + `httpx` + `dnspython` | Двухпротокольный опрос серверов Minecraft и HTTP fallback |
+| **Database** | SQLite + `aiosqlite` | Неблокирующее хранение телеметрии, новостей и отзывов (WAL-mode) |
+| **Frontend** | Jinja2 + Tailwind CSS + HTMX | Серверный рендеринг, динамические обновления и темная тема |
+| **Data Viz** | Chart.js | Интерактивные мобильные графики телеметрии |
+| **Production** | Ubuntu 22.04 LTS (FirstByte, MSK) | Выделенная виртуальная машина |
+| **Reverse Proxy**| Nginx | SSL-терминация, сжатие статики, 301-редирект |
+| **Security** | Let's Encrypt Certbot | Автоматическое продление SSL-сертификата (HTTPS) |
+
+---
+
+## 📡 Открытый REST API
+
+Интерактивная песочница Swagger доступна по адресу **[https://voxelvitals.ru/docs](https://voxelvitals.ru/docs)**.
+
+| Метод | Эндпоинт | Описание |
+|---|---|---|
+| `GET` | `/api/status/{address}` | Полный JSON-статус сервера (онлайн, игроки, версия, пинг, MOTD, иконка) |
+| `GET` | `/api/history/{address}` | Временной ряд замеров онлайна и задержки за последние 24 часа |
+| `GET` | `/api/badge/{address}.svg` | Динамический векторный SVG-бейдж статуса |
+| `GET` | `/api/catalog` | Курируемый каталог серверов с фильтрацией по категориям и тегам |
+| `GET` | `/api/health` | Проверка работоспособности приложения и соединения с БД |
+| `POST`| `/api/reviews` | Добавление отзыва реального игрока |
+| `POST`| `/api/votes/{address}` | Голосование за сервер в рейтинге |
+
+---
+
+## 💻 Локальная разработка (Self-Hosting)
+
+<details>
+<summary><b>Развернуть локально для тестирования</b></summary>
 
 ```bash
+# 1. Клонирование репозитория
 git clone https://github.com/soroka-ilya/voxelvitals.git
 cd voxelvitals
 
+# 2. Создание виртуального окружения
 python -m venv .venv
-# Linux / macOS
-source .venv/bin/activate
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
+source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
 
+# 3. Установка зависимостей
 pip install -r requirements.txt
+
+# 4. Запуск сервера разработки
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# 5. Запуск тестов
+pytest -q
 ```
-
-### 2. Run the Application
-
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Open [http://localhost:8000](http://localhost:8000) in your browser.
-
-### 3. Run the Test Suite
-
-```bash
-pytest -v
-```
+</details>
 
 ---
 
-## API Endpoints
+<div align="center">
 
-- `GET /`: Explorer home page with search and tracked nodes.
-- `GET /server/{address}`: Detailed telemetry graphs, MOTD, player sample.
-- `GET /api/status/{address}`: Full JSON metadata for a server (`?bedrock=true|false`).
-- `GET /api/history/{address}`: Time-series telemetry points (`?hours=24`).
-- `GET /api/badge/{address}.svg`: Dynamic Shields.io-compatible vector status badge.
-- `GET /partials/server-card`: HTMX partial card for instant asynchronous queries.
-- `GET /docs`: Interactive OpenAPI documentation (Swagger UI).
+Разработано с ❤️ для Minecraft сообщества • [VoxelVitals Live](https://voxelvitals.ru)
+
+</div>

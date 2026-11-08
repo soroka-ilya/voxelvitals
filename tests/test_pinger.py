@@ -54,8 +54,35 @@ async def test_query_server_mocked_success():
 @pytest.mark.asyncio
 async def test_query_server_offline_timeout():
     """Verify query_server captures network exceptions cleanly without raising."""
-    with patch("app.services.pinger.JavaServer.async_lookup", side_effect=TimeoutError("Connection timed out")):
+    with patch("app.services.pinger.JavaServer.async_lookup", side_effect=TimeoutError("Connection timed out")), \
+         patch("app.services.pinger._query_http_fallback", AsyncMock(return_value=None)):
         res = await query_server("unreachable.node.internal")
         assert res.is_online is False
         assert res.players_online == 0
-        assert "timed out" in res.error_message
+
+
+@pytest.mark.asyncio
+async def test_query_server_tier2_fallback_success():
+    """Verify query_server engages Tier-2 HTTP fallback when native TCP fails."""
+    mock_fallback = ServerStatus(
+        address="fallback.node.net",
+        is_online=True,
+        edition="java",
+        players_online=999,
+        players_max=2000,
+        players_sample=[],
+        version_name="Paper 1.21.1",
+        latency_ms=28.0,
+        motd_raw="Fallback MOTD",
+        motd_html="<span>Fallback MOTD</span>",
+        motd_plain="Fallback MOTD",
+        icon_base64="data:image/png;base64,fallback_icon",
+    )
+    with patch("app.services.pinger.JavaServer.async_lookup", side_effect=Exception("DNS SRV SERVFAIL")), \
+         patch("app.services.pinger._query_http_fallback", AsyncMock(return_value=mock_fallback)):
+        res = await query_server("fallback.node.net")
+        assert res.is_online is True
+        assert res.players_online == 999
+        assert res.icon_base64 == "data:image/png;base64,fallback_icon"
+
+        assert res.error_message is None

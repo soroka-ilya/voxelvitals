@@ -211,3 +211,17 @@ async def test_bedrock_flag_preservation(client):
     assert "bedrock=true" in response.text
 
 
+def test_hypixel_and_flagship_brand_icons():
+    """Verify Hypixel, CubeCraft, and 2b2t have high-res brand SVG icons."""
+    catalog = get_curated_catalog()
+    hypixel = next(s for s in catalog if s["address"] == "mc.hypixel.net")
+    assert hypixel["icon"].startswith("data:image/svg+xml;base64,")
+    
+    cubecraft = next(s for s in catalog if s["address"] == "play.cubecraft.net")
+    assert cubecraft["icon"].startswith("data:image/svg+xml;base64,")
+    
+    twobtt = next(s for s in catalog if s["address"] == "2b2t.org")
+    assert twobtt["icon"].startswith("data:image/svg+xml;base64,")
+
+
+

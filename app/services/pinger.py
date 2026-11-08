@@ -3,6 +3,7 @@
 import asyncio
 import logging
 from typing import Optional
+import httpx
 from mcstatus import BedrockServer, JavaServer
 from app.config import settings
 from app.domain.models import PlayerSample, ServerStatus
@@ -54,6 +55,53 @@ def get_mock_server_status(
         motd_plain=strip_minecraft_formatting(motd),
         icon_base64=None,
     )
+
+
+async def _query_http_fallback(
+    address: str, is_bedrock: bool = False, timeout: float = 3.5
+) -> Optional[ServerStatus]:
+    """Resilient Tier-2 fallback query via public telemetry API (api.mcsrvstat.us)."""
+    clean_addr = address.strip()
+    edition = "bedrock" if is_bedrock else "java"
+    url = f"https://api.mcsrvstat.us/{'bedrock/3/' if is_bedrock else '3/'}{clean_addr}"
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            resp = await client.get(url)
+            if resp.status_code != 200:
+                return None
+            data = resp.json()
+            if not data.get("online"):
+                return None
+
+            motd_lines = data.get("motd", {}).get("raw", [])
+            motd_str = "\n".join(motd_lines) if isinstance(motd_lines, list) else str(motd_lines or "")
+            players = data.get("players", {})
+            sample = []
+            if "list" in players and isinstance(players["list"], list):
+                sample = [
+                    PlayerSample(name=p.get("name", str(p)), id=p.get("uuid", ""))
+                    for p in players["list"]
+                    if isinstance(p, dict)
+                ]
+
+            return ServerStatus(
+                address=clean_addr,
+                is_online=True,
+                edition=edition,
+                players_online=int(players.get("online", 0)),
+                players_max=int(players.get("max", 0)),
+                players_sample=sample,
+                version_name=data.get("version", "Minecraft Server"),
+                version_protocol=data.get("protocol", {}).get("version") if isinstance(data.get("protocol"), dict) else None,
+                latency_ms=round(float(data.get("debug", {}).get("ping", 32.0)), 1) if isinstance(data.get("debug"), dict) else 32.0,
+                motd_raw=motd_str,
+                motd_html=format_motd_html(motd_str),
+                motd_plain=strip_minecraft_formatting(motd_str),
+                icon_base64=data.get("icon"),
+            )
+    except Exception as exc:
+        logger.debug(f"HTTP fallback query failed for {clean_addr}: {exc}")
+        return None
 
 
 async def query_server(
@@ -120,7 +168,14 @@ async def query_server(
                 icon_base64=status.icon,
             )
     except Exception as exc:
-        logger.warning(f"Failed to query {clean_addr}: {exc}")
+        logger.warning(f"Tier-1 query failed for {clean_addr}: {exc}. Trying Tier-2 fallback...")
+        fallback_status = await _query_http_fallback(
+            clean_addr, is_bedrock=is_bedrock, timeout=min(effective_timeout, 4.0)
+        )
+        if fallback_status:
+            logger.info(f"Tier-2 fallback succeeded for {clean_addr} (players={fallback_status.players_online})")
+            return fallback_status
+
         return ServerStatus(
             address=clean_addr,
             is_online=False,

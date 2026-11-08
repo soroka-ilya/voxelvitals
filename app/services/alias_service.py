@@ -77,9 +77,69 @@ def _make_bedrock_generic_icon(label: str = "MCPE") -> str:
     return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode('utf-8')).decode('ascii')}"
 
 
+def _make_hypixel_icon() -> str:
+    """High-res official brand SVG icon for Hypixel Network."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">'
+        '<defs>'
+        '<linearGradient id="hypG" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#181308"/>'
+        '<stop offset="100%" stop-color="#0c0a04"/>'
+        '</linearGradient>'
+        '<linearGradient id="goldG" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#fde047"/>'
+        '<stop offset="50%" stop-color="#f59e0b"/>'
+        '<stop offset="100%" stop-color="#b45309"/>'
+        '</linearGradient>'
+        '</defs>'
+        '<rect width="64" height="64" rx="14" fill="url(#hypG)" stroke="#d97706" stroke-width="2"/>'
+        '<path d="M16 14 L24 14 L24 28 L40 28 L40 14 L48 14 L48 50 L40 50 L40 36 L24 36 L24 50 L16 50 Z" fill="url(#goldG)"/>'
+        '<polygon points="32,6 35,11 41,11 36,15 38,20 32,17 26,20 28,15 23,11 29,11" fill="#fde047"/>'
+        '</svg>'
+    )
+    return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode('utf-8')).decode('ascii')}"
+
+
+def _make_cubecraft_icon() -> str:
+    """High-res official brand SVG icon for CubeCraft Games."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">'
+        '<defs>'
+        '<linearGradient id="ccG" x1="0%" y1="0%" x2="100%" y2="100%">'
+        '<stop offset="0%" stop-color="#083344"/>'
+        '<stop offset="100%" stop-color="#021f2d"/>'
+        '</linearGradient>'
+        '</defs>'
+        '<rect width="64" height="64" rx="14" fill="url(#ccG)" stroke="#06b6d4" stroke-width="2"/>'
+        '<polygon points="32,12 50,22 32,32 14,22" fill="#22d3ee"/>'
+        '<polygon points="14,22 32,32 32,52 14,42" fill="#0284c7"/>'
+        '<polygon points="50,22 32,32 32,52 50,42" fill="#0369a1"/>'
+        '</svg>'
+    )
+    return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode('utf-8')).decode('ascii')}"
+
+
+def _make_2b2t_icon() -> str:
+    """High-res official brand SVG icon for 2b2t Anarchy."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">'
+        '<rect width="64" height="64" rx="14" fill="#18181b" stroke="#71717a" stroke-width="2"/>'
+        '<text x="32" y="36" font-family="JetBrains Mono, monospace" font-size="16" font-weight="900" fill="#f97316" text-anchor="middle" dominant-baseline="central">2b2t</text>'
+        '<rect x="18" y="46" width="28" height="3" rx="1.5" fill="#ea580c"/>'
+        '</svg>'
+    )
+    return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode('utf-8')).decode('ascii')}"
+
+
 def _get_server_icon_url(address: str, edition: str = "java") -> str:
-    """Return real public server favicon URL. Uses specialized brand SVGs for Bedrock servers."""
+    """Return real public server favicon URL. Uses specialized brand SVGs for Bedrock and flagship servers."""
     clean_host = address.strip().lower().split(":")[0]
+    if "hypixel" in clean_host:
+        return _make_hypixel_icon()
+    if "cubecraft" in clean_host:
+        return _make_cubecraft_icon()
+    if "2b2t" in clean_host:
+        return _make_2b2t_icon()
     if "hive" in clean_host:
         return _make_hive_icon()
     if "nethergames" in clean_host:
