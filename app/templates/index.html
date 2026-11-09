@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}VoxelVitals - Real-Time Minecraft Telemetry{% endblock %}
+{% block title %}VoxelVitals - {{ t('hero.title') }}{% endblock %}
 
 {% block content %}
 <div class="space-y-12">
@@ -8,14 +8,14 @@
   <section class="max-w-3xl mx-auto text-center space-y-4 pt-4">
     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
       <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      Protocol v767 & Bedrock v1.21 Compatible
+      {{ t('hero.protocol_badge') }}
     </div>
 
     <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
-      Minecraft Server Telemetry & Status
+      {{ t('hero.title') }}
     </h1>
     <p class="text-slate-600 dark:text-slate-400 text-base max-w-xl mx-auto">
-      Query live players, latency, DNS SRV records, MOTD formatting, and export dynamic SVG status badges.
+      {{ t('hero.subtitle') }}
     </p>
 
     <!-- Search / Query Form -->
@@ -34,7 +34,7 @@
                  name="q" 
                  autocomplete="off"
                  required 
-                 placeholder="Например: 2b2t, hypixel, reallyworld, play.cubecraft.net" 
+                 placeholder="{{ t('hero.search_placeholder') }}" 
                  class="w-full bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none font-mono py-1.5" />
 
           <!-- Autocomplete suggestions dropdown -->
@@ -45,7 +45,7 @@
 
         <div class="flex items-center justify-end px-1">
           <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs tracking-wide transition-colors flex items-center justify-center gap-1.5">
-            <span>Проверить сервер</span>
+            <span>{{ t('hero.search_button') }}</span>
           </button>
         </div>
       </form>
@@ -58,10 +58,10 @@
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span class="text-xs font-mono uppercase text-emerald-600 dark:text-emerald-400 font-semibold tracking-wider">Каталог серверов</span>
+          <span class="text-xs font-mono uppercase text-emerald-600 dark:text-emerald-400 font-semibold tracking-wider">{{ t('catalog.badge') }}</span>
         </div>
-        <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Популярные игровые сети</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Официальные хабы с поддержкой быстрого подключения и аналитики</p>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{{ t('catalog.title') }}</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ t('catalog.subtitle') }}</p>
       </div>
 
       <!-- Advanced Filter Toolbar: Edition, Categories & Versions -->
@@ -71,7 +71,7 @@
           <button type="button" 
                   data-edition-filter="all" 
                   class="edition-tab px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-emerald-500 text-slate-950 font-semibold">
-            Все издания
+            {{ t('catalog.all_editions') }}
           </button>
           <button type="button" 
                   data-edition-filter="java" 
@@ -91,30 +91,30 @@
                   id="category-dropdown-btn" 
                   class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-[#121622] hover:bg-slate-50 dark:hover:bg-[#161b26] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#273147] flex items-center gap-2 transition-colors">
             <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-            <span id="category-filter-label">Категории: Все</span>
+            <span id="category-filter-label">{{ t('catalog.categories_all') }}</span>
             <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
 
           <div id="category-dropdown-menu" class="hidden absolute left-0 sm:right-0 mt-2 w-56 bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] rounded-xl shadow-2xl p-2 z-50 space-y-1">
             <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer text-xs text-slate-700 dark:text-slate-300">
               <input type="checkbox" value="anarchy" class="category-checkbox rounded bg-slate-100 dark:bg-[#0c0f17] border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
-              <span>Анархия и Гриф</span>
+              <span>{{ t('categories.anarchy') }}</span>
             </label>
             <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer text-xs text-slate-700 dark:text-slate-300">
               <input type="checkbox" value="minigames" class="category-checkbox rounded bg-slate-100 dark:bg-[#0c0f17] border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
-              <span>Мини-игры (Bedwars, etc.)</span>
+              <span>{{ t('categories.minigames') }}</span>
             </label>
             <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer text-xs text-slate-700 dark:text-slate-300">
               <input type="checkbox" value="rpg" class="category-checkbox rounded bg-slate-100 dark:bg-[#0c0f17] border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
-              <span>MMORPG и Квесты</span>
+              <span>{{ t('categories.rpg') }}</span>
             </label>
             <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer text-xs text-slate-700 dark:text-slate-300">
               <input type="checkbox" value="pvp" class="category-checkbox rounded bg-slate-100 dark:bg-[#0c0f17] border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
-              <span>PvP и Дуэли</span>
+              <span>{{ t('categories.pvp') }}</span>
             </label>
             <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer text-xs text-slate-700 dark:text-slate-300">
               <input type="checkbox" value="survival" class="category-checkbox rounded bg-slate-100 dark:bg-[#0c0f17] border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
-              <span>Выживание и SMP</span>
+              <span>{{ t('categories.survival') }}</span>
             </label>
           </div>
         </div>
@@ -125,17 +125,17 @@
                   id="version-dropdown-btn" 
                   class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-[#121622] hover:bg-slate-50 dark:hover:bg-[#161b26] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#273147] flex items-center gap-2 transition-colors">
             <svg class="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-            <span id="version-filter-label">Версия: Все</span>
+            <span id="version-filter-label">{{ t('catalog.versions_all') }}</span>
             <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
 
           <div id="version-dropdown-menu" class="hidden absolute right-0 mt-2 w-60 bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] rounded-xl shadow-2xl p-2 z-50 space-y-1">
             <div class="px-2 py-1 text-[10px] font-mono uppercase text-emerald-600 dark:text-emerald-400 font-semibold border-b border-slate-200 dark:border-[#273147]/60">
-              Поддерживаемые версии
+              {{ t('catalog.supported_versions') }}
             </div>
             <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer text-xs text-slate-700 dark:text-slate-200">
               <input type="checkbox" value="1.21.x" class="version-checkbox rounded bg-slate-100 dark:bg-[#0c0f17] border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
-              <span>1.21.x Tricky Trials <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold">(Latest)</span></span>
+              <span>1.21.x Tricky Trials <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold">{{ t('catalog.latest') }}</span></span>
             </label>
             <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-[#1c2233] cursor-pointer text-xs text-slate-700 dark:text-slate-300">
               <input type="checkbox" value="1.20.x" class="version-checkbox rounded bg-slate-100 dark:bg-[#0c0f17] border-slate-300 dark:border-[#273147] text-emerald-500 focus:ring-0" />
@@ -160,7 +160,7 @@
         <button type="button" 
                 id="reset-filters-btn" 
                 class="hidden px-2.5 py-1.5 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] transition-colors">
-          Сброс
+          {{ t('catalog.reset_filters') }}
         </button>
       </div>
     </div>
@@ -204,17 +204,17 @@
               <div class="flex items-center gap-1.5 flex-shrink-0">
                 <button type="button" 
                         onclick="event.stopPropagation(); launchMinecraft('{{ server.address }}', '{{ server.edition }}', '{{ server.name }}', this);" 
-                        title="Запустить в лаунчере"
+                        title="{{ t('server_card.to_launcher') }}"
                         class="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-medium transition-colors flex items-center gap-1">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-                  <span>В лаунчер</span>
+                  <span>{{ t('server_card.to_launcher') }}</span>
                 </button>
                 <button type="button" 
                         onclick="event.stopPropagation(); copyIp('{{ server.address }}', this);" 
-                        title="Копировать IP"
+                        title="{{ t('server_card.copy_ip') }}"
                         class="px-2 py-1 rounded bg-white hover:bg-slate-100 dark:bg-[#161b26] dark:hover:bg-[#273147] border border-slate-200 dark:border-[#273147] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[11px] font-medium transition-colors flex items-center gap-1">
                   <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                  <span class="copy-label">Копировать IP</span>
+                  <span class="copy-label">{{ t('server_card.copy_ip') }}</span>
                 </button>
               </div>
             </div>
@@ -229,7 +229,7 @@
             <a href="/server/{{ server.address }}{% if server.edition == 'bedrock' %}?bedrock=true{% endif %}" 
                onclick="event.stopPropagation();"
                class="text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-500 font-medium flex items-center gap-1 transition-colors text-[11px]">
-              <span>Телеметрия 24ч</span>
+              <span>{{ t('server_card.analytics_link') }} 24ч</span>
               <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
           </div>
@@ -246,9 +246,9 @@
 
     <!-- Empty Filter Results Message -->
     <div id="catalog-empty-state" class="hidden p-8 text-center rounded-xl border border-dashed border-slate-300 dark:border-[#273147] bg-slate-100/50 dark:bg-[#161b26]/50">
-      <p class="text-sm text-slate-500 dark:text-slate-400">Нет серверов, соответствующих выбранной комбинации фильтров.</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400">{{ t('catalog.empty_state') }}</p>
       <button type="button" onclick="resetAllFilters()" class="mt-3 px-3 py-1.5 rounded-lg text-xs bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 transition-colors">
-        Сбросить все фильтры
+        {{ t('catalog.reset_all_filters') }}
       </button>
     </div>
   </section>
@@ -257,11 +257,11 @@
   <section class="space-y-6 pt-4">
     <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Tracked Infrastructure</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Live health indicators from verified public nodes</p>
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">{{ t('catalog.tracked_infra_title') }}</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('catalog.tracked_infra_subtitle') }}</p>
       </div>
       <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
-        Active Monitoring
+        {{ t('catalog.active_monitoring') }}
       </span>
     </div>
 

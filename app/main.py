@@ -20,6 +20,13 @@ from app.services.analytics_service import (
     hash_ip,
     parse_device_and_browser,
 )
+from app.services.i18n_service import (
+    LANGUAGE_METADATA,
+    SUPPORTED_LANGUAGES,
+    get_request_language,
+    set_current_lang,
+    t,
+)
 from app.services.pinger import query_server
 
 logging.basicConfig(
@@ -99,6 +106,49 @@ def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, custom_rate_limit_handler)
+
+
+@app.middleware("http")
+async def i18n_middleware(request: Request, call_next):
+    """Resolve request language and populate ContextVar / request state."""
+    lang = get_request_language(request)
+    set_current_lang(lang)
+    request.state.lang = lang
+    response = await call_next(request)
+
+    # If explicit ?lang= was requested, persist to cookie
+    query_lang = request.query_params.get("lang")
+    if query_lang and query_lang.lower() in SUPPORTED_LANGUAGES:
+        response.set_cookie(
+            key="vv_lang",
+            value=query_lang.lower(),
+            max_age=365 * 86400,
+            httponly=False,
+            samesite="lax",
+            path="/",
+        )
+    return response
+
+
+@app.get("/set-lang/{code}")
+@app.post("/api/lang/{code}")
+async def set_language_endpoint(code: str, request: Request, redirect: str = "/"):
+    """Switch user language, persist in vv_lang cookie, and redirect back."""
+    target_lang = code.lower() if code.lower() in SUPPORTED_LANGUAGES else "ru"
+    ref = redirect or request.headers.get("referer") or "/"
+    if not ref.startswith("/"):
+        ref = "/"
+    from fastapi.responses import RedirectResponse
+    resp = RedirectResponse(url=ref, status_code=303)
+    resp.set_cookie(
+        key="vv_lang",
+        value=target_lang,
+        max_age=365 * 86400,
+        httponly=False,
+        samesite="lax",
+        path="/",
+    )
+    return resp
 
 
 @app.get("/healthz")

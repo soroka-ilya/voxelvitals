@@ -732,11 +732,23 @@ def is_featured_bedrock(address: str) -> bool:
     return any(k in host for k in featured_keywords)
 
 
-def get_curated_catalog(category: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Return list of curated Minecraft servers, optionally filtered by genre category."""
-    if not category or category == "all":
-        return list(CURATED_SERVERS)
-    return [s for s in CURATED_SERVERS if s.get("category") == category]
+def get_curated_catalog(category: Optional[str] = None, lang: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Return list of curated Minecraft servers, optionally filtered by genre category and localized."""
+    from app.services.i18n_service import get_current_lang, t
+    eff_lang = lang or get_current_lang()
+
+    servers = list(CURATED_SERVERS)
+    if category and category != "all":
+        servers = [s for s in servers if s.get("category") == category]
+
+    result = []
+    for s in servers:
+        sid = s["id"]
+        item = dict(s)
+        item["description"] = t(f"catalog.servers.{sid}.description", lang=eff_lang, default=s.get("description", ""))
+        item["category_label"] = t(f"catalog.servers.{sid}.category_label", lang=eff_lang, default=s.get("category_label", s.get("category", "")))
+        result.append(item)
+    return result
 
 
 def search_suggestions(query: str, limit: int = 6) -> List[Dict[str, Any]]:

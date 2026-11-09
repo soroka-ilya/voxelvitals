@@ -19,9 +19,22 @@ from app.services.alias_service import (
 from app.services.auth_service import get_current_user_from_request
 from app.services.pinger import get_mock_server_status, query_server
 from app.services.probes_service import get_multi_region_probes
+from app.services.i18n_service import (
+    LANGUAGE_METADATA,
+    SUPPORTED_LANGUAGES,
+    get_request_language,
+    t,
+)
 
 templates_path = Path(__file__).resolve().parent.parent / "templates"
 templates = Jinja2Templates(directory=str(templates_path))
+
+# Wire Jinja2 i18n helper globals
+templates.env.globals["t"] = t
+templates.env.globals["_"] = t
+templates.env.globals["SUPPORTED_LANGUAGES"] = SUPPORTED_LANGUAGES
+templates.env.globals["LANGUAGE_METADATA"] = LANGUAGE_METADATA
+templates.env.globals["get_lang"] = get_request_language
 
 web_router = APIRouter(tags=["Web Pages"])
 repo = ServerRepository()
@@ -37,14 +50,16 @@ async def favicon():
 async def home_page(request: Request):
     """Render home landing page with search bar and featured servers."""
     current_user = await get_current_user_from_request(request, repo)
+    lang = get_request_language(request)
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
             "featured_servers": settings.featured_servers,
             "app_name": settings.app_name,
-            "catalog": get_curated_catalog(),
+            "catalog": get_curated_catalog(lang=lang),
             "current_user": current_user,
+            "current_lang": lang,
         },
     )
 
@@ -99,6 +114,7 @@ async def search_page(
     )
     current_user = await get_current_user_from_request(request, repo)
     resolved_fallback = resolve_address(raw_query)
+    lang = get_request_language(request)
 
     return templates.TemplateResponse(
         request=request,
@@ -115,6 +131,7 @@ async def search_page(
             "resolved_fallback": resolved_fallback,
             "app_name": settings.app_name,
             "current_user": current_user,
+            "current_lang": lang,
         },
     )
 
@@ -146,6 +163,7 @@ async def server_page(
     current_user = await get_current_user_from_request(request, repo)
     probes = get_multi_region_probes(clean_addr, status.latency_ms, edition=status.edition)
     peak_info = await repo.get_server_peak(clean_addr)
+    lang = get_request_language(request)
 
     return templates.TemplateResponse(
         request=request,
@@ -162,6 +180,7 @@ async def server_page(
             "peak_info": peak_info,
             "current_user": current_user,
             "app_name": settings.app_name,
+            "current_lang": lang,
         },
     )
 

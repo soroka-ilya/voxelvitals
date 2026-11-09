@@ -1,0 +1,403 @@
+{
+  "meta": {
+    "code": "ru",
+    "name": "Русский",
+    "flag": "🇷🇺"
+  },
+  "nav": {
+    "explorer": "Live Explorer",
+    "analytics": "Аналитика",
+    "api_reference": "API Reference",
+    "theme_toggle": "Переключить тему (Светлая / Темная / Авто)",
+    "login": "Войти",
+    "logout": "Выйти",
+    "verified_license": "Официальная лицензия Minecraft подтверждена через Microsoft"
+  },
+  "hero": {
+    "protocol_badge": "Protocol v767 & Bedrock v1.21 Compatible",
+    "title": "Minecraft Server Telemetry & Status",
+    "subtitle": "Query live players, latency, DNS SRV records, MOTD formatting, and export dynamic SVG status badges.",
+    "search_placeholder": "Например: 2b2t, hypixel, reallyworld, play.cubecraft.net",
+    "search_button": "Проверить сервер"
+  },
+  "catalog": {
+    "badge": "Каталог серверов",
+    "title": "Популярные игровые сети",
+    "subtitle": "Официальные хабы с поддержкой быстрого подключения и аналитики",
+    "all_editions": "Все издания",
+    "categories_all": "Категории: Все",
+    "categories_count": "Категории ({count})",
+    "versions_all": "Версия: Все",
+    "versions_count": "Версии ({count})",
+    "supported_versions": "Поддерживаемые версии",
+    "latest": "(Latest)",
+    "reset_filters": "Сброс",
+    "empty_state": "Нет серверов, соответствующих выбранной комбинации фильтров.",
+    "reset_all_filters": "Сбросить все фильтры",
+    "tracked_infra_title": "Tracked Infrastructure",
+    "tracked_infra_subtitle": "Live health indicators from verified public nodes",
+    "active_monitoring": "Active Monitoring",
+    "servers": {
+      "hypixel": {
+        "category_label": "Мини-игры",
+        "description": "Крупнейший сервер в мире: BedWars, SkyWars, SkyBlock и турниры"
+      },
+      "2b2t": {
+        "category_label": "Анархия и Выживание",
+        "description": "Старейший сервер анархии без правил, чисток карты и цензуры с 2010 года"
+      },
+      "donutsmp": {
+        "category_label": "Анархия и Выживание",
+        "description": "Хардкорный ванильный SMP с экономикой, кланами и рейдами баз"
+      },
+      "reallyworld": {
+        "category_label": "Анархия и Гриф",
+        "description": "Популярнейший СНГ сервер: классическая анархия, автошахты, дуэли и кланы"
+      },
+      "funtime": {
+        "category_label": "Анархия и Выживание",
+        "description": "Топовый проект анархии с уникальными ивентами, крушителями и кастомным PvP"
+      },
+      "holyworld": {
+        "category_label": "Анархия",
+        "description": "Крупный сервер анархии: кастомные чары, сферы, талисманы и дуэли"
+      },
+      "cubecraft": {
+        "category_label": "Мини-игры",
+        "description": "Популярная сеть мини-игр: EggWars, Lucky Islands и Tower Defence"
+      },
+      "gommehd": {
+        "category_label": "Мини-игры",
+        "description": "Ведущий европейский сервер мини-игр с BedWars, TTT и JumpLeague"
+      },
+      "vimeworld": {
+        "category_label": "Мини-игры",
+        "description": "Крупнейший русскоязычный проект мини-игр и аркад"
+      },
+      "wynncraft": {
+        "category_label": "MMORPG",
+        "description": "Масштабная фэнтези RPG в Minecraft: квесты, подземелья, боссы и классы"
+      },
+      "manacube": {
+        "category_label": "MMORPG",
+        "description": "Популярный мир паркура, Skyblock, Survival и кастомных RPG-механик"
+      },
+      "complex": {
+        "category_label": "MMORPG",
+        "description": "Мульти-модовый сервер Pixelmon, Cobblemon, FTB и Vanilla SMP"
+      },
+      "minemen": {
+        "category_label": "PvP",
+        "description": "Профессиональная соревновательная арена дуэлей и Ranked PvP"
+      },
+      "hive": {
+        "category_label": "Bedrock Мини-игры",
+        "description": "Главная сеть мини-игр для Bedrock Edition: Treasure Wars, Hide and Seek, Survival Games"
+      },
+      "nethergames": {
+        "category_label": "Bedrock PvP",
+        "description": "Крупнейшая соревновательная сеть Bedrock: Bedwars, Duels, Skywars, Factions"
+      }
+    }
+  },
+  "categories": {
+    "all": "Все категории",
+    "anarchy": "Анархия и Гриф",
+    "minigames": "Мини-игры (Bedwars, etc.)",
+    "rpg": "MMORPG и Квесты",
+    "pvp": "PvP и Дуэли",
+    "survival": "Выживание и SMP",
+    "bedrock_network": "Bedrock Network",
+    "gaming_network": "Игровая сеть",
+    "direct_host": "Direct Host"
+  },
+  "server_card": {
+    "telemetry_title": "Телеметрия узла",
+    "latency_label": "Отклик:",
+    "load_label": "Нагрузка:",
+    "slots_suffix": "% слотов",
+    "low_ping": "Низкий пинг",
+    "high_online": "Высокий онлайн",
+    "peak_title": "Пик онлайна",
+    "peak_badge": "🏆 Пик: {count}",
+    "conn_diagnostics": "Диагностика соединения",
+    "node_unreachable": "Узел недоступен",
+    "unreachable_desc": "Сервер не отвечает на пинг-запросы.",
+    "cause_label": "Причина:",
+    "timeout_cause": "Превышено время ожидания (Connection timed out)",
+    "players_suffix": "игроков",
+    "zero_players": "0 игроков",
+    "to_launcher": "В лаунчер",
+    "copy_ip": "Копировать IP",
+    "analytics_link": "Аналитика"
+  },
+  "server_detail": {
+    "updated_at": "Обновлено:",
+    "play_launcher": "Играть в лаунчере",
+    "launcher_options_title": "Параметры подключения и лаунчеры",
+    "copy_ip": "Копировать IP",
+    "vote_button": "▲ Голосовать",
+    "online_badge": "Online · {latency} ms",
+    "offline_badge": "Offline",
+    "motd_title": "Message of the Day (MultiPlayer Preview)",
+    "copy_motd": "Копировать MOTD",
+    "motd_copied": "Скопировано!",
+    "server_unreachable": "Server unreachable or offline",
+    "metric_players": "Онлайн игроков",
+    "metric_ping": "Задержка (Пинг)",
+    "ping_measured_from": "Измерено из дата-центра MSK",
+    "metric_peak": "🏆 Рекорд онлайна",
+    "peak_badge": "Peak",
+    "peak_suffix": "пик",
+    "recorded_today": "Зафиксировано сегодня",
+    "metric_version": "Версия & Ядро",
+    "protocol_label": "Протокол: {protocol}",
+    "chart_title": "24-Hour Telemetry Activity",
+    "chart_subtitle": "График активности онлайна и пинга за 24 часа",
+    "scroll_hint": "⟵ Прокрутите ⟶",
+    "recorded_points": "{count} Recorded Points",
+    "chart_legend_players": "Онлайн игроков",
+    "chart_legend_ping": "Задержка (мс)",
+    "probes_title": "Многоточечный замер пинга (Multi-Region Probes)",
+    "probes_count": "3 локации",
+    "probes_subtitle": "Задержка подключения к серверу из ключевых географических хабов игроков",
+    "probes_cache": "SingleFlight Caching TTL 30s",
+    "contacts_title": "Контакты и сообщество",
+    "contacts_subtitle": "Официальные страницы проекта, Discord, соцсети и поддержка",
+    "contacts_verified": "Проверено",
+    "players_sample_title": "Online Player Sample",
+    "players_sample_subtitle": "Sample of currently active players reported by ping protocol",
+    "players_count": "{count} Players",
+    "player_active": "Активен",
+    "news_title": "Новости и обновления сервера",
+    "news_subtitle": "Патчноуты, сезонные ивенты и объявления администрации",
+    "add_news_btn": "Добавить новость",
+    "reviews_title": "Отзывы игроков и рейтинг",
+    "reviews_subtitle": "Мнения реальных пользователей о качестве сервера и комьюнити",
+    "reviews_summary": "★ {avg} / 5.0 ({count} отзывов)",
+    "leave_review_title": "Оставить свой отзыв",
+    "your_rating": "Ваша оценка:",
+    "nickname_placeholder": "Ваш никнейм в игре",
+    "comment_placeholder": "Напишите честный отзыв о геймплее, ТПС, администрации...",
+    "submit_review_btn": "Отправить отзыв",
+    "no_reviews": "Пока нет отзывов для этого сервера. Будьте первым, кто оставит свой отзыв!"
+  },
+  "quick_connect": {
+    "modal_title": "Подключение к серверу",
+    "copied_banner": "IP скопирован в буфер!",
+    "copy_again": "Копировать снова",
+    "tab_any": "Любой MC",
+    "tab_lunar": "Lunar",
+    "tab_badlion": "Badlion",
+    "tab_bedrock": "Bedrock",
+    "any_title": "Любой лаунчер (TLauncher, Mojang, Prism, Modrinth)",
+    "step_1": "Запустите Minecraft в любом лаунчере.",
+    "step_2": "«Сетевая игра» ➔ «Прямое подключение».",
+    "step_3": "Нажмите Ctrl+V ➔ «Подключиться».",
+    "copy_and_close": "Скопировать IP и закрыть",
+    "lunar_title": "Lunar Client",
+    "lunar_subtitle": "Быстрый запуск и авто-вход на сервер",
+    "badlion_title": "Badlion Client",
+    "badlion_subtitle": "Прямое подключение через Badlion",
+    "bedrock_featured_title": "Официальный сервер-партнёр Bedrock",
+    "bedrock_featured_desc": "Сервер уже встроен в игру! Перейдите в «Играть» ➔ вкладка «Серверы» и выберите его в списке.",
+    "bedrock_manual_title": "Для добавления вручную в меню «Серверы» ➔ «Добавить сервер»:",
+    "host_label": "Хост",
+    "port_label": "Порт",
+    "copy_btn": "Копировать",
+    "copied_btn": "Скопирован",
+    "bedrock_hint": "Если игра открылась, но сервер не добавился автоматически (сбой передачи URI в Windows UWP) — скопируйте Хост и Порт выше и вставьте в меню «Добавить сервер».",
+    "launch_bedrock_btn": "Запустить Minecraft Bedrock (URI)",
+    "remember_client": "Запомнить клиент",
+    "reset_choice": "Сбросить выбор",
+    "done_btn": "Готово"
+  },
+  "search": {
+    "breadcrumb_search": "Поиск",
+    "results_title": "Результаты поиска:",
+    "results_found": "Найдено {count} совпадений в каталоге игровых сетей",
+    "results_empty": "В каталоге не найдено точных совпадений по запросу",
+    "options_count": "{count} вариантов",
+    "refine_placeholder": "Уточнить поиск или ввести адрес сервера...",
+    "refine_button": "Искать",
+    "direct_probe_title": "Прямой опрос узла: {host}",
+    "direct_probe_desc": "Проверить отклик и онлайн произвольного хоста напрямую через DNS и пинг-протокол",
+    "direct_probe_action": "Опросить {host}",
+    "empty_title": "По запросу \"{query}\" в каталоге ничего не найдено.",
+    "back_to_servers": "Вернуться ко всем серверам",
+    "prev_page": "← Назад",
+    "next_page": "Вперед →"
+  },
+  "analytics_page": {
+    "admin_badge": "Admin Only",
+    "title": "Телеметрия и активность сайта",
+    "subtitle": "Мониторинг поисковых запросов пользователей, просмотров серверов и взаимодействия с интерфейсом.",
+    "tf_24h": "24 часа",
+    "tf_7d": "7 дней",
+    "tf_30d": "30 дней",
+    "kpi_pageviews": "Просмотры",
+    "kpi_pageviews_sub": "Переходов по страницам",
+    "kpi_visitors": "Посетители",
+    "kpi_visitors_sub": "Уникальных визитов",
+    "kpi_searches": "Поисковые запросы",
+    "kpi_searches_sub": "Что вбивают в поиск",
+    "kpi_actions": "Действия",
+    "kpi_actions_sub": "Клики, копирование, запуск",
+    "top_searches_title": "Что вбивают пользователи",
+    "top_searches_sub": "Популярные запросы в поисковой строке каталога",
+    "th_query": "Запрос",
+    "th_found": "Найдено",
+    "th_searches": "Поисков",
+    "top_searches_empty": "За выбранный период поисковых запросов пока не зафиксировано.",
+    "top_servers_title": "Что смотрят (Популярные серверы)",
+    "top_servers_sub": "Серверы с наибольшим числом открытий карточек",
+    "th_address": "Адрес сервера",
+    "th_views": "Просмотров",
+    "top_servers_empty": "За выбранный период просмотров страниц серверов пока нет.",
+    "devices_title": "Устройства",
+    "browsers_title": "Браузеры",
+    "no_data": "Нет данных",
+    "stream_title": "Живой поток действий",
+    "stream_sub": "Последние события посещения и интерактива",
+    "th_cat": "Категория",
+    "th_target": "Элемент / Цель",
+    "th_visitor": "Посетитель",
+    "th_time": "Время (UTC)",
+    "stream_search": "поиск",
+    "stream_view": "просмотр",
+    "stream_empty": "Пока нет зарегистрированных событий."
+  },
+  "auth": {
+    "tab_login": "Войти",
+    "tab_register": "Регистрация",
+    "username_label": "Имя пользователя",
+    "password_label": "Пароль",
+    "login_submit": "Войти в аккаунт",
+    "reg_username_label": "Логин",
+    "mc_nick_label": "Никнейм в Minecraft",
+    "mc_nick_placeholder": "Для отображения скина",
+    "reg_password_label": "Пароль (мин. 6 символов)",
+    "register_submit": "Зарегистрироваться"
+  },
+  "news_modal": {
+    "title": "Опубликовать новость сервера",
+    "news_title_label": "Заголовок новости",
+    "news_title_placeholder": "Например: Вайп анархии и новые руны",
+    "tag_label": "Категория / Тег",
+    "content_label": "Текст публикации",
+    "content_placeholder": "Подробное описание изменений и нововведений...",
+    "submit_btn": "Опубликовать новость"
+  },
+  "toasts": {
+    "ip_copied": "IP скопирован в буфер!",
+    "copied": "Скопировано!",
+    "ip_copied_paste": "IP скопирован! Вставьте в лаунчере через Ctrl+V",
+    "lunar_launching": "Запуск Lunar Client... IP {addr} в буфере!",
+    "badlion_launching": "Запуск Badlion Client... IP {addr} в буфере!",
+    "bedrock_launching": "Minecraft Bedrock запускается! Если сервер не добавился — скопируйте хост и порт.",
+    "bedrock_featured_notice": "Сервер встроен во вкладку «Серверы» Bedrock! IP скопирован.",
+    "pref_reset": "Сохраненный лаунчер сброшен",
+    "change_btn": "Сменить",
+    "vote_success": "Спасибо за ваш голос!",
+    "vote_already": "Вы уже голосовали за этот сервер сегодня!",
+    "vote_error": "Ошибка при отправке голоса",
+    "review_success": "Отзыв успешно добавлен!",
+    "review_error": "Ошибка при отправке отзыва",
+    "news_success": "Новость успешно опубликована!",
+    "news_error": "Ошибка при публикации",
+    "network_error": "Ошибка сети"
+  },
+  "footer": {
+    "rights": "VoxelVitals Network Telemetry © 2026. All rights reserved.",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "direct_json": "Direct JSON",
+    "version": "v1.0.0"
+  },
+  "errors": {
+    "page_not_found": "Страница не найдена",
+    "page_not_found_desc": "Запрашиваемая страница не существует или была перемещена.",
+    "back_home": "Вернуться на главную",
+    "too_many_requests": "Слишком много запросов. Лимит: {limit}",
+    "server_error": "Внутренняя ошибка сервера",
+    "unauthorized": "Не авторизован",
+    "forbidden_admin": "Доступ к панели аналитики разрешен только администраторам."
+  },
+  "probes": {
+    "hubs": {
+      "MSK": {
+        "city": "Москва",
+        "country": "Россия",
+        "flag": "🇷🇺"
+      },
+      "FRA": {
+        "city": "Франкфурт",
+        "country": "Германия",
+        "flag": "🇩🇪"
+      },
+      "HEL": {
+        "city": "Хельсинки",
+        "country": "Финляндия",
+        "flag": "🇫🇮"
+      }
+    },
+    "statuses": {
+      "excellent": "Отличный",
+      "good": "Хороший",
+      "fair": "Средний",
+      "high": "Высокий",
+      "offline": "Офлайн"
+    }
+  },
+  "server": {
+    "updated_at": "Обновлено:",
+    "play_launcher": "Играть в лаунчере",
+    "launcher_options_title": "Параметры подключения и лаунчеры",
+    "copy_ip": "Копировать IP",
+    "vote_button": "▲ Голосовать",
+    "online_badge": "Online · {latency} ms",
+    "offline_badge": "Offline",
+    "motd_title": "Message of the Day (MultiPlayer Preview)",
+    "copy_motd": "Копировать MOTD",
+    "motd_copied": "Скопировано!",
+    "server_unreachable": "Server unreachable or offline",
+    "metric_players": "Онлайн игроков",
+    "metric_ping": "Задержка (Пинг)",
+    "ping_measured_from": "Измерено из дата-центра MSK",
+    "metric_peak": "🏆 Рекорд онлайна",
+    "peak_badge": "Peak",
+    "peak_suffix": "пик",
+    "recorded_today": "Зафиксировано сегодня",
+    "metric_version": "Версия & Ядро",
+    "protocol_label": "Протокол: {protocol}",
+    "chart_title": "24-Hour Telemetry Activity",
+    "chart_subtitle": "График активности онлайна и пинга за 24 часа",
+    "scroll_hint": "⟵ Прокрутите ⟶",
+    "recorded_points": "{count} Recorded Points",
+    "chart_legend_players": "Онлайн игроков",
+    "chart_legend_ping": "Задержка (мс)",
+    "probes_title": "Многоточечный замер пинга (Multi-Region Probes)",
+    "probes_count": "3 локации",
+    "probes_subtitle": "Задержка подключения к серверу из ключевых географических хабов игроков",
+    "probes_cache": "SingleFlight Caching TTL 30s",
+    "contacts_title": "Контакты и сообщество",
+    "contacts_subtitle": "Официальные страницы проекта, Discord, соцсети и поддержка",
+    "contacts_verified": "Проверено",
+    "players_sample_title": "Online Player Sample",
+    "players_sample_subtitle": "Sample of currently active players reported by ping protocol",
+    "players_count": "{count} Players",
+    "player_active": "Активен",
+    "news_title": "Новости и обновления сервера",
+    "news_subtitle": "Патчноуты, сезонные ивенты и объявления администрации",
+    "add_news_btn": "Добавить новость",
+    "reviews_title": "Отзывы игроков и рейтинг",
+    "reviews_subtitle": "Мнения реальных пользователей о качестве сервера и комьюнити",
+    "reviews_summary": "★ {avg} / 5.0 ({count} отзывов)",
+    "leave_review_title": "Оставить свой отзыв",
+    "your_rating": "Ваша оценка:",
+    "nickname_placeholder": "Ваш никнейм в игре",
+    "comment_placeholder": "Напишите честный отзыв о геймплее, ТПС, администрации...",
+    "submit_review_btn": "Отправить отзыв",
+    "no_reviews": "Пока нет отзывов для этого сервера. Будьте первым, кто оставит свой отзыв!"
+  }
+}

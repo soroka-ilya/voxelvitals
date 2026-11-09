@@ -1,0 +1,403 @@
+{
+  "meta": {
+    "code": "en",
+    "name": "English",
+    "flag": "🇬🇧"
+  },
+  "nav": {
+    "explorer": "Live Explorer",
+    "analytics": "Analytics",
+    "api_reference": "API Reference",
+    "theme_toggle": "Toggle Theme (Light / Dark / Auto)",
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "verified_license": "Official Minecraft license verified via Microsoft"
+  },
+  "hero": {
+    "protocol_badge": "Protocol v767 & Bedrock v1.21 Compatible",
+    "title": "Minecraft Server Telemetry & Status",
+    "subtitle": "Query live players, latency, DNS SRV records, MOTD formatting, and export dynamic SVG status badges.",
+    "search_placeholder": "Example: 2b2t, hypixel, reallyworld, play.cubecraft.net",
+    "search_button": "Check Server"
+  },
+  "catalog": {
+    "badge": "Server Catalog",
+    "title": "Popular Gaming Networks",
+    "subtitle": "Official hubs featuring direct launcher connectivity and live telemetry",
+    "all_editions": "All Editions",
+    "categories_all": "Categories: All",
+    "categories_count": "Categories ({count})",
+    "versions_all": "Version: All",
+    "versions_count": "Versions ({count})",
+    "supported_versions": "Supported Versions",
+    "latest": "(Latest)",
+    "reset_filters": "Reset",
+    "empty_state": "No servers match the selected filter combination.",
+    "reset_all_filters": "Reset all filters",
+    "tracked_infra_title": "Tracked Infrastructure",
+    "tracked_infra_subtitle": "Live health indicators from verified public nodes",
+    "active_monitoring": "Active Monitoring",
+    "servers": {
+      "hypixel": {
+        "category_label": "Minigames",
+        "description": "The world's largest server: BedWars, SkyWars, SkyBlock, and competitive tournaments"
+      },
+      "2b2t": {
+        "category_label": "Anarchy & Survival",
+        "description": "The oldest anarchy server with no rules, map resets, or chat moderation since 2010"
+      },
+      "donutsmp": {
+        "category_label": "Anarchy & Survival",
+        "description": "Hardcore vanilla SMP featuring player economy, clans, and base raiding"
+      },
+      "reallyworld": {
+        "category_label": "Anarchy & Grief",
+        "description": "Top CIS community server: classic anarchy, auto-mines, duels, and clan wars"
+      },
+      "funtime": {
+        "category_label": "Anarchy & Survival",
+        "description": "Premier anarchy network with unique world events, crushers, and custom PvP"
+      },
+      "holyworld": {
+        "category_label": "Anarchy",
+        "description": "Major anarchy server: custom enchants, magic orbs, talismans, and duels"
+      },
+      "cubecraft": {
+        "category_label": "Minigames",
+        "description": "Renowned minigames network: EggWars, Lucky Islands, and Tower Defence"
+      },
+      "gommehd": {
+        "category_label": "Minigames",
+        "description": "Leading European minigame server featuring BedWars, TTT, and JumpLeague"
+      },
+      "vimeworld": {
+        "category_label": "Minigames",
+        "description": "Largest Russian-speaking network for original minigames and arcades"
+      },
+      "wynncraft": {
+        "category_label": "MMORPG",
+        "description": "Massive fantasy MMORPG inside Minecraft: rich quests, dungeons, bosses, and classes"
+      },
+      "manacube": {
+        "category_label": "MMORPG",
+        "description": "Popular network featuring parkour, Skyblock, Survival, and custom RPG mechanics"
+      },
+      "complex": {
+        "category_label": "MMORPG",
+        "description": "Multi-mod network featuring Pixelmon, Cobblemon, FTB, and Vanilla SMP"
+      },
+      "minemen": {
+        "category_label": "PvP",
+        "description": "Premier competitive arena for 1v1 duels and ranked practice PvP"
+      },
+      "hive": {
+        "category_label": "Bedrock Minigames",
+        "description": "Leading Bedrock Edition minigame network: Treasure Wars, Hide and Seek, Survival Games"
+      },
+      "nethergames": {
+        "category_label": "Bedrock PvP",
+        "description": "Largest Bedrock competitive hub: Bedwars, Duels, Skywars, and Factions"
+      }
+    }
+  },
+  "categories": {
+    "all": "All Categories",
+    "anarchy": "Anarchy & Grief",
+    "minigames": "Minigames (Bedwars, etc.)",
+    "rpg": "MMORPG & Quests",
+    "pvp": "PvP & Duels",
+    "survival": "Survival & SMP",
+    "bedrock_network": "Bedrock Network",
+    "gaming_network": "Gaming Network",
+    "direct_host": "Direct Host"
+  },
+  "server_card": {
+    "telemetry_title": "Node Telemetry",
+    "latency_label": "Latency:",
+    "load_label": "Load:",
+    "slots_suffix": "% slots",
+    "low_ping": "Low Ping",
+    "high_online": "High Player Count",
+    "peak_title": "Peak Players",
+    "peak_badge": "🏆 Peak: {count}",
+    "conn_diagnostics": "Connection Diagnostics",
+    "node_unreachable": "Node Unreachable",
+    "unreachable_desc": "Server is not responding to ping queries.",
+    "cause_label": "Cause:",
+    "timeout_cause": "Connection timed out",
+    "players_suffix": "players",
+    "zero_players": "0 players",
+    "to_launcher": "To Launcher",
+    "copy_ip": "Copy IP",
+    "analytics_link": "Analytics"
+  },
+  "server_detail": {
+    "updated_at": "Updated:",
+    "play_launcher": "Play in Launcher",
+    "launcher_options_title": "Connection Options & Launchers",
+    "copy_ip": "Copy IP",
+    "vote_button": "▲ Vote",
+    "online_badge": "Online · {latency} ms",
+    "offline_badge": "Offline",
+    "motd_title": "Message of the Day (MultiPlayer Preview)",
+    "copy_motd": "Copy MOTD",
+    "motd_copied": "Copied!",
+    "server_unreachable": "Server unreachable or offline",
+    "metric_players": "Online Players",
+    "metric_ping": "Latency (Ping)",
+    "ping_measured_from": "Measured from MSK datacenter",
+    "metric_peak": "🏆 Peak Record",
+    "peak_badge": "Peak",
+    "peak_suffix": "peak",
+    "recorded_today": "Recorded today",
+    "metric_version": "Version & Core",
+    "protocol_label": "Protocol: {protocol}",
+    "chart_title": "24-Hour Telemetry Activity",
+    "chart_subtitle": "Player count and latency activity chart over the past 24 hours",
+    "scroll_hint": "⟵ Scroll ⟶",
+    "recorded_points": "{count} Recorded Points",
+    "chart_legend_players": "Players Online",
+    "chart_legend_ping": "Latency (ms)",
+    "probes_title": "Multi-Region Probes",
+    "probes_count": "3 locations",
+    "probes_subtitle": "Connection latency to the server measured from key player regional hubs",
+    "probes_cache": "SingleFlight Caching TTL 30s",
+    "contacts_title": "Contacts & Community",
+    "contacts_subtitle": "Official project pages, Discord, social media, and support",
+    "contacts_verified": "Verified",
+    "players_sample_title": "Online Player Sample",
+    "players_sample_subtitle": "Sample of currently active players reported by ping protocol",
+    "players_count": "{count} Players",
+    "player_active": "Active",
+    "news_title": "Server News & Announcements",
+    "news_subtitle": "Patch notes, seasonal events, and administrative announcements",
+    "add_news_btn": "Add News",
+    "reviews_title": "Player Reviews & Ratings",
+    "reviews_subtitle": "Authentic feedback from real users about gameplay quality and community",
+    "reviews_summary": "★ {avg} / 5.0 ({count} reviews)",
+    "leave_review_title": "Leave a Review",
+    "your_rating": "Your Rating:",
+    "nickname_placeholder": "Your in-game nickname",
+    "comment_placeholder": "Write an honest review about gameplay, TPS, moderation...",
+    "submit_review_btn": "Submit Review",
+    "no_reviews": "No reviews yet for this server. Be the first to share your experience!"
+  },
+  "quick_connect": {
+    "modal_title": "Connect to Server",
+    "copied_banner": "IP copied to clipboard!",
+    "copy_again": "Copy again",
+    "tab_any": "Any MC",
+    "tab_lunar": "Lunar",
+    "tab_badlion": "Badlion",
+    "tab_bedrock": "Bedrock",
+    "any_title": "Any Launcher (Prism, Modrinth, TLauncher, Vanilla)",
+    "step_1": "Launch Minecraft in your launcher.",
+    "step_2": "Navigate to Multiplayer ➔ Direct Connection.",
+    "step_3": "Press Ctrl+V ➔ Click Connect.",
+    "copy_and_close": "Copy IP & Close",
+    "lunar_title": "Lunar Client",
+    "lunar_subtitle": "Quick launch and automatic server join",
+    "badlion_title": "Badlion Client",
+    "badlion_subtitle": "Direct connection via Badlion Client",
+    "bedrock_featured_title": "Official Bedrock Partner Server",
+    "bedrock_featured_desc": "Server is already built into the game! Go to Play ➔ Servers tab and select it from the list.",
+    "bedrock_manual_title": "To add manually, navigate to Servers ➔ Add Server:",
+    "host_label": "Host",
+    "port_label": "Port",
+    "copy_btn": "Copy",
+    "copied_btn": "Copied",
+    "bedrock_hint": "If Minecraft opened without adding the server automatically (Windows UWP URI protocol limitation) — copy the Host and Port above and paste them into 'Add Server'.",
+    "launch_bedrock_btn": "Launch Minecraft Bedrock (URI)",
+    "remember_client": "Remember my choice",
+    "reset_choice": "Reset choice",
+    "done_btn": "Done"
+  },
+  "search": {
+    "breadcrumb_search": "Search",
+    "results_title": "Search Results:",
+    "results_found": "Found {count} matching networks in catalog",
+    "results_empty": "No exact catalog matches found for query",
+    "options_count": "{count} options",
+    "refine_placeholder": "Refine search or enter server address...",
+    "refine_button": "Search",
+    "direct_probe_title": "Direct Node Probe: {host}",
+    "direct_probe_desc": "Query latency and live player count directly via DNS and ping protocol",
+    "direct_probe_action": "Query {host}",
+    "empty_title": "No servers found in catalog matching \"{query}\".",
+    "back_to_servers": "Return to all servers",
+    "prev_page": "← Previous",
+    "next_page": "Next →"
+  },
+  "analytics_page": {
+    "admin_badge": "Admin Only",
+    "title": "Site Telemetry & Activity",
+    "subtitle": "Monitoring user search queries, server pageviews, and UI interactions.",
+    "tf_24h": "24 Hours",
+    "tf_7d": "7 Days",
+    "tf_30d": "30 Days",
+    "kpi_pageviews": "Pageviews",
+    "kpi_pageviews_sub": "Total page navigations",
+    "kpi_visitors": "Visitors",
+    "kpi_visitors_sub": "Unique visitor sessions",
+    "kpi_searches": "Searches",
+    "kpi_searches_sub": "Queries entered into search",
+    "kpi_actions": "Actions",
+    "kpi_actions_sub": "Clicks, copies, launcher runs",
+    "top_searches_title": "Top Search Queries",
+    "top_searches_sub": "Most frequent queries entered in catalog search bar",
+    "th_query": "Query",
+    "th_found": "Results",
+    "th_searches": "Count",
+    "top_searches_empty": "No search queries recorded for the selected timeframe.",
+    "top_servers_title": "Most Viewed Servers",
+    "top_servers_sub": "Servers with the highest detail card views",
+    "th_address": "Server Address",
+    "th_views": "Views",
+    "top_servers_empty": "No server detail views recorded for the selected timeframe.",
+    "devices_title": "Devices",
+    "browsers_title": "Browsers",
+    "no_data": "No data",
+    "stream_title": "Live Activity Stream",
+    "stream_sub": "Latest pageviews and interactive events",
+    "th_cat": "Category",
+    "th_target": "Target / Item",
+    "th_visitor": "Visitor",
+    "th_time": "Time (UTC)",
+    "stream_search": "search",
+    "stream_view": "view",
+    "stream_empty": "No activity events recorded yet."
+  },
+  "auth": {
+    "tab_login": "Sign In",
+    "tab_register": "Register",
+    "username_label": "Username",
+    "password_label": "Password",
+    "login_submit": "Sign in to Account",
+    "reg_username_label": "Username",
+    "mc_nick_label": "Minecraft Username",
+    "mc_nick_placeholder": "For skin rendering",
+    "reg_password_label": "Password (min. 6 characters)",
+    "register_submit": "Create Account"
+  },
+  "news_modal": {
+    "title": "Publish Server News",
+    "news_title_label": "News Title",
+    "news_title_placeholder": "Example: Anarchy wipe and new rune system",
+    "tag_label": "Category / Tag",
+    "content_label": "Publication Text",
+    "content_placeholder": "Detailed description of patch notes and changes...",
+    "submit_btn": "Publish News"
+  },
+  "toasts": {
+    "ip_copied": "IP copied to clipboard!",
+    "copied": "Copied!",
+    "ip_copied_paste": "IP copied! Paste in launcher via Ctrl+V",
+    "lunar_launching": "Launching Lunar Client... IP {addr} in clipboard!",
+    "badlion_launching": "Launching Badlion Client... IP {addr} in clipboard!",
+    "bedrock_launching": "Minecraft Bedrock is launching! If the server was not added, copy host & port.",
+    "bedrock_featured_notice": "Server is integrated into Bedrock 'Servers' tab! IP copied.",
+    "pref_reset": "Saved launcher preference reset",
+    "change_btn": "Change",
+    "vote_success": "Thank you for your vote!",
+    "vote_already": "You have already voted for this server today!",
+    "vote_error": "Error submitting vote",
+    "review_success": "Review successfully submitted!",
+    "review_error": "Error submitting review",
+    "news_success": "News successfully published!",
+    "news_error": "Error publishing news",
+    "network_error": "Network error"
+  },
+  "footer": {
+    "rights": "VoxelVitals Network Telemetry © 2026. All rights reserved.",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "direct_json": "Direct JSON",
+    "version": "v1.0.0"
+  },
+  "errors": {
+    "page_not_found": "Page Not Found",
+    "page_not_found_desc": "The requested page does not exist or has been moved.",
+    "back_home": "Back to Home",
+    "too_many_requests": "Too many requests. Limit: {limit}",
+    "server_error": "Internal Server Error",
+    "unauthorized": "Unauthorized",
+    "forbidden_admin": "Access to analytics dashboard is restricted to administrators only."
+  },
+  "probes": {
+    "hubs": {
+      "MSK": {
+        "city": "Moscow",
+        "country": "Russia",
+        "flag": "🇷🇺"
+      },
+      "FRA": {
+        "city": "Frankfurt",
+        "country": "Germany",
+        "flag": "🇩🇪"
+      },
+      "HEL": {
+        "city": "Helsinki",
+        "country": "Finland",
+        "flag": "🇫🇮"
+      }
+    },
+    "statuses": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "fair": "Fair",
+      "high": "High",
+      "offline": "Offline"
+    }
+  },
+  "server": {
+    "updated_at": "Updated:",
+    "play_launcher": "Play in Launcher",
+    "launcher_options_title": "Connection Options & Launchers",
+    "copy_ip": "Copy IP",
+    "vote_button": "▲ Vote",
+    "online_badge": "Online · {latency} ms",
+    "offline_badge": "Offline",
+    "motd_title": "Message of the Day (MultiPlayer Preview)",
+    "copy_motd": "Copy MOTD",
+    "motd_copied": "Copied!",
+    "server_unreachable": "Server unreachable or offline",
+    "metric_players": "Online Players",
+    "metric_ping": "Latency (Ping)",
+    "ping_measured_from": "Measured from MSK datacenter",
+    "metric_peak": "🏆 Peak Record",
+    "peak_badge": "Peak",
+    "peak_suffix": "peak",
+    "recorded_today": "Recorded today",
+    "metric_version": "Version & Core",
+    "protocol_label": "Protocol: {protocol}",
+    "chart_title": "24-Hour Telemetry Activity",
+    "chart_subtitle": "Player count and latency activity chart over the past 24 hours",
+    "scroll_hint": "⟵ Scroll ⟶",
+    "recorded_points": "{count} Recorded Points",
+    "chart_legend_players": "Players Online",
+    "chart_legend_ping": "Latency (ms)",
+    "probes_title": "Multi-Region Probes",
+    "probes_count": "3 locations",
+    "probes_subtitle": "Connection latency to the server measured from key player regional hubs",
+    "probes_cache": "SingleFlight Caching TTL 30s",
+    "contacts_title": "Contacts & Community",
+    "contacts_subtitle": "Official project pages, Discord, social media, and support",
+    "contacts_verified": "Verified",
+    "players_sample_title": "Online Player Sample",
+    "players_sample_subtitle": "Sample of currently active players reported by ping protocol",
+    "players_count": "{count} Players",
+    "player_active": "Active",
+    "news_title": "Server News & Announcements",
+    "news_subtitle": "Patch notes, seasonal events, and administrative announcements",
+    "add_news_btn": "Add News",
+    "reviews_title": "Player Reviews & Ratings",
+    "reviews_subtitle": "Authentic feedback from real users about gameplay quality and community",
+    "reviews_summary": "★ {avg} / 5.0 ({count} reviews)",
+    "leave_review_title": "Leave a Review",
+    "your_rating": "Your Rating:",
+    "nickname_placeholder": "Your in-game nickname",
+    "comment_placeholder": "Write an honest review about gameplay, TPS, moderation...",
+    "submit_review_btn": "Submit Review",
+    "no_reviews": "No reviews yet for this server. Be the first to share your experience!"
+  }
+}

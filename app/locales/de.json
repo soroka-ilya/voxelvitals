@@ -1,0 +1,403 @@
+{
+  "meta": {
+    "code": "de",
+    "name": "Deutsch",
+    "flag": "🇩🇪"
+  },
+  "nav": {
+    "explorer": "Live-Explorer",
+    "analytics": "Analytik",
+    "api_reference": "API-Referenz",
+    "theme_toggle": "Design umschalten (Hell / Dunkel / Auto)",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "verified_license": "Offizielle Minecraft-Lizenz über Microsoft verifiziert"
+  },
+  "hero": {
+    "protocol_badge": "Kompatibel mit Protokoll v767 & Bedrock v1.21",
+    "title": "Minecraft Server-Telemetrie & Status",
+    "subtitle": "Echtzeit-Spielerzahlen, Latenz, DNS-SRV-Einträge, MOTD-Formatierung abfragen und dynamische SVG-Status-Badges exportieren.",
+    "search_placeholder": "Z. B.: 2b2t, hypixel, reallyworld, play.cubecraft.net",
+    "search_button": "Server prüfen"
+  },
+  "catalog": {
+    "badge": "Serverkatalog",
+    "title": "Beliebte Gaming-Netzwerke",
+    "subtitle": "Offizielle Hubs mit Schnellstart-Unterstützung und 24h-Analytik",
+    "all_editions": "Alle Editionen",
+    "categories_all": "Kategorien: Alle",
+    "categories_count": "Kategorien ({count})",
+    "versions_all": "Version: Alle",
+    "versions_count": "Versionen ({count})",
+    "supported_versions": "Unterstützte Versionen",
+    "latest": "(Aktuell)",
+    "reset_filters": "Zurücksetzen",
+    "empty_state": "Keine Server entsprechen der ausgewählten Filterkombination.",
+    "reset_all_filters": "Alle Filter zurücksetzen",
+    "tracked_infra_title": "Überwachte Infrastruktur",
+    "tracked_infra_subtitle": "Live-Gesundheitsindikatoren von verifizierten öffentlichen Knoten",
+    "active_monitoring": "Aktive Überwachung",
+    "servers": {
+      "hypixel": {
+        "category_label": "Minispiele",
+        "description": "Größter Server der Welt: BedWars, SkyWars, SkyBlock und Turniere"
+      },
+      "2b2t": {
+        "category_label": "Anarchie & Survival",
+        "description": "Der älteste Anarchie-Server ohne Regeln, Resets oder Chatfilter seit 2010"
+      },
+      "donutsmp": {
+        "category_label": "Anarchie & Survival",
+        "description": "Hardcore-Vanilla-SMP mit Wirtschaftssystem, Clans und Basis-Raids"
+      },
+      "reallyworld": {
+        "category_label": "Anarchie & Grief",
+        "description": "Beliebter GUS-Server: klassische Anarchie, Auto-Minen, Duelle und Clans"
+      },
+      "funtime": {
+        "category_label": "Anarchie & Survival",
+        "description": "Top-Anarchie-Netzwerk mit einzigartigen Events, Crushern und individuellem PvP"
+      },
+      "holyworld": {
+        "category_label": "Anarchie",
+        "description": "Großer Anarchie-Server: benutzerdefinierte Verzauberungen, Sphären, Talismane und Duelle"
+      },
+      "cubecraft": {
+        "category_label": "Minispiele",
+        "description": "Bekanntes Minispiele-Netzwerk: EggWars, Lucky Islands und Tower Defence"
+      },
+      "gommehd": {
+        "category_label": "Minispiele",
+        "description": "Führender europäischer Minispiele-Server mit BedWars, TTT und JumpLeague"
+      },
+      "vimeworld": {
+        "category_label": "Minispiele",
+        "description": "Größtes russischsprachiges Netzwerk für Minispiele und Arcades"
+      },
+      "wynncraft": {
+        "category_label": "MMORPG",
+        "description": "Riesiges Fantasy-MMORPG in Minecraft: Quests, Dungeons, Bosse und Charakterklassen"
+      },
+      "manacube": {
+        "category_label": "MMORPG",
+        "description": "Beliebte Welt für Parkour, Skyblock, Survival und eigene RPG-Systeme"
+      },
+      "complex": {
+        "category_label": "MMORPG",
+        "description": "Multi-Mod-Server mit Pixelmon, Cobblemon, FTB und Vanilla-SMP"
+      },
+      "minemen": {
+        "category_label": "PvP",
+        "description": "Professionelle Wettkampfarena für Duelle und Ranked Practice PvP"
+      },
+      "hive": {
+        "category_label": "Bedrock Minispiele",
+        "description": "Haupt-Netzwerk für Bedrock Edition: Treasure Wars, Versteckspiel, Survival Games"
+      },
+      "nethergames": {
+        "category_label": "Bedrock PvP",
+        "description": "Größtes Bedrock-Wettkampfnetzwerk: Bedwars, Duelle, Skywars und Factions"
+      }
+    }
+  },
+  "categories": {
+    "all": "Alle Kategorien",
+    "anarchy": "Anarchie & Grief",
+    "minigames": "Minispiele (Bedwars usw.)",
+    "rpg": "MMORPG & Quests",
+    "pvp": "PvP & Duelle",
+    "survival": "Survival & SMP",
+    "bedrock_network": "Bedrock-Netzwerk",
+    "gaming_network": "Gaming-Netzwerk",
+    "direct_host": "Direkter Host"
+  },
+  "server_card": {
+    "telemetry_title": "Knoten-Telemetrie",
+    "latency_label": "Latenz:",
+    "load_label": "Auslastung:",
+    "slots_suffix": "% Slots",
+    "low_ping": "Niedriger Ping",
+    "high_online": "Hohe Spielerzahl",
+    "peak_title": "Online-Rekord",
+    "peak_badge": "🏆 Rekord: {count}",
+    "conn_diagnostics": "Verbindungsdiagnose",
+    "node_unreachable": "Knoten nicht erreichbar",
+    "unreachable_desc": "Server antwortet nicht auf Ping-Anfragen.",
+    "cause_label": "Ursache:",
+    "timeout_cause": "Verbindungs-Timeout (Connection timed out)",
+    "players_suffix": "Spieler",
+    "zero_players": "0 Spieler",
+    "to_launcher": "In Launcher",
+    "copy_ip": "IP kopieren",
+    "analytics_link": "Analytik"
+  },
+  "server_detail": {
+    "updated_at": "Aktualisiert:",
+    "play_launcher": "Im Launcher spielen",
+    "launcher_options_title": "Verbindungsoptionen & Launcher",
+    "copy_ip": "IP kopieren",
+    "vote_button": "▲ Abstimmen",
+    "online_badge": "Online · {latency} ms",
+    "offline_badge": "Offline",
+    "motd_title": "Message of the Day (MultiPlayer Preview)",
+    "copy_motd": "MOTD kopieren",
+    "motd_copied": "Kopiert!",
+    "server_unreachable": "Server nicht erreichbar oder offline",
+    "metric_players": "Spieler online",
+    "metric_ping": "Latenz (Ping)",
+    "ping_measured_from": "Gemessen aus MSK-Rechenzentrum",
+    "metric_peak": "🏆 Online-Rekord",
+    "peak_badge": "Rekord",
+    "peak_suffix": "Peak",
+    "recorded_today": "Heute erfasst",
+    "metric_version": "Version & Core",
+    "protocol_label": "Protokoll: {protocol}",
+    "chart_title": "24-Stunden-Telemetrie",
+    "chart_subtitle": "Diagramm der Spieleraktivität und Latenz der letzten 24 Stunden",
+    "scroll_hint": "⟵ Scrollen ⟶",
+    "recorded_points": "{count} Messpunkte",
+    "chart_legend_players": "Spieler online",
+    "chart_legend_ping": "Latenz (ms)",
+    "probes_title": "Multi-Regionen-Ping (Multi-Region Probes)",
+    "probes_count": "3 Standorte",
+    "probes_subtitle": "Verbindungslatenz zum Server aus wichtigen regionalen Knotenpunkten",
+    "probes_cache": "SingleFlight Caching TTL 30s",
+    "contacts_title": "Kontakte & Community",
+    "contacts_subtitle": "Offizielle Projektlinks, Discord, soziale Medien und Support",
+    "contacts_verified": "Verifiziert",
+    "players_sample_title": "Aktive Spieler-Stichprobe",
+    "players_sample_subtitle": "Vom Ping-Protokoll gemeldete aktive Spieler",
+    "players_count": "{count} Spieler",
+    "player_active": "Aktiv",
+    "news_title": "Server-News & Ankündigungen",
+    "news_subtitle": "Patchnotes, saisonale Events und Team-Ankündigungen",
+    "add_news_btn": "News hinzufügen",
+    "reviews_title": "Spielerbewertungen & Rating",
+    "reviews_subtitle": "Erfahrungsberichte echter Nutzer über Gameplay und Community",
+    "reviews_summary": "★ {avg} / 5.0 ({count} Bewertungen)",
+    "leave_review_title": "Eigene Bewertung abgeben",
+    "your_rating": "Deine Bewertung:",
+    "nickname_placeholder": "Dein Minecraft-Name",
+    "comment_placeholder": "Schreibe eine ehrliche Bewertung zu Gameplay, TPS, Team...",
+    "submit_review_btn": "Bewertung absenden",
+    "no_reviews": "Noch keine Bewertungen für diesen Server. Sei der Erste!"
+  },
+  "quick_connect": {
+    "modal_title": "Mit Server verbinden",
+    "copied_banner": "IP in die Zwischenablage kopiert!",
+    "copy_again": "Erneut kopieren",
+    "tab_any": "Jeder MC",
+    "tab_lunar": "Lunar",
+    "tab_badlion": "Badlion",
+    "tab_bedrock": "Bedrock",
+    "any_title": "Beliebiger Launcher (Prism, Modrinth, TLauncher, Mojang)",
+    "step_1": "Starte Minecraft in einem beliebigen Launcher.",
+    "step_2": "Gehe zu «Mehrspieler» ➔ «Direkte Verbindung».",
+    "step_3": "Drücke Strg+V ➔ «Verbinden».",
+    "copy_and_close": "IP kopieren & schließen",
+    "lunar_title": "Lunar Client",
+    "lunar_subtitle": "Schnellstart und automatischer Serverbeitritt",
+    "badlion_title": "Badlion Client",
+    "badlion_subtitle": "Direkte Verbindung über Badlion Client",
+    "bedrock_featured_title": "Offizieller Bedrock-Partnerserver",
+    "bedrock_featured_desc": "Dieser Server ist bereits im Spiel integriert! Gehe zu «Spielen» ➔ Reiter «Server» und wähle ihn aus der Liste.",
+    "bedrock_manual_title": "Um manuell hinzuzufügen: «Server» ➔ «Server hinzufügen»:",
+    "host_label": "Host",
+    "port_label": "Port",
+    "copy_btn": "Kopieren",
+    "copied_btn": "Kopiert",
+    "bedrock_hint": "Wenn das Spiel geöffnet wurde, der Server aber nicht automatisch hinzugefügt wurde — kopiere Host und Port und trage sie unter «Server hinzufügen» ein.",
+    "launch_bedrock_btn": "Minecraft Bedrock starten (URI)",
+    "remember_client": "Auswahl merken",
+    "reset_choice": "Auswahl zurücksetzen",
+    "done_btn": "Fertig"
+  },
+  "search": {
+    "breadcrumb_search": "Suche",
+    "results_title": "Suchergebnisse:",
+    "results_found": "{count} passende Servernetzwerke im Katalog gefunden",
+    "results_empty": "Keine genauen Katalogtreffer für die Anfrage gefunden",
+    "options_count": "{count} Optionen",
+    "refine_placeholder": "Suche verfeinern oder Serveradresse eingeben...",
+    "refine_button": "Suchen",
+    "direct_probe_title": "Direkte Knotenabfrage: {host}",
+    "direct_probe_desc": "Antwortzeit und Spielerzahl eines beliebigen Hosts direkt via DNS und Ping prüfen",
+    "direct_probe_action": "{host} abfragen",
+    "empty_title": "Keine Server im Katalog für die Anfrage \"{query}\" gefunden.",
+    "back_to_servers": "Zurück zu allen Servern",
+    "prev_page": "← Zurück",
+    "next_page": "Weiter →"
+  },
+  "analytics_page": {
+    "admin_badge": "Nur Administratoren",
+    "title": "Seiten-Telemetrie & Aktivität",
+    "subtitle": "Überwachung von Suchanfragen, Serveraufrufen und UI-Interaktionen.",
+    "tf_24h": "24 Stunden",
+    "tf_7d": "7 Tage",
+    "tf_30d": "30 Tage",
+    "kpi_pageviews": "Aufrufe",
+    "kpi_pageviews_sub": "Seitenaufrufe insgesamt",
+    "kpi_visitors": "Besucher",
+    "kpi_visitors_sub": "Eindeutige Besucher-Sessions",
+    "kpi_searches": "Suchanfragen",
+    "kpi_searches_sub": "Eingegebene Suchbegriffe",
+    "kpi_actions": "Aktionen",
+    "kpi_actions_sub": "Klicks, Kopieren, Launcher-Starts",
+    "top_searches_title": "Häufigste Suchbegriffe",
+    "top_searches_sub": "Beliebte Suchanfragen im Server-Katalog",
+    "th_query": "Anfrage",
+    "th_found": "Treffer",
+    "th_searches": "Anzahl",
+    "top_searches_empty": "Keine Suchanfragen im ausgewählten Zeitraum protokolliert.",
+    "top_servers_title": "Meistgesehene Server",
+    "top_servers_sub": "Server mit den meisten Detailaufrufen",
+    "th_address": "Serveradresse",
+    "th_views": "Aufrufe",
+    "top_servers_empty": "Keine Serveraufrufe im ausgewählten Zeitraum verzeichnet.",
+    "devices_title": "Geräte",
+    "browsers_title": "Browser",
+    "no_data": "Keine Daten",
+    "stream_title": "Live-Aktivitätsstrom",
+    "stream_sub": "Neueste Seitenaufrufe und Interaktionen",
+    "th_cat": "Kategorie",
+    "th_target": "Element / Ziel",
+    "th_visitor": "Besucher",
+    "th_time": "Zeit (UTC)",
+    "stream_search": "Suche",
+    "stream_view": "Aufruf",
+    "stream_empty": "Noch keine protokollierten Ereignisse."
+  },
+  "auth": {
+    "tab_login": "Anmelden",
+    "tab_register": "Registrieren",
+    "username_label": "Benutzername",
+    "password_label": "Passwort",
+    "login_submit": "Anmelden",
+    "reg_username_label": "Benutzername",
+    "mc_nick_label": "Minecraft-Spielername",
+    "mc_nick_placeholder": "Für Skin-Vorschau",
+    "reg_password_label": "Passwort (mind. 6 Zeichen)",
+    "register_submit": "Konto erstellen"
+  },
+  "news_modal": {
+    "title": "Server-News veröffentlichen",
+    "news_title_label": "Titel der News",
+    "news_title_placeholder": "Z. B.: Anarchie-Wipe und neues Runensystem",
+    "tag_label": "Kategorie / Tag",
+    "content_label": "Nachrichtentext",
+    "content_placeholder": "Detaillierte Beschreibung der Änderungen...",
+    "submit_btn": "News veröffentlichen"
+  },
+  "toasts": {
+    "ip_copied": "IP in die Zwischenablage kopiert!",
+    "copied": "Kopiert!",
+    "ip_copied_paste": "IP kopiert! Im Launcher mit Strg+V einfügen",
+    "lunar_launching": "Lunar Client wird gestartet... IP {addr} in Zwischenablage!",
+    "badlion_launching": "Badlion Client wird gestartet... IP {addr} in Zwischenablage!",
+    "bedrock_launching": "Minecraft Bedrock wird gestartet! Wenn nicht hinzugefügt, Host & Port kopieren.",
+    "bedrock_featured_notice": "Server ist im Bedrock-Reiter 'Server' integriert! IP kopiert.",
+    "pref_reset": "Gespeicherte Launcher-Einstellung zurückgesetzt",
+    "change_btn": "Ändern",
+    "vote_success": "Vielen Dank für deine Stimme!",
+    "vote_already": "Du hast heute bereits für diesen Server abgestimmt!",
+    "vote_error": "Fehler beim Abstimmen",
+    "review_success": "Bewertung erfolgreich hinzugefügt!",
+    "review_error": "Fehler beim Absenden der Bewertung",
+    "news_success": "News erfolgreich veröffentlicht!",
+    "news_error": "Fehler beim Veröffentlichen der News",
+    "network_error": "Netzwerkfehler"
+  },
+  "footer": {
+    "rights": "VoxelVitals Netzwerk-Telemetrie © 2026. Alle Rechte vorbehalten.",
+    "terms": "Nutzungsbedingungen (Terms)",
+    "privacy": "Datenschutz (Privacy)",
+    "direct_json": "Direkte JSON-API",
+    "version": "v1.0.0"
+  },
+  "errors": {
+    "page_not_found": "Seite nicht gefunden",
+    "page_not_found_desc": "Die angeforderte Seite existiert nicht oder wurde verschoben.",
+    "back_home": "Zurück zur Startseite",
+    "too_many_requests": "Zu viele Anfragen. Limit: {limit}",
+    "server_error": "Interner Serverfehler",
+    "unauthorized": "Nicht autorisiert",
+    "forbidden_admin": "Zugriff auf das Analytik-Dashboard ist Administratoren vorbehalten."
+  },
+  "probes": {
+    "hubs": {
+      "MSK": {
+        "city": "Moskau",
+        "country": "Russland",
+        "flag": "🇷🇺"
+      },
+      "FRA": {
+        "city": "Frankfurt",
+        "country": "Deutschland",
+        "flag": "🇩🇪"
+      },
+      "HEL": {
+        "city": "Helsinki",
+        "country": "Finnland",
+        "flag": "🇫🇮"
+      }
+    },
+    "statuses": {
+      "excellent": "Hervorragend",
+      "good": "Gut",
+      "fair": "Mittel",
+      "high": "Hoch",
+      "offline": "Offline"
+    }
+  },
+  "server": {
+    "updated_at": "Aktualisiert:",
+    "play_launcher": "Im Launcher spielen",
+    "launcher_options_title": "Verbindungsoptionen & Launcher",
+    "copy_ip": "IP kopieren",
+    "vote_button": "▲ Abstimmen",
+    "online_badge": "Online · {latency} ms",
+    "offline_badge": "Offline",
+    "motd_title": "Message of the Day (MultiPlayer Preview)",
+    "copy_motd": "MOTD kopieren",
+    "motd_copied": "Kopiert!",
+    "server_unreachable": "Server nicht erreichbar oder offline",
+    "metric_players": "Spieler online",
+    "metric_ping": "Latenz (Ping)",
+    "ping_measured_from": "Gemessen aus MSK-Rechenzentrum",
+    "metric_peak": "🏆 Online-Rekord",
+    "peak_badge": "Rekord",
+    "peak_suffix": "Peak",
+    "recorded_today": "Heute erfasst",
+    "metric_version": "Version & Core",
+    "protocol_label": "Protokoll: {protocol}",
+    "chart_title": "24-Stunden-Telemetrie",
+    "chart_subtitle": "Diagramm der Spieleraktivität und Latenz der letzten 24 Stunden",
+    "scroll_hint": "⟵ Scrollen ⟶",
+    "recorded_points": "{count} Messpunkte",
+    "chart_legend_players": "Spieler online",
+    "chart_legend_ping": "Latenz (ms)",
+    "probes_title": "Multi-Regionen-Ping (Multi-Region Probes)",
+    "probes_count": "3 Standorte",
+    "probes_subtitle": "Verbindungslatenz zum Server aus wichtigen regionalen Knotenpunkten",
+    "probes_cache": "SingleFlight Caching TTL 30s",
+    "contacts_title": "Kontakte & Community",
+    "contacts_subtitle": "Offizielle Projektlinks, Discord, soziale Medien und Support",
+    "contacts_verified": "Verifiziert",
+    "players_sample_title": "Aktive Spieler-Stichprobe",
+    "players_sample_subtitle": "Vom Ping-Protokoll gemeldete aktive Spieler",
+    "players_count": "{count} Spieler",
+    "player_active": "Aktiv",
+    "news_title": "Server-News & Ankündigungen",
+    "news_subtitle": "Patchnotes, saisonale Events und Team-Ankündigungen",
+    "add_news_btn": "News hinzufügen",
+    "reviews_title": "Spielerbewertungen & Rating",
+    "reviews_subtitle": "Erfahrungsberichte echter Nutzer über Gameplay und Community",
+    "reviews_summary": "★ {avg} / 5.0 ({count} Bewertungen)",
+    "leave_review_title": "Eigene Bewertung abgeben",
+    "your_rating": "Deine Bewertung:",
+    "nickname_placeholder": "Dein Minecraft-Name",
+    "comment_placeholder": "Schreibe eine ehrliche Bewertung zu Gameplay, TPS, Team...",
+    "submit_review_btn": "Bewertung absenden",
+    "no_reviews": "Noch keine Bewertungen für diesen Server. Sei der Erste!"
+  }
+}

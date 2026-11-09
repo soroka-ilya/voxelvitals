@@ -18,7 +18,7 @@
     </div>
 
     <div>
-      <span class="text-slate-400 dark:text-slate-500">Обновлено:</span>
+      <span class="text-slate-400 dark:text-slate-500">{{ t('server_detail.updated_at') }}</span>
       <span class="font-mono text-slate-700 dark:text-slate-300">{{ status.last_updated[:19].replace('T', ' ') }} UTC</span>
     </div>
   </div>
@@ -63,11 +63,11 @@
                   onclick="launchMinecraft('{{ status.address }}', '{{ status.edition }}', '{{ status.name or status.address }}');" 
                   class="px-4 py-2.5 rounded-l-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs tracking-wide transition-all flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-            <span>Играть в лаунчере</span>
+            <span>{{ t('server_detail.play_launcher') }}</span>
           </button>
           <button type="button"
                   onclick="openQuickConnectModal('{{ status.address }}', '{{ status.edition }}', '{{ status.name or status.address }}');"
-                  title="Параметры подключения и лаунчеры"
+                  title="{{ t('server_detail.launcher_options_title') }}"
                   class="px-2.5 py-2.5 rounded-r-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold text-xs transition-colors border-l border-emerald-400/40 flex items-center justify-center">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
@@ -78,7 +78,7 @@
                 onclick="copyIp('{{ status.address }}', this);" 
                 class="px-3.5 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#273147] dark:hover:bg-[#3b4866] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-transparent text-xs font-medium transition-colors flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-          <span class="copy-label">Копировать IP</span>
+          <span class="copy-label">{{ t('server_detail.copy_ip') }}</span>
         </button>
 
         <!-- Vote Button -->
@@ -86,19 +86,19 @@
                 id="vote-btn"
                 onclick="handleVote('{{ status.address }}', this);"
                 class="px-3.5 py-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-semibold transition-colors flex items-center gap-1.5">
-          <span>▲ Голосовать</span>
+          <span>{{ t('server_detail.vote_button') }}</span>
           <span id="vote-count" class="font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-[10px]">{{ votes or 0 }}</span>
         </button>
 
         {% if status.is_online %}
           <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
-            Online · {{ status.latency_ms | int }} ms
+            {{ t('server_detail.online_badge', latency=(status.latency_ms | int)) }}
           </div>
         {% else %}
           <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20">
             <span class="w-2 h-2 rounded-full bg-red-500 dark:bg-red-400"></span>
-            Offline
+            {{ t('server_detail.offline_badge') }}
           </div>
         {% endif %}
       </div>
@@ -109,12 +109,12 @@
       <div class="flex items-center justify-between mb-2">
         <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-          <span>Message of the Day (MultiPlayer Preview)</span>
+          <span>{{ t('server_detail.motd_title') }}</span>
         </h3>
         <button type="button" 
-                onclick="navigator.clipboard.writeText(document.querySelector('.mc-motd-content').innerText); this.innerText='Скопировано!'; setTimeout(() => this.innerText='Копировать MOTD', 1500);" 
+                onclick="navigator.clipboard.writeText(document.querySelector('.mc-motd-content').innerText); this.innerText='{{ t('server_detail.motd_copied') }}'; setTimeout(() => this.innerText='{{ t('server_detail.copy_motd') }}', 1500);" 
                 class="text-[11px] font-mono text-slate-400 hover:text-emerald-400 px-2 py-0.5 rounded bg-[#1e293b]/70 border border-[#273147] transition-colors">
-          Копировать MOTD
+          {{ t('server_detail.copy_motd') }}
         </button>
       </div>
 
@@ -147,7 +147,7 @@
     <!-- Metric 1: Live Online Players -->
     <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-5 shadow-sm space-y-2 relative overflow-hidden transition-all">
       <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span class="font-medium">Онлайн игроков</span>
+        <span class="font-medium">{{ t('server_detail.metric_players') }}</span>
         <span class="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping"></span> Live SSE
         </span>
@@ -164,7 +164,7 @@
     <!-- Metric 2: Live Latency -->
     <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-5 shadow-sm space-y-2 transition-all">
       <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span class="font-medium">Задержка (Пинг)</span>
+        <span class="font-medium">{{ t('server_detail.metric_ping') }}</span>
         <span id="live-ping-label" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
           {% if status.latency_ms < 60 %}Отличный{% elif status.latency_ms < 120 %}Хороший{% else %}Средний{% endif %}
         </span>
@@ -173,32 +173,32 @@
         <span id="live-latency-val" class="text-2xl sm:text-3xl font-bold font-mono text-slate-900 dark:text-white transition-colors duration-300">{{ status.latency_ms | int }}</span>
         <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">ms</span>
       </div>
-      <p class="text-[11px] text-slate-500 dark:text-slate-400">Измерено из дата-центра MSK</p>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ t('server_detail.ping_measured_from') }}</p>
     </div>
 
     <!-- Metric 3: Peak Online Hall of Fame -->
     <div class="rounded-xl border border-amber-500/30 dark:border-amber-500/30 bg-gradient-to-br from-amber-500/5 via-white dark:via-[#161b26] to-transparent p-4 sm:p-5 shadow-sm space-y-2 transition-all">
       <div class="flex items-center justify-between text-xs text-amber-600 dark:text-amber-400">
-        <span class="font-semibold flex items-center gap-1">🏆 Рекорд онлайна</span>
-        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">Peak</span>
+        <span class="font-semibold flex items-center gap-1">{{ t('server_detail.metric_peak') }}</span>
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">{{ t('server_detail.peak_badge') }}</span>
       </div>
       <div class="flex items-baseline gap-1.5">
         <span class="text-2xl sm:text-3xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ "{:,}".format(status.peak_players or (peak_info.peak_players if peak_info else status.players_online)) }}</span>
-        <span class="text-xs text-amber-600/70 dark:text-amber-400/70 font-mono">пик</span>
+        <span class="text-xs text-amber-600/70 dark:text-amber-400/70 font-mono">{{ t('server_detail.peak_suffix') }}</span>
       </div>
-      <p id="peak-online-text" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ status.peak_players_formatted or (peak_info.formatted if peak_info else (peak_info.peak_date if peak_info else 'Зафиксировано сегодня')) }}</p>
+      <p id="peak-online-text" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ status.peak_players_formatted or (peak_info.formatted if peak_info else (peak_info.peak_date if peak_info else t('server_detail.recorded_today'))) }}</p>
     </div>
 
     <!-- Metric 4: Version & Protocol -->
     <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-5 shadow-sm space-y-2 transition-all">
       <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span class="font-medium">Версия & Ядро</span>
+        <span class="font-medium">{{ t('server_detail.metric_version') }}</span>
         <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 uppercase">{{ status.edition }}</span>
       </div>
       <div class="truncate text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white pt-1">
         {{ status.version_name or 'Minecraft' }}
       </div>
-      <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Протокол: {{ status.version_protocol or 'Auto' }}</p>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{{ t('server_detail.protocol_label', protocol=(status.version_protocol or 'Auto')) }}</p>
     </div>
   </div>
 
@@ -206,15 +206,15 @@
   <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-6 shadow-sm space-y-4 transition-colors">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-[#273147] pb-3">
       <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">24-Hour Telemetry Activity</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">График активности онлайна и пинга за 24 часа</p>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ t('server_detail.chart_title') }}</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('server_detail.chart_subtitle') }}</p>
       </div>
       <div class="flex items-center gap-2">
         <span class="sm:hidden text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-mono">
-          <span>⟵ Прокрутите ⟶</span>
+          <span>{{ t('server_detail.scroll_hint') }}</span>
         </span>
         <span class="text-xs font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#273147]/50 px-2.5 py-1 rounded border border-slate-200 dark:border-transparent">
-          {{ history | length }} Recorded Points
+          {{ t('server_detail.recorded_points', count=(history | length)) }}
         </span>
       </div>
     </div>
@@ -233,13 +233,13 @@
       <div>
         <h2 class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
           <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span>Многоточечный замер пинга (Multi-Region Probes)</span>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-normal">3 локации</span>
+          <span>{{ t('server_detail.probes_title') }}</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-normal">{{ t('server_detail.probes_count') }}</span>
         </h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Задержка подключения к серверу из ключевых географических хабов игроков</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('server_detail.probes_subtitle') }}</p>
       </div>
       <span class="text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#273147]/50 px-2.5 py-1 rounded">
-        SingleFlight Caching TTL 30s
+        {{ t('server_detail.probes_cache') }}
       </span>
     </div>
 
@@ -276,11 +276,11 @@
   <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4">
     <div class="border-b border-slate-200 dark:border-[#273147] pb-3 flex items-center justify-between">
       <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Контакты и сообщество</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Официальные страницы проекта, Discord, соцсети и поддержка</p>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ t('server_detail.contacts_title') }}</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('server_detail.contacts_subtitle') }}</p>
       </div>
       <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
-        Проверено
+        {{ t('server_detail.contacts_verified') }}
       </span>
     </div>
 
@@ -294,7 +294,7 @@
       {% if extra_info.contacts.discord %}
         <a href="{{ extra_info.contacts.discord }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#121622] dark:hover:bg-[#1c2233] border border-slate-200 dark:border-[#273147] text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-indigo-400 transition-colors flex items-center gap-2">
           <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.894.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-          <span>Discord Сервер</span>
+          <span>Discord</span>
         </a>
       {% endif %}
       {% if extra_info.contacts.vk %}
@@ -306,13 +306,13 @@
       {% if extra_info.contacts.telegram %}
         <a href="{{ extra_info.contacts.telegram }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#121622] dark:hover:bg-[#1c2233] border border-slate-200 dark:border-[#273147] text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-sky-400 transition-colors flex items-center gap-2">
           <svg class="w-4 h-4 text-sky-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.197 1.006.128.832.966z"/></svg>
-          <span>Telegram Канал</span>
+          <span>Telegram</span>
         </a>
       {% endif %}
       {% if extra_info.contacts.youtube %}
         <a href="{{ extra_info.contacts.youtube }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#121622] dark:hover:bg-[#1c2233] border border-slate-200 dark:border-[#273147] text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-red-500 transition-colors flex items-center gap-2">
           <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-          <span>YouTube Канал</span>
+          <span>YouTube</span>
         </a>
       {% endif %}
     </div>
@@ -324,10 +324,12 @@
   <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4 transition-colors">
     <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
       <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Online Player Sample</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Sample of currently active players reported by ping protocol</p>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ t('server_detail.players_sample_title') }}</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('server_detail.players_sample_subtitle') }}</p>
       </div>
       <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
+        {{ t('server_detail.players_count', count=(status.players_sample | length)) }}
+      </span>
         {{ status.players_sample | length }} Players
       </span>
     </div>
@@ -341,7 +343,7 @@
             <span class="text-xs font-mono text-slate-800 dark:text-slate-200 block truncate group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors font-medium">{{ player.name }}</span>
             <span class="text-[10px] text-slate-500 flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              Активен
+              {{ t('server_detail.player_active') }}
             </span>
           </div>
         </div>
@@ -357,12 +359,12 @@
   <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4">
     <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
       <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Новости и обновления сервера</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Патчноуты, сезонные ивенты и объявления администрации</p>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ t('server_detail.news_title') }}</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('server_detail.news_subtitle') }}</p>
       </div>
       <button type="button" onclick="document.getElementById('add-news-modal').classList.remove('hidden')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-[#273147] dark:hover:bg-[#3b4866] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1.5">
         <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        <span>Добавить новость</span>
+        <span>{{ t('server_detail.add_news_btn') }}</span>
       </button>
     </div>
 
@@ -392,8 +394,8 @@
   <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#273147] pb-4">
       <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">Отзывы игроков и рейтинг</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Мнения реальных пользователей о качестве сервера и комьюнити</p>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ t('server_detail.reviews_title') }}</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('server_detail.reviews_subtitle') }}</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -406,11 +408,11 @@
 
     <!-- Submit Review Form -->
     <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] space-y-3">
-      <h3 class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Оставить свой отзыв</h3>
+      <h3 class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{{ t('server_detail.leave_review_title') }}</h3>
       <form id="review-form" onsubmit="submitReview(event, '{{ status.address }}')" class="space-y-3">
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-600 dark:text-slate-300">Ваша оценка:</span>
+            <span class="text-xs text-slate-600 dark:text-slate-300">{{ t('server_detail.your_rating') }}</span>
             <div class="flex items-center gap-1 text-amber-400 cursor-pointer" id="star-rating-select">
               <span onclick="setRating(1)" class="star text-lg">★</span>
               <span onclick="setRating(2)" class="star text-lg">★</span>
@@ -422,17 +424,17 @@
           </div>
           {% if not current_user %}
           <div class="flex-1 min-w-[200px]">
-            <input type="text" id="review-author" placeholder="Ваш никнейм в игре" required class="w-full px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none font-mono" />
+            <input type="text" id="review-author" placeholder="{{ t('server_detail.nickname_placeholder') }}" required class="w-full px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none font-mono" />
           </div>
           {% endif %}
         </div>
         <div>
-          <textarea id="review-comment" required rows="2" placeholder="Напишите честный отзыв о геймплее, ТПС, администрации..." class="w-full px-3 py-2 rounded-lg text-xs bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"></textarea>
+          <textarea id="review-comment" required rows="2" placeholder="{{ t('server_detail.comment_placeholder') }}" class="w-full px-3 py-2 rounded-lg text-xs bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"></textarea>
         </div>
         <div class="flex items-center justify-between">
           <p id="review-status-msg" class="text-xs text-emerald-500 hidden"></p>
           <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors flex items-center gap-1.5">
-            <span>Отправить отзыв</span>
+            <span>{{ t('server_detail.submit_review_btn') }}</span>
           </button>
         </div>
       </form>
@@ -460,7 +462,7 @@
       </div>
       {% else %}
       <div id="no-reviews-msg" class="p-6 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-center text-xs text-slate-500 dark:text-slate-400">
-        Пока нет отзывов для этого сервера. Будьте первым, кто оставит свой отзыв!
+        {{ t('server_detail.no_reviews') }}
       </div>
       {% endfor %}
     </div>
@@ -473,14 +475,14 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
 
-      <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-4">Опубликовать новость сервера</h3>
+      <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-4">{{ t('news_modal.title') }}</h3>
       <form onsubmit="submitNews(event, '{{ status.address }}')" class="space-y-3">
         <div>
-          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Заголовок новости</label>
-          <input type="text" id="news-title" required class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="Например: Вайп анархии и новые руны" />
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('news_modal.news_title_label') }}</label>
+          <input type="text" id="news-title" required class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="{{ t('news_modal.news_title_placeholder') }}" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Категория / Тег</label>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('news_modal.tag_label') }}</label>
           <select id="news-tag" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none">
             <option value="Обновление">Обновление</option>
             <option value="Ивент">Ивент</option>
@@ -489,12 +491,12 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Текст публикации</label>
-          <textarea id="news-content" required rows="4" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none" placeholder="Подробное описание изменений и нововведений..."></textarea>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('news_modal.content_label') }}</label>
+          <textarea id="news-content" required rows="4" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none" placeholder="{{ t('news_modal.content_placeholder') }}"></textarea>
         </div>
         <p id="news-modal-error" class="hidden text-xs text-red-500"></p>
         <button type="submit" class="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
-          Опубликовать новость
+          {{ t('news_modal.submit_btn') }}
         </button>
       </form>
     </div>

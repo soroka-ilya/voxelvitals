@@ -1,0 +1,403 @@
+{
+  "meta": {
+    "code": "zh",
+    "name": "简体中文",
+    "flag": "🇨🇳"
+  },
+  "nav": {
+    "explorer": "实时大厅",
+    "analytics": "数据分析",
+    "api_reference": "API 文档",
+    "theme_toggle": "切换主题 (亮色 / 暗色 / 自动跟随)",
+    "login": "登录",
+    "logout": "退出",
+    "verified_license": "已通过微软官方验证的 Minecraft 正版玩家"
+  },
+  "hero": {
+    "protocol_badge": "兼容协议版本 v767 与基岩版 v1.21",
+    "title": "Minecraft 服务器遥测与状态监控",
+    "subtitle": "实时查询玩家在线人数、网络延迟、DNS SRV 记录、MOTD 颜色格式化，并支持导出动态 SVG 状态徽章。",
+    "search_placeholder": "例如：2b2t、hypixel、reallyworld、play.cubecraft.net",
+    "search_button": "检测服务器"
+  },
+  "catalog": {
+    "badge": "服务器大厅",
+    "title": "热门游戏网络",
+    "subtitle": "支持启动器一键直连与 24 小时状态遥测的官方认证服务器",
+    "all_editions": "所有版本",
+    "categories_all": "分类：全部",
+    "categories_count": "分类 ({count})",
+    "versions_all": "版本：全部",
+    "versions_count": "版本 ({count})",
+    "supported_versions": "支持的客户端版本",
+    "latest": "(最新)",
+    "reset_filters": "重置",
+    "empty_state": "没有匹配当前筛选条件的服务器。",
+    "reset_all_filters": "重置所有筛选条件",
+    "tracked_infra_title": "重点监控基础设施",
+    "tracked_infra_subtitle": "来自公开验证节点的实时健康度指标",
+    "active_monitoring": "实时监测中",
+    "servers": {
+      "hypixel": {
+        "category_label": "小游戏",
+        "description": "全球规模最大的 Minecraft 服务器：起床战争、空岛战争、空岛生存与锦标赛"
+      },
+      "2b2t": {
+        "category_label": "无政府与生存",
+        "description": "自 2010 年起运行的历史最悠久无政府服务器，无规则、不删档、零审查"
+      },
+      "donutsmp": {
+        "category_label": "无政府与生存",
+        "description": "硬核原版 SMP 生存服，包含玩家经济、宗族公会与基地突袭"
+      },
+      "reallyworld": {
+        "category_label": "无政府与掠夺",
+        "description": "热门东欧社区服务器：经典无政府、自动矿场、决斗场与公会争霸"
+      },
+      "funtime": {
+        "category_label": "无政府与生存",
+        "description": "高人气无政府网络，拥有独特世界事件、毁灭者机制与定制 PvP"
+      },
+      "holyworld": {
+        "category_label": "无政府",
+        "description": "大型无政府服务器：自定义附魔、魔法宝珠、护身符与决斗系统"
+      },
+      "cubecraft": {
+        "category_label": "小游戏",
+        "description": "享誉全球的小游戏网络：龙蛋战争 (EggWars)、幸运岛与塔防玩法"
+      },
+      "gommehd": {
+        "category_label": "小游戏",
+        "description": "欧洲顶尖小游戏服务器，主打起床战争、TTT 叛徒猜想与跳跃联盟"
+      },
+      "vimeworld": {
+        "category_label": "小游戏",
+        "description": "俄语区最大的自研小游戏与街机模式综合社区"
+      },
+      "wynncraft": {
+        "category_label": "MMORPG",
+        "description": "Minecraft 中的大型魔幻 MMORPG：丰富史诗任务、地牢副本、Boss 战与职业进阶"
+      },
+      "manacube": {
+        "category_label": "MMORPG",
+        "description": "高人气综合网络，包含极限跑酷、空岛生存与独特 RPG 角色机制"
+      },
+      "complex": {
+        "category_label": "MMORPG",
+        "description": "多模组大型服：宝可梦 (Pixelmon/Cobblemon)、FTB 科技空岛与原版生存"
+      },
+      "minemen": {
+        "category_label": "PvP",
+        "description": "专业竞技对决擂台，提供 1v1 决斗与排位天梯练习场"
+      },
+      "hive": {
+        "category_label": "基岩版小游戏",
+        "description": "基岩版旗舰小游戏网络：宝藏战争、躲猫猫、饥饿游戏等"
+      },
+      "nethergames": {
+        "category_label": "基岩版 PvP",
+        "description": "基岩版最大的竞技对战枢纽：起床战争、决斗、空岛战争与派系争霸"
+      }
+    }
+  },
+  "categories": {
+    "all": "全部分类",
+    "anarchy": "无政府与掠夺",
+    "minigames": "小游戏 (起床战争等)",
+    "rpg": "MMORPG 与任务",
+    "pvp": "PvP 与决斗",
+    "survival": "生存与 SMP",
+    "bedrock_network": "基岩版网络",
+    "gaming_network": "游戏网络",
+    "direct_host": "直连主机"
+  },
+  "server_card": {
+    "telemetry_title": "节点遥测",
+    "latency_label": "网络延迟：",
+    "load_label": "当前负载：",
+    "slots_suffix": "% 槽位占用",
+    "low_ping": "低延迟",
+    "high_online": "高人气在线",
+    "peak_title": "历史最高在线",
+    "peak_badge": "🏆 峰值：{count}",
+    "conn_diagnostics": "连接诊断",
+    "node_unreachable": "节点不可达",
+    "unreachable_desc": "服务器未响应 Ping 探测请求。",
+    "cause_label": "可能原因：",
+    "timeout_cause": "连接超时 (Connection timed out)",
+    "players_suffix": "名玩家",
+    "zero_players": "0 名玩家",
+    "to_launcher": "启动游戏",
+    "copy_ip": "复制 IP",
+    "analytics_link": "分析数据"
+  },
+  "server_detail": {
+    "updated_at": "更新时间：",
+    "play_launcher": "启动器进入",
+    "launcher_options_title": "连接参数与各版本启动指南",
+    "copy_ip": "复制 IP",
+    "vote_button": "▲ 投一票",
+    "online_badge": "在线 · {latency} 毫秒",
+    "offline_badge": "离线",
+    "motd_title": "今日公告预览 (MultiPlayer Preview)",
+    "copy_motd": "复制 MOTD",
+    "motd_copied": "已复制！",
+    "server_unreachable": "服务器无法连接或处于离线维护中",
+    "metric_players": "在线玩家人数",
+    "metric_ping": "连接延迟 (Ping)",
+    "ping_measured_from": "由莫斯科数据中心测得",
+    "metric_peak": "🏆 历史最高在线",
+    "peak_badge": "峰值",
+    "peak_suffix": "峰值",
+    "recorded_today": "今日记录",
+    "metric_version": "版本与服务端核心",
+    "protocol_label": "协议版本：{protocol}",
+    "chart_title": "24 小时遥测趋势",
+    "chart_subtitle": "过去 24 小时内玩家在线人数与延迟波动折线图",
+    "scroll_hint": "⟵ 滑动查看 ⟶",
+    "recorded_points": "{count} 个监测点",
+    "chart_legend_players": "在线玩家",
+    "chart_legend_ping": "网络延迟 (ms)",
+    "probes_title": "多地域节点测速 (Multi-Region Probes)",
+    "probes_count": "3 个节点",
+    "probes_subtitle": "从各主要地理枢纽到该服务器的网络直连延迟实测",
+    "probes_cache": "SingleFlight 高速缓存 TTL 30秒",
+    "contacts_title": "官方社群与支持",
+    "contacts_subtitle": "官方网站、Discord 社区、社交账号与玩家支持中心",
+    "contacts_verified": "已认证",
+    "players_sample_title": "当前在线玩家抽样",
+    "players_sample_subtitle": "由 Ping 协议获取的当前活跃玩家列表抽样",
+    "players_count": "{count} 名玩家",
+    "player_active": "在线",
+    "news_title": "服务器新闻与更新公告",
+    "news_subtitle": "更新日志、赛季大事件与运营团队最新公告",
+    "add_news_btn": "发布新闻",
+    "reviews_title": "玩家真实口碑与评分",
+    "reviews_subtitle": "社区玩家对游戏平衡性、TPS 流畅度与管理团队的客观评价",
+    "reviews_summary": "★ {avg} / 5.0 ({count} 条评价)",
+    "leave_review_title": "发表您的评价",
+    "your_rating": "您的评分：",
+    "nickname_placeholder": "您的游戏昵称",
+    "comment_placeholder": "分享您对玩法机制、TPS 流畅度、管理公正性的真实体验...",
+    "submit_review_btn": "提交评价",
+    "no_reviews": "该服务器暂无评价，快来抢先留下第一条评价吧！"
+  },
+  "quick_connect": {
+    "modal_title": "连接到服务器",
+    "copied_banner": "IP 地址已成功复制到剪贴板！",
+    "copy_again": "再次复制",
+    "tab_any": "任意启动器",
+    "tab_lunar": "Lunar",
+    "tab_badlion": "Badlion",
+    "tab_bedrock": "基岩版",
+    "any_title": "任意启动器 (Prism, Modrinth, HMCL, 官方启动器等)",
+    "step_1": "在您常用的启动器中启动 Minecraft 游戏。",
+    "step_2": "在主菜单点击「多人游戏」➔「直接连接」。",
+    "step_3": "按快捷键 Ctrl+V 粘贴地址 ➔ 点击「加入服务器」。",
+    "copy_and_close": "复制 IP 并关闭窗口",
+    "lunar_title": "Lunar Client",
+    "lunar_subtitle": "一键快速启动并自动直连服务器",
+    "badlion_title": "Badlion Client",
+    "badlion_subtitle": "通过 Badlion 客户端直接连接",
+    "bedrock_featured_title": "官方基岩版合作服务器",
+    "bedrock_featured_desc": "该服务器已内置在游戏中！进入「游戏」➔「服务器」标签页并在列表中直接选择即可。",
+    "bedrock_manual_title": "手动添加方法：在菜单中点击「服务器」➔「添加服务器」：",
+    "host_label": "服务器地址",
+    "port_label": "端口号",
+    "copy_btn": "复制",
+    "copied_btn": "已复制",
+    "bedrock_hint": "如果游戏已打开但未自动添加服务器（系统 URI 协议限制）— 请复制上方的地址与端口并粘贴到「添加服务器」界面。",
+    "launch_bedrock_btn": "启动 Minecraft 基岩版 (URI)",
+    "remember_client": "记住我的客户端偏好",
+    "reset_choice": "重置偏好",
+    "done_btn": "完成"
+  },
+  "search": {
+    "breadcrumb_search": "搜索",
+    "results_title": "搜索结果：",
+    "results_found": "在服务器大厅中找到 {count} 条匹配结果",
+    "results_empty": "在服务器大厅中未找到完全匹配的结果",
+    "options_count": "{count} 个候选",
+    "refine_placeholder": "精确筛选或直接输入服务器地址...",
+    "refine_button": "搜索",
+    "direct_probe_title": "直接探测节点：{host}",
+    "direct_probe_desc": "通过 DNS 与 Ping 协议直接检测任意主机的网络延迟与在线人数",
+    "direct_probe_action": "查询 {host}",
+    "empty_title": "未找到与 \"{query}\" 相关的服务器。",
+    "back_to_servers": "返回全部服务器列表",
+    "prev_page": "← 上一页",
+    "next_page": "下一页 →"
+  },
+  "analytics_page": {
+    "admin_badge": "管理员专享",
+    "title": "网站遥测与运营数据",
+    "subtitle": "监控用户实时搜索词、服务器详情浏览量与界面交互热度。",
+    "tf_24h": "24 小时",
+    "tf_7d": "7 天",
+    "tf_30d": "30 天",
+    "kpi_pageviews": "总浏览量",
+    "kpi_pageviews_sub": "页面点击与跳转次数",
+    "kpi_visitors": "独立访客",
+    "kpi_visitors_sub": "唯一访客会话数",
+    "kpi_searches": "搜索次数",
+    "kpi_searches_sub": "用户主动检索次数",
+    "kpi_actions": "交互动作",
+    "kpi_actions_sub": "点击、复制与客户端拉起",
+    "top_searches_title": "用户都在搜什么",
+    "top_searches_sub": "目录搜索框中最热门的搜索关键词",
+    "th_query": "关键词",
+    "th_found": "命中结果",
+    "th_searches": "搜索频次",
+    "top_searches_empty": "所选时间段内暂无搜索关键词记录。",
+    "top_servers_title": "最受关注的服务器",
+    "top_servers_sub": "被查看详情次数最多的服务器排名",
+    "th_address": "服务器地址",
+    "th_views": "浏览次数",
+    "top_servers_empty": "所选时间段内暂无服务器浏览记录。",
+    "devices_title": "访问设备",
+    "browsers_title": "浏览器分布",
+    "no_data": "暂无数据",
+    "stream_title": "实时动态流",
+    "stream_sub": "最新页面访问与交互事件记录",
+    "th_cat": "类型",
+    "th_target": "目标 / 动作",
+    "th_visitor": "访客标识",
+    "th_time": "时间 (UTC)",
+    "stream_search": "搜索",
+    "stream_view": "浏览",
+    "stream_empty": "当前暂无交互事件记录。"
+  },
+  "auth": {
+    "tab_login": "登录",
+    "tab_register": "注册",
+    "username_label": "用户名",
+    "password_label": "登录密码",
+    "login_submit": "立即登录",
+    "reg_username_label": "账号名称",
+    "mc_nick_label": "Minecraft 游戏昵称",
+    "mc_nick_placeholder": "用于自动获取角色皮肤",
+    "reg_password_label": "设置密码 (至少 6 位字符)",
+    "register_submit": "创建新账号"
+  },
+  "news_modal": {
+    "title": "发布服务器公告",
+    "news_title_label": "公告标题",
+    "news_title_placeholder": "例如：无政府服全图重置与全新符文系统上线",
+    "tag_label": "分类 / 标签",
+    "content_label": "公告正文",
+    "content_placeholder": "详细说明本次更新或维护的具体内容...",
+    "submit_btn": "发布公告"
+  },
+  "toasts": {
+    "ip_copied": "IP 地址已成功复制到剪贴板！",
+    "copied": "已复制！",
+    "ip_copied_paste": "IP 已复制！请在启动器中按 Ctrl+V 粘贴",
+    "lunar_launching": "正在拉起 Lunar Client... IP {addr} 已复制！",
+    "badlion_launching": "正在拉起 Badlion Client... IP {addr} 已复制！",
+    "bedrock_launching": "正在启动 Minecraft 基岩版！如未自动添加，请复制地址与端口。",
+    "bedrock_featured_notice": "该服务器已内置在基岩版「服务器」标签页！IP 已复制。",
+    "pref_reset": "已重置已保存的默认启动器",
+    "change_btn": "更改",
+    "vote_success": "感谢您的投票支持！",
+    "vote_already": "您今天已经为该服务器投过票了！",
+    "vote_error": "投票时发生错误",
+    "review_success": "评价已成功提交！",
+    "review_error": "提交评价时发生错误",
+    "news_success": "新闻公告已成功发布！",
+    "news_error": "发布新闻时发生错误",
+    "network_error": "网络连接异常"
+  },
+  "footer": {
+    "rights": "VoxelVitals 网络遥测 © 2026. 保留所有权利。",
+    "terms": "服务条款 (Terms)",
+    "privacy": "隐私政策 (Privacy)",
+    "direct_json": "直连 JSON 接口",
+    "version": "v1.0.0"
+  },
+  "errors": {
+    "page_not_found": "页面未找到",
+    "page_not_found_desc": "您访问的页面不存在或已被移除。",
+    "back_home": "返回首页",
+    "too_many_requests": "请求过于频繁。速率限制：{limit}",
+    "server_error": "服务器内部错误",
+    "unauthorized": "未授权访问",
+    "forbidden_admin": "数据分析控制台仅限管理员权限访问。"
+  },
+  "probes": {
+    "hubs": {
+      "MSK": {
+        "city": "莫斯科",
+        "country": "俄罗斯",
+        "flag": "🇷🇺"
+      },
+      "FRA": {
+        "city": "法兰克福",
+        "country": "德国",
+        "flag": "🇩🇪"
+      },
+      "HEL": {
+        "city": "赫尔辛基",
+        "country": "芬兰",
+        "flag": "🇫🇮"
+      }
+    },
+    "statuses": {
+      "excellent": "极佳",
+      "good": "良好",
+      "fair": "一般",
+      "high": "较高",
+      "offline": "离线"
+    }
+  },
+  "server": {
+    "updated_at": "更新时间：",
+    "play_launcher": "启动器进入",
+    "launcher_options_title": "连接参数与各版本启动指南",
+    "copy_ip": "复制 IP",
+    "vote_button": "▲ 投一票",
+    "online_badge": "在线 · {latency} 毫秒",
+    "offline_badge": "离线",
+    "motd_title": "今日公告预览 (MultiPlayer Preview)",
+    "copy_motd": "复制 MOTD",
+    "motd_copied": "已复制！",
+    "server_unreachable": "服务器无法连接或处于离线维护中",
+    "metric_players": "在线玩家人数",
+    "metric_ping": "连接延迟 (Ping)",
+    "ping_measured_from": "由莫斯科数据中心测得",
+    "metric_peak": "🏆 历史最高在线",
+    "peak_badge": "峰值",
+    "peak_suffix": "峰值",
+    "recorded_today": "今日记录",
+    "metric_version": "版本与服务端核心",
+    "protocol_label": "协议版本：{protocol}",
+    "chart_title": "24 小时遥测趋势",
+    "chart_subtitle": "过去 24 小时内玩家在线人数与延迟波动折线图",
+    "scroll_hint": "⟵ 滑动查看 ⟶",
+    "recorded_points": "{count} 个监测点",
+    "chart_legend_players": "在线玩家",
+    "chart_legend_ping": "网络延迟 (ms)",
+    "probes_title": "多地域节点测速 (Multi-Region Probes)",
+    "probes_count": "3 个节点",
+    "probes_subtitle": "从各主要地理枢纽到该服务器的网络直连延迟实测",
+    "probes_cache": "SingleFlight 高速缓存 TTL 30秒",
+    "contacts_title": "官方社群与支持",
+    "contacts_subtitle": "官方网站、Discord 社区、社交账号与玩家支持中心",
+    "contacts_verified": "已认证",
+    "players_sample_title": "当前在线玩家抽样",
+    "players_sample_subtitle": "由 Ping 协议获取的当前活跃玩家列表抽样",
+    "players_count": "{count} 名玩家",
+    "player_active": "在线",
+    "news_title": "服务器新闻与更新公告",
+    "news_subtitle": "更新日志、赛季大事件与运营团队最新公告",
+    "add_news_btn": "发布新闻",
+    "reviews_title": "玩家真实口碑与评分",
+    "reviews_subtitle": "社区玩家对游戏平衡性、TPS 流畅度与管理团队的客观评价",
+    "reviews_summary": "★ {avg} / 5.0 ({count} 条评价)",
+    "leave_review_title": "发表您的评价",
+    "your_rating": "您的评分：",
+    "nickname_placeholder": "您的游戏昵称",
+    "comment_placeholder": "分享您对玩法机制、TPS 流畅度、管理公正性的真实体验...",
+    "submit_review_btn": "提交评价",
+    "no_reviews": "该服务器暂无评价，快来抢先留下第一条评价吧！"
+  }
+}
