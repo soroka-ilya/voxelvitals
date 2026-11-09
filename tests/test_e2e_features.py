@@ -10,6 +10,7 @@ Tests pairwise feature interactions and end-to-end multi-client application work
 
 import asyncio
 import json
+import uuid
 from unittest.mock import AsyncMock, patch
 import pytest
 import pytest_asyncio
@@ -21,6 +22,7 @@ from app.repository import ServerRepository
 from app.services.cache_service import status_cache
 from app.services.probes_service import get_multi_region_probes
 from app.services.rate_limiter import review_rate_limiter, vote_rate_limiter
+
 
 
 class CompatibleProbe(dict):
@@ -108,7 +110,8 @@ async def test_cross_caching_and_realtime_sse(client):
 @pytest.mark.asyncio
 async def test_cross_peak_online_and_multi_region_probes(repo):
     """Pairwise F2 x F5: Recording higher player peak calculates matching regional probes."""
-    addr = "peak.probes.ru"
+    addr = f"peak.probes.{uuid.uuid4().hex[:8]}.ru"
+
     server_id = await repo.get_or_create_server(addr)
 
     # Spike in players records all-time peak
@@ -162,7 +165,8 @@ async def test_cross_caching_and_rate_limiting(client):
 @pytest.mark.asyncio
 async def test_cross_peak_online_and_rate_limiting(client, repo):
     """Pairwise F4 x F5: Blocked review spammers cannot pollute or mutate peak online records."""
-    addr = "protected.server.net"
+    addr = f"protected.server.{uuid.uuid4().hex[:8]}.net"
+
     server_id = await repo.get_or_create_server(addr)
 
     # Establish initial legitimate peak
@@ -255,7 +259,8 @@ async def test_scenario_1_high_concurrency_status_flood():
 @pytest.mark.asyncio
 async def test_scenario_2_telemetry_polling_new_all_time_peak(repo):
     """Scenario 2: Telemetry polling records new all-time peak with regional latency distribution."""
-    addr = "record.breaker.net"
+    addr = f"record.breaker.{uuid.uuid4().hex[:8]}.net"
+
     server_id = await repo.get_or_create_server(addr)
 
     # Initial standard telemetry
@@ -319,7 +324,8 @@ async def test_scenario_3_malicious_review_spam_attack(client):
 @pytest.mark.asyncio
 async def test_scenario_4_active_client_session_sse_streaming(client, repo):
     """Scenario 4: Active client session receives live SSE stream and renders peak record."""
-    addr = "live.client.session.org"
+    addr = f"live.client.{uuid.uuid4().hex[:8]}.org"
+
     server_id = await repo.get_or_create_server(addr)
 
     # Prime historical peak in database

@@ -9,7 +9,7 @@
 [![Production Live](https://img.shields.io/badge/Production-voxelvitals.ru-10b981?style=flat-square&logo=nginx&logoColor=white)](https://voxelvitals.ru)
 [![IPv4 & IPv6 Dual--Stack](https://img.shields.io/badge/Network-IPv4%20%2B%20IPv6%20Ready-3b82f6?style=flat-square&logo=cloudflare&logoColor=white)](https://voxelvitals.ru)
 [![SSL](https://img.shields.io/badge/Security-Let's%20Encrypt%20HTTPS-00c7b7?style=flat-square&logo=letsencrypt&logoColor=white)](https://voxelvitals.ru)
-[![Tests](https://img.shields.io/badge/Tests-107%20Passed-emerald?style=flat-square&logo=pytest&logoColor=white)](https://github.com/soroka-ilya/voxelvitals)
+[![Tests](https://img.shields.io/badge/Tests-157%20Passed-emerald?style=flat-square&logo=pytest&logoColor=white)](https://github.com/soroka-ilya/voxelvitals)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-slate?style=flat-square)](LICENSE)
