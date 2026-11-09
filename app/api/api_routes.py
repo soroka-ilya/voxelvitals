@@ -121,7 +121,8 @@ async def get_server_status(
     server_id = await repo.get_or_create_server(
         address=clean_addr, edition="bedrock" if effective_bedrock else "java"
     )
-    await repo.record_telemetry(server_id, status)
+    if server_id > 0:
+        await repo.record_telemetry(server_id, status)
     peak_info = await repo.get_server_peak(clean_addr)
     status.peak_players = peak_info["peak_players"]
     status.peak_online = peak_info["peak_online"]

@@ -53,6 +53,19 @@ class ServerRepository:
         """Fetch existing server ID or create a new entry."""
         now = datetime.now(timezone.utc).isoformat()
         normalized_addr = address.strip().lower()
+
+        # Reject scanners and junk paths (e.g. /.env, wp-login.php, script injections)
+        if (
+            not normalized_addr
+            or normalized_addr.startswith(".")
+            or "/" in normalized_addr
+            or "\\" in normalized_addr
+            or " " in normalized_addr
+            or normalized_addr.endswith((".php", ".env", ".git", ".txt", ".bak", ".ini"))
+            or (not is_pinned and "." not in normalized_addr and normalized_addr != "localhost")
+        ):
+            return 0
+
         async with get_db_connection(self.db_path) as conn:
             cursor = await conn.execute(
                 "SELECT id FROM servers WHERE LOWER(address) = ?", (normalized_addr,)
