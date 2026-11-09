@@ -104,8 +104,10 @@ async def get_suggestions(
 @api_router.get("/status/{address}", response_model=ServerStatus)
 async def get_server_status(
     address: str,
+    request: Request,
     bedrock: bool = Query(False, description="Query Bedrock edition"),
     mock: bool = Query(False, description="Return mock data"),
+    force_refresh: bool = Query(False, description="Bypass cache and force refresh"),
 ):
     """Query live server status and update telemetry history."""
     clean_addr = resolve_address(address.strip())
@@ -113,50 +115,94 @@ async def get_server_status(
     if mock:
         status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
     else:
-        status = await query_server(clean_addr, is_bedrock=effective_bedrock)
+        status = await query_server(clean_addr, is_bedrock=effective_bedrock, force_refresh=force_refresh)
 
     # Persist telemetry for tracking
     server_id = await repo.get_or_create_server(
         address=clean_addr, edition="bedrock" if effective_bedrock else "java"
     )
     await repo.record_telemetry(server_id, status)
+    peak_info = await repo.get_server_peak(clean_addr)
+    status.peak_players = peak_info["peak_players"]
+    status.peak_online = peak_info["peak_online"]
+    status.peak_date = peak_info["peak_date"]
+    status.peak_players_time = peak_info.get("peak_players_time")
+    status.peak_players_formatted = peak_info.get("formatted")
     return status
 
 
+@api_router.post("/servers/{address}/ping", response_model=ServerStatus)
+@api_router.post("/ping/{address}", response_model=ServerStatus)
+@limiter.limit("30/minute")
+async def manual_ping_server(
+    address: str,
+    request: Request,
+    bedrock: bool = Query(False),
+):
+    """Manual ping trigger endpoint rate limited to 30 req/min per IP."""
+    clean_addr = resolve_address(address.strip())
+    effective_bedrock = bedrock or is_bedrock_address(clean_addr)
+    status = await query_server(clean_addr, is_bedrock=effective_bedrock, force_refresh=True)
+    server_id = await repo.get_or_create_server(
+        address=clean_addr, edition="bedrock" if effective_bedrock else "java"
+    )
+    await repo.record_telemetry(server_id, status)
+    peak_info = await repo.get_server_peak(clean_addr)
+    status.peak_players = peak_info["peak_players"]
+    status.peak_online = peak_info["peak_online"]
+    status.peak_date = peak_info["peak_date"]
+    status.peak_players_time = peak_info.get("peak_players_time")
+    status.peak_players_formatted = peak_info.get("formatted")
+    return status
+
+
+@api_router.get("/sse/status/{address}")
 @api_router.get("/live/{address}")
 async def live_server_stream(
     address: str,
     request: Request,
     bedrock: bool = Query(False, description="Query Bedrock edition"),
-    interval: int = Query(10, ge=3, le=60, description="Stream interval in seconds"),
+    interval: int = Query(60, ge=1, le=300, description="Stream interval in seconds"),
+    mock: bool = Query(False, description="Return mock data"),
 ):
     """Server-Sent Events (SSE) live telemetry stream.
-    Streams real-time player counts, ping, and multi-region probes every 10 seconds.
+    Streams real-time player counts, ping, multi-region probes, and peak online every 60 seconds.
     """
     clean_addr = resolve_address(address.strip())
     effective_bedrock = bedrock or is_bedrock_address(clean_addr)
 
     async def event_generator():
         while True:
-            if await request.is_disconnected():
-                break
             try:
-                status = await query_server(clean_addr, is_bedrock=effective_bedrock)
-                probes = get_multi_region_probes(clean_addr, status.latency_ms, edition=status.edition)
+                if mock:
+                    status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
+                else:
+                    status = await query_server(clean_addr, is_bedrock=effective_bedrock)
+                probes = get_multi_region_probes(clean_addr, status.latency_ms, edition=status.edition, is_online=status.is_online)
+                peak_info = await repo.get_server_peak(clean_addr)
                 payload = {
                     "address": clean_addr,
                     "is_online": status.is_online,
                     "players_online": status.players_online,
                     "players_max": status.players_max,
                     "latency_ms": status.latency_ms,
+                    "region_latencies": status.region_latencies,
+                    "peak_players": peak_info["peak_players"],
+                    "peak_players_formatted": peak_info.get("formatted"),
                     "version_name": status.version_name,
                     "motd_html": status.motd_html,
-                    "probes": [p.to_dict() for p in probes],
+                    "probes": [p.to_dict() if hasattr(p, "to_dict") else p for p in probes],
+                    "last_updated": status.last_updated,
                 }
                 yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+            except (asyncio.CancelledError, GeneratorExit):
+                break
             except Exception as exc:
                 yield f"data: {json.dumps({'error': str(exc)}, ensure_ascii=False)}\n\n"
-            await asyncio.sleep(interval)
+            try:
+                await asyncio.sleep(interval)
+            except (asyncio.CancelledError, GeneratorExit):
+                break
 
     return StreamingResponse(
         event_generator(),
@@ -320,7 +366,8 @@ async def get_reviews_by_path(address: str):
 
 
 @api_router.post("/reviews", dependencies=[Depends(review_rate_limiter)])
-async def create_review(payload: ReviewCreateRequest, request: Request):
+@limiter.limit("5/minute")
+async def create_review(request: Request, payload: ReviewCreateRequest):
     """Submit a rating and review for a server (rate limited to 5 req/min)."""
     clean_addr = resolve_address(payload.server_address.strip())
     user = await get_current_user_from_request(request, repo)
@@ -395,5 +442,23 @@ async def vote_server(request: Request, payload: Dict[str, str]):
     if not success:
         return {"success": False, "message": "Вы уже голосовали за этот сервер сегодня!", "votes": total_votes}
     return {"success": True, "message": "Спасибо за ваш голос!", "votes": total_votes}
+
+
+# ----------------- Telegram Bot Webhook Endpoint -----------------
+@api_router.post("/tg/webhook")
+async def telegram_webhook(request: Request):
+    """Receive and process incoming Telegram Bot updates via Webhook.
+    Returns inline Webhook response JSON, bypassing outbound TSPU filtering.
+    """
+    from app.services.tg_service import process_telegram_update
+    try:
+        update_data = await request.json()
+    except Exception:
+        return {"ok": False, "error": "Invalid JSON"}
+
+    response_payload = await process_telegram_update(update_data)
+    if response_payload:
+        return response_payload
+    return {"ok": True}
 
 

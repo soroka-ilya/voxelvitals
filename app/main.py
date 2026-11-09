@@ -5,8 +5,8 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.api.api_routes import api_router
 from app.api.oauth_routes import oauth_router
@@ -86,8 +86,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": f"Слишком много запросов. Лимит: {exc.detail}",
+            "error": str(exc),
+        },
+        headers={"Retry-After": "60"},
+    )
+
+
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, custom_rate_limit_handler)
 
 
 @app.get("/healthz")

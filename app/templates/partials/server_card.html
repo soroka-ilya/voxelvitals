@@ -84,6 +84,16 @@
           <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             {{ status.edition | upper }} Online
           </span>
+          {% if status.peak_players and status.peak_players > 0 %}
+          <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold" title="{{ status.peak_players_formatted or 'Пик онлайна' }}">
+            🏆 Пик: {{ "{:,}".format(status.peak_players) }}
+          </span>
+          {% endif %}
+          {% if status.region_latencies and status.is_online %}
+          <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1f293d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-transparent">
+            🇷🇺 {{ status.region_latencies.moscow | round | int }}ms · 🇩🇪 {{ status.region_latencies.frankfurt | round | int }}ms · 🇫🇮 {{ status.region_latencies.helsinki | round | int }}ms
+          </span>
+          {% endif %}
           {% if status.latency_ms < 80 and status.latency_ms > 0 %}
           <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             Низкий пинг
@@ -94,9 +104,6 @@
             Высокий онлайн
           </span>
           {% endif %}
-          <span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-[#161b26] text-slate-700 dark:text-slate-300">
-            Пинг проверен
-          </span>
         </div>
       {% else %}
         <div class="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400 mb-2 pb-1.5 border-b border-slate-200 dark:border-[#1f293d]/50">

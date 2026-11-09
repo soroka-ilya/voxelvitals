@@ -178,10 +178,10 @@
         <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">Peak</span>
       </div>
       <div class="flex items-baseline gap-1.5">
-        <span class="text-2xl sm:text-3xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ "{:,}".format(peak_info.peak_players if peak_info else status.players_online) }}</span>
+        <span class="text-2xl sm:text-3xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ "{:,}".format(status.peak_players or (peak_info.peak_players if peak_info else status.players_online)) }}</span>
         <span class="text-xs text-amber-600/70 dark:text-amber-400/70 font-mono">пик</span>
       </div>
-      <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ peak_info.peak_date if peak_info else 'Зафиксировано сегодня' }}</p>
+      <p id="peak-online-text" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ status.peak_players_formatted or (peak_info.formatted if peak_info else (peak_info.peak_date if peak_info else 'Зафиксировано сегодня')) }}</p>
     </div>
 
     <!-- Metric 4: Version & Protocol -->
@@ -618,17 +618,17 @@
     }
   }
 
-  // Live SSE Telemetry Stream (Updates online & ping every 10s without reload)
+  // Live SSE Telemetry Stream (Updates online & ping every 60s without reload per R1)
   (function initLiveStream() {
     const serverAddr = "{{ status.address }}";
     const isBedrock = "{{ status.edition }}" === "bedrock";
-    const sseUrl = `/api/live/${encodeURIComponent(serverAddr)}${isBedrock ? '?bedrock=true' : ''}`;
+    const sseUrl = `/api/sse/status/${encodeURIComponent(serverAddr)}${isBedrock ? '?bedrock=true' : ''}`;
 
     if (!window.EventSource) return;
 
     try {
       const evtSource = new EventSource(sseUrl);
-      evtSource.onmessage = function(event) {
+      const handleData = function(event) {
         try {
           const data = JSON.parse(event.data);
           if (data.error) return;
@@ -658,18 +658,20 @@
 
           if (Array.isArray(data.probes)) {
             data.probes.forEach(probe => {
-              const pingEl = document.getElementById(`probe-ping-${probe.hub_code}`);
+              const pingEl = document.getElementById(`probe-ping-${probe.hub_code || probe.code}`);
               if (pingEl) {
                 pingEl.innerHTML = `${Math.round(probe.latency_ms)} <span class="text-xs font-normal text-slate-500">ms</span>`;
               }
-              const labelEl = document.getElementById(`probe-label-${probe.hub_code}`);
+              const labelEl = document.getElementById(`probe-label-${probe.hub_code || probe.code}`);
               if (labelEl) {
-                labelEl.textContent = probe.status_label;
+                labelEl.textContent = probe.status_label || probe.status;
               }
             });
           }
         } catch (err) {}
       };
+      evtSource.addEventListener('status', handleData);
+      evtSource.onmessage = handleData;
     } catch (e) {}
   })();
 </script>

@@ -23,6 +23,10 @@ wheels/
 .venv
 venv/
 *.db
+*.db-*
+*.db-journal
+*.db-shm
+*.db-wal
 *.sqlite3
 .pytest_cache/
 .coverage
