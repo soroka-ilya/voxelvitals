@@ -2,6 +2,11 @@
 
 {% block title %}Аналитика и телеметрия | {{ app_name }}{% endblock %}
 
+{% block extra_head %}
+  <script src="/static/js/chart.min.js" defer></script>
+  <script src="/static/js/chart_init.js" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="space-y-8">
   <!-- Header & Timeframe Selector -->

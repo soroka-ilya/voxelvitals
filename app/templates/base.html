@@ -22,39 +22,23 @@
     })();
   </script>
   
-  <!-- Fonts -->
+  <!-- Fonts: Non-blocking with system font fallback -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Tailwind CSS & HTMX -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            canvas: '#0c0f17',
-            surface: '#161b26',
-            panel: '#1c2233',
-            borderline: '#273147',
-            emeraldaccent: '#10b981',
-          },
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          }
-        }
-      }
-    }
-  </script>
-  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-  <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </noscript>
+
+  <!-- Precompiled Production Stylesheets (Instant 0ms JS Compiler Overhead) -->
+  <link rel="stylesheet" href="/static/css/tailwind.min.css">
   <link rel="stylesheet" href="/static/css/style.css">
-  <script src="/static/js/chart_init.js"></script>
-  <script src="/static/js/app.js"></script>
+
+  <!-- Local Fast Scripts with Defer -->
+  <script src="/static/js/htmx.min.js" defer></script>
+  <script src="/static/js/sse.js" defer></script>
+  <script src="/static/js/app.js" defer></script>
+  {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-slate-50 dark:bg-[#0c0f17] text-slate-800 dark:text-slate-100 font-sans antialiased flex flex-col min-h-screen selection:bg-emerald-500/20 selection:text-emerald-500 transition-colors duration-150">
   <!-- Top Navigation Bar -->

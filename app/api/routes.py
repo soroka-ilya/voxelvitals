@@ -140,26 +140,6 @@ async def server_page(
 
     extra_info = get_server_extra_info(clean_addr, edition=status.edition)
     news = await repo.get_news_for_server(clean_addr)
-    if not news:
-        news = [
-            {
-                "id": 1,
-                "title": "Сезонное обновление серверов и оптимизация сети",
-                "content": "Обновлена сетевая инфраструктура, улучшен пинг для игроков из СНГ и Европы. Добавлен античит протокол нового поколения и оптимизированы задержки чанков.",
-                "tag": "Обновление",
-                "author": "Команда сервера",
-                "published_at": "2026-10-25T14:00:00Z",
-            },
-            {
-                "id": 2,
-                "title": "Рейтинговый турнир выходного дня",
-                "content": "На этих выходных открывается турнирная сетка с наградами за победы в дуэлях и командных боях. Зарегистрируйтесь заранее!",
-                "tag": "Ивент",
-                "author": "Event Manager",
-                "published_at": "2026-10-22T18:30:00Z",
-            },
-        ]
-
     reviews = await repo.get_reviews_for_server(clean_addr)
     rating_stats = await repo.get_server_rating_stats(clean_addr)
     votes = await repo.get_votes_count(clean_addr)

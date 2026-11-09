@@ -2,6 +2,11 @@
 
 {% block title %}{{ status.address }} - Telemetry & Status | VoxelVitals{% endblock %}
 
+{% block extra_head %}
+  <script src="/static/js/chart.min.js" defer></script>
+  <script src="/static/js/chart_init.js" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="space-y-8">
   <!-- Breadcrumbs & Status Bar -->

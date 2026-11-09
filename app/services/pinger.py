@@ -146,10 +146,11 @@ async def _execute_query(
                 regional_latencies=regions,
             )
         else:
+            tier1_timeout = min(effective_timeout, 2.0)
             server = await asyncio.wait_for(
-                JavaServer.async_lookup(clean_addr), timeout=effective_timeout
+                JavaServer.async_lookup(clean_addr), timeout=tier1_timeout
             )
-            status = await asyncio.wait_for(server.async_status(), timeout=effective_timeout)
+            status = await asyncio.wait_for(server.async_status(), timeout=tier1_timeout)
             motd_str = _extract_motd_str(status.motd)
             sample = [
                 PlayerSample(name=p.name, id=str(p.id))
