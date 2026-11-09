@@ -132,8 +132,10 @@ def _make_2b2t_icon() -> str:
 
 
 def _get_server_icon_url(address: str, edition: str = "java") -> str:
-    """Return instant SVG brand/styled icon for servers without external CDN network dependencies."""
+    """Return authentic local server PNG icon for curated servers, or SVG fallback for custom servers."""
     clean_host = address.strip().lower().split(":")[0]
+
+    # Flagship servers with specialized high-res brand vector SVGs
     if "hypixel" in clean_host:
         return _make_hypixel_icon()
     if "cubecraft" in clean_host:
@@ -144,26 +146,24 @@ def _get_server_icon_url(address: str, edition: str = "java") -> str:
         return _make_hive_icon()
     if "nethergames" in clean_host:
         return _make_nethergames_icon()
-    if "donut" in clean_host:
-        return _make_svg_icon("DS", "#be185d", "#fdf2f8")
-    if "reallyworld" in clean_host:
-        return _make_svg_icon("RW", "#e11d48", "#fff1f2")
-    if "funtime" in clean_host:
-        return _make_svg_icon("FT", "#059669", "#ecfdf5")
-    if "holyworld" in clean_host:
-        return _make_svg_icon("HW", "#8b5cf6", "#f5f3ff")
-    if "gomme" in clean_host:
-        return _make_svg_icon("GHD", "#c2410c", "#ffedd5")
-    if "vime" in clean_host:
-        return _make_svg_icon("VW", "#1d4ed8", "#dbeafe")
-    if "wynn" in clean_host:
-        return _make_svg_icon("WY", "#4338ca", "#e0e7ff")
-    if "mana" in clean_host:
-        return _make_svg_icon("MC", "#047857", "#d1fae5")
-    if "complex" in clean_host:
-        return _make_svg_icon("CX", "#7c3aed", "#ede9fe")
-    if "minemen" in clean_host:
-        return _make_svg_icon("MMC", "#b91c1c", "#fee2e2")
+
+    # Popular servers with authentic local PNG favicons
+    server_icons = {
+        "donut": "/static/img/servers/donutsmp.png",
+        "reallyworld": "/static/img/servers/reallyworld.png",
+        "funtime": "/static/img/servers/funtime.png",
+        "holyworld": "/static/img/servers/holyworld.png",
+        "gomme": "/static/img/servers/gommehd.png",
+        "vime": "/static/img/servers/vimeworld.png",
+        "wynn": "/static/img/servers/wynncraft.png",
+        "mana": "/static/img/servers/manacube.png",
+        "complex": "/static/img/servers/complex.png",
+        "minemen": "/static/img/servers/minemen.png",
+    }
+    for key, path in server_icons.items():
+        if key in clean_host:
+            return path
+
     if "bedrock" in clean_host or edition == "bedrock":
         return _make_bedrock_generic_icon()
 
@@ -364,7 +364,7 @@ CURATED_SERVERS: List[Dict[str, Any]] = [
         "category": "minigames",
         "category_label": "Bedrock Мини-игры",
         "description": "Главная сеть мини-игр для Bedrock Edition: Treasure Wars, Hide and Seek, Survival Games",
-        "icon": _make_hive_icon(),
+        "icon": _get_server_icon_url("geo.hivebedrock.network"),
         "fallback_icon": _make_hive_icon(),
         "edition": "bedrock",
         "versions": ["1.21.x", "1.20.x"],
@@ -379,7 +379,7 @@ CURATED_SERVERS: List[Dict[str, Any]] = [
         "category": "pvp",
         "category_label": "Bedrock PvP",
         "description": "Крупнейшая соревновательная сеть Bedrock: Bedwars, Duels, Skywars, Factions",
-        "icon": _make_nethergames_icon(),
+        "icon": _get_server_icon_url("play.nethergames.org"),
         "fallback_icon": _make_nethergames_icon(),
         "edition": "bedrock",
         "versions": ["1.21.x"],
