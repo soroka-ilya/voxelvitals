@@ -7,7 +7,9 @@ import httpx
 from mcstatus import BedrockServer, JavaServer
 from app.config import settings
 from app.domain.models import PlayerSample, ServerStatus
+from app.services.cache_service import status_cache
 from app.services.motd_formatter import format_motd_html, strip_minecraft_formatting
+from app.services.probes import calculate_regional_latencies
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +30,18 @@ def get_mock_server_status(
 ) -> ServerStatus:
     """Generate realistic mock status for testing or offline demonstration."""
     if not is_online:
+        regions = {"moscow": 0.0, "frankfurt": 0.0, "helsinki": 0.0}
         return ServerStatus(
             address=address,
             is_online=False,
             edition=edition,
             error_message="Could not resolve or connect to server (timed out)",
+            region_latencies=regions,
+            regional_latencies=regions,
         )
 
     motd = "§6§lVOXELVITALS §7| §aProduction Ready Status\n§eSurvival §7• §bMinigames §7• §dEconomy"
+    regions = calculate_regional_latencies(address, 24.5, is_online=True)
     return ServerStatus(
         address=address,
         is_online=True,
@@ -54,6 +60,8 @@ def get_mock_server_status(
         motd_html=format_motd_html(motd),
         motd_plain=strip_minecraft_formatting(motd),
         icon_base64=None,
+        region_latencies=regions,
+        regional_latencies=regions,
     )
 
 
@@ -84,6 +92,8 @@ async def _query_http_fallback(
                     if isinstance(p, dict)
                 ]
 
+            lat_val = round(float(data.get("debug", {}).get("ping", 32.0)), 1) if isinstance(data.get("debug"), dict) else 32.0
+            regions = calculate_regional_latencies(clean_addr, lat_val, is_online=True)
             return ServerStatus(
                 address=clean_addr,
                 is_online=True,
@@ -93,35 +103,31 @@ async def _query_http_fallback(
                 players_sample=sample,
                 version_name=data.get("version", "Minecraft Server"),
                 version_protocol=data.get("protocol", {}).get("version") if isinstance(data.get("protocol"), dict) else None,
-                latency_ms=round(float(data.get("debug", {}).get("ping", 32.0)), 1) if isinstance(data.get("debug"), dict) else 32.0,
+                latency_ms=lat_val,
                 motd_raw=motd_str,
                 motd_html=format_motd_html(motd_str),
                 motd_plain=strip_minecraft_formatting(motd_str),
                 icon_base64=data.get("icon"),
+                region_latencies=regions,
+                regional_latencies=regions,
             )
     except Exception as exc:
         logger.debug(f"HTTP fallback query failed for {clean_addr}: {exc}")
         return None
 
 
-async def query_server(
-    address: str,
+async def _execute_query(
+    clean_addr: str,
     is_bedrock: bool = False,
-    timeout: Optional[float] = None,
+    effective_timeout: float = 5.0,
 ) -> ServerStatus:
-    """Query live server with DNS SRV support and fallback handling."""
-    effective_timeout = timeout or settings.query_timeout_seconds
-    clean_addr = address.strip()
     edition = "bedrock" if is_bedrock else "java"
-
     try:
         if is_bedrock:
-            # Bedrock UDP query
             server = BedrockServer.lookup(clean_addr)
-            status = await asyncio.wait_for(
-                server.async_status(), timeout=effective_timeout
-            )
+            status = await asyncio.wait_for(server.async_status(), timeout=effective_timeout)
             motd_str = _extract_motd_str(status.motd)
+            regions = calculate_regional_latencies(clean_addr, float(status.latency), is_online=True)
             return ServerStatus(
                 address=clean_addr,
                 is_online=True,
@@ -136,22 +142,20 @@ async def query_server(
                 motd_html=format_motd_html(motd_str),
                 motd_plain=strip_minecraft_formatting(motd_str),
                 icon_base64=None,
+                region_latencies=regions,
+                regional_latencies=regions,
             )
         else:
-            # Java TCP Server List Ping
             server = await asyncio.wait_for(
                 JavaServer.async_lookup(clean_addr), timeout=effective_timeout
             )
-            status = await asyncio.wait_for(
-                server.async_status(), timeout=effective_timeout
-            )
+            status = await asyncio.wait_for(server.async_status(), timeout=effective_timeout)
             motd_str = _extract_motd_str(status.motd)
-            sample = []
-            if status.players and status.players.sample:
-                sample = [
-                    PlayerSample(name=p.name, id=str(p.id))
-                    for p in status.players.sample
-                ]
+            sample = [
+                PlayerSample(name=p.name, id=str(p.id))
+                for p in (status.players.sample or [])
+            ] if status.players else []
+            regions = calculate_regional_latencies(clean_addr, float(status.latency), is_online=True)
             return ServerStatus(
                 address=clean_addr,
                 is_online=True,
@@ -166,6 +170,8 @@ async def query_server(
                 motd_html=format_motd_html(motd_str),
                 motd_plain=strip_minecraft_formatting(motd_str),
                 icon_base64=status.icon,
+                region_latencies=regions,
+                regional_latencies=regions,
             )
     except Exception as exc:
         logger.warning(f"Tier-1 query failed for {clean_addr}: {exc}. Trying Tier-2 fallback...")
@@ -173,12 +179,34 @@ async def query_server(
             clean_addr, is_bedrock=is_bedrock, timeout=min(effective_timeout, 4.0)
         )
         if fallback_status:
-            logger.info(f"Tier-2 fallback succeeded for {clean_addr} (players={fallback_status.players_online})")
             return fallback_status
 
+        offline_regions = {"moscow": 0.0, "frankfurt": 0.0, "helsinki": 0.0}
         return ServerStatus(
             address=clean_addr,
             is_online=False,
             edition=edition,
             error_message=str(exc) or "Server offline or unreachable",
+            region_latencies=offline_regions,
+            regional_latencies=offline_regions,
         )
+
+
+async def query_server(
+    address: str,
+    is_bedrock: bool = False,
+    timeout: Optional[float] = None,
+    force_refresh: bool = False,
+) -> ServerStatus:
+    """Query live server with cache, DNS SRV support, and fallback handling."""
+    effective_timeout = timeout or settings.query_timeout_seconds
+    clean_addr = address.strip()
+    edition_str = "bedrock" if is_bedrock else "java"
+    cache_key = f"status:{clean_addr.lower()}:{edition_str}"
+
+    return await status_cache.get_or_fetch(
+        cache_key,
+        lambda: _execute_query(clean_addr, is_bedrock, effective_timeout),
+        ttl=30.0,
+        force_refresh=force_refresh,
+    )

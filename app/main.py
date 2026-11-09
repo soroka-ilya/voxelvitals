@@ -6,11 +6,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from app.api.api_routes import api_router
 from app.api.oauth_routes import oauth_router
 from app.api.routes import web_router
 from app.config import settings
 from app.database import init_db
+from app.limiter import limiter
 from app.repository import ServerRepository
 from app.services.analytics_service import (
     get_or_create_visitor_id,
@@ -82,6 +85,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 @app.get("/healthz")

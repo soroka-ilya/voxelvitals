@@ -137,6 +137,66 @@
     </div>
   </div>
 
+  <!-- Telemetry Metrics & Peak Record Grid -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Metric 1: Live Online Players -->
+    <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-5 shadow-sm space-y-2 relative overflow-hidden transition-all">
+      <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span class="font-medium">Онлайн игроков</span>
+        <span class="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping"></span> Live SSE
+        </span>
+      </div>
+      <div class="flex items-baseline gap-1.5">
+        <span id="live-players-val" class="text-2xl sm:text-3xl font-bold font-mono text-slate-900 dark:text-white transition-colors duration-300">{{ "{:,}".format(status.players_online) }}</span>
+        <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">/ <span id="live-max-val">{{ "{:,}".format(status.players_max) }}</span></span>
+      </div>
+      <div class="w-full bg-slate-100 dark:bg-[#0c0f17] h-1.5 rounded-full overflow-hidden">
+        <div id="live-online-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: {{ [((status.players_online / status.players_max) * 100) if status.players_max else 0, 100] | min }}%;"></div>
+      </div>
+    </div>
+
+    <!-- Metric 2: Live Latency -->
+    <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-5 shadow-sm space-y-2 transition-all">
+      <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span class="font-medium">Задержка (Пинг)</span>
+        <span id="live-ping-label" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+          {% if status.latency_ms < 60 %}Отличный{% elif status.latency_ms < 120 %}Хороший{% else %}Средний{% endif %}
+        </span>
+      </div>
+      <div class="flex items-baseline gap-1.5">
+        <span id="live-latency-val" class="text-2xl sm:text-3xl font-bold font-mono text-slate-900 dark:text-white transition-colors duration-300">{{ status.latency_ms | int }}</span>
+        <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">ms</span>
+      </div>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400">Измерено из дата-центра MSK</p>
+    </div>
+
+    <!-- Metric 3: Peak Online Hall of Fame -->
+    <div class="rounded-xl border border-amber-500/30 dark:border-amber-500/30 bg-gradient-to-br from-amber-500/5 via-white dark:via-[#161b26] to-transparent p-4 sm:p-5 shadow-sm space-y-2 transition-all">
+      <div class="flex items-center justify-between text-xs text-amber-600 dark:text-amber-400">
+        <span class="font-semibold flex items-center gap-1">🏆 Рекорд онлайна</span>
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">Peak</span>
+      </div>
+      <div class="flex items-baseline gap-1.5">
+        <span class="text-2xl sm:text-3xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ "{:,}".format(peak_info.peak_players if peak_info else status.players_online) }}</span>
+        <span class="text-xs text-amber-600/70 dark:text-amber-400/70 font-mono">пик</span>
+      </div>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ peak_info.peak_date if peak_info else 'Зафиксировано сегодня' }}</p>
+    </div>
+
+    <!-- Metric 4: Version & Protocol -->
+    <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-5 shadow-sm space-y-2 transition-all">
+      <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span class="font-medium">Версия & Ядро</span>
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 uppercase">{{ status.edition }}</span>
+      </div>
+      <div class="truncate text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white pt-1">
+        {{ status.version_name or 'Minecraft' }}
+      </div>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Протокол: {{ status.version_protocol or 'Auto' }}</p>
+    </div>
+  </div>
+
   <!-- 24-Hour Telemetry History Chart -->
   <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-6 shadow-sm space-y-4 transition-colors">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-[#273147] pb-3">
@@ -159,6 +219,48 @@
       <div class="h-64 sm:h-72 min-w-[560px] sm:min-w-0 relative">
         <canvas id="telemetryChart"></canvas>
       </div>
+    </div>
+  </div>
+
+  <!-- Multi-Region Probes Latency Matrix -->
+  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-4 sm:p-6 shadow-sm space-y-4 transition-colors">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-[#273147] pb-3">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Многоточечный замер пинга (Multi-Region Probes)</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-normal">3 локации</span>
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Задержка подключения к серверу из ключевых географических хабов игроков</p>
+      </div>
+      <span class="text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#273147]/50 px-2.5 py-1 rounded">
+        SingleFlight Caching TTL 30s
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="probes-grid">
+      {% for probe in probes %}
+      <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] flex items-center justify-between" id="probe-card-{{ probe.hub_code }}">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">{{ probe.flag_emoji }}</span>
+          <div>
+            <div class="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>{{ probe.city }}</span>
+              <span class="text-[10px] font-mono text-slate-400">({{ probe.hub_code }})</span>
+            </div>
+            <span class="text-[11px] text-slate-500">{{ probe.region_name }}</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-base font-bold font-mono text-slate-900 dark:text-white" id="probe-ping-{{ probe.hub_code }}">
+            {{ probe.latency_ms | int }} <span class="text-xs font-normal text-slate-500">ms</span>
+          </div>
+          <span id="probe-label-{{ probe.hub_code }}" class="text-[10px] font-mono px-1.5 py-0.5 rounded {% if probe.latency_ms < 60 %}bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20{% elif probe.latency_ms < 110 %}bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20{% else %}bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20{% endif %}">
+            {{ probe.status_label }}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
     </div>
   </div>
 
@@ -515,5 +617,60 @@
       err.classList.remove('hidden');
     }
   }
+
+  // Live SSE Telemetry Stream (Updates online & ping every 10s without reload)
+  (function initLiveStream() {
+    const serverAddr = "{{ status.address }}";
+    const isBedrock = "{{ status.edition }}" === "bedrock";
+    const sseUrl = `/api/live/${encodeURIComponent(serverAddr)}${isBedrock ? '?bedrock=true' : ''}`;
+
+    if (!window.EventSource) return;
+
+    try {
+      const evtSource = new EventSource(sseUrl);
+      evtSource.onmessage = function(event) {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.error) return;
+
+          const playersEl = document.getElementById('live-players-val');
+          if (playersEl && typeof data.players_online === 'number') {
+            playersEl.textContent = data.players_online.toLocaleString();
+            playersEl.classList.add('text-emerald-500');
+            setTimeout(() => playersEl.classList.remove('text-emerald-500'), 1500);
+          }
+
+          const maxEl = document.getElementById('live-max-val');
+          if (maxEl && typeof data.players_max === 'number') {
+            maxEl.textContent = data.players_max.toLocaleString();
+          }
+
+          const barEl = document.getElementById('live-online-bar');
+          if (barEl && data.players_max > 0) {
+            const pct = Math.min(100, Math.round((data.players_online / data.players_max) * 100));
+            barEl.style.width = pct + '%';
+          }
+
+          const latencyEl = document.getElementById('live-latency-val');
+          if (latencyEl && typeof data.latency_ms === 'number') {
+            latencyEl.textContent = Math.round(data.latency_ms);
+          }
+
+          if (Array.isArray(data.probes)) {
+            data.probes.forEach(probe => {
+              const pingEl = document.getElementById(`probe-ping-${probe.hub_code}`);
+              if (pingEl) {
+                pingEl.innerHTML = `${Math.round(probe.latency_ms)} <span class="text-xs font-normal text-slate-500">ms</span>`;
+              }
+              const labelEl = document.getElementById(`probe-label-${probe.hub_code}`);
+              if (labelEl) {
+                labelEl.textContent = probe.status_label;
+              }
+            });
+          }
+        } catch (err) {}
+      };
+    } catch (e) {}
+  })();
 </script>
 {% endblock %}

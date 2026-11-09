@@ -18,6 +18,7 @@ from app.services.alias_service import (
 )
 from app.services.auth_service import get_current_user_from_request
 from app.services.pinger import get_mock_server_status, query_server
+from app.services.probes_service import get_multi_region_probes
 
 templates_path = Path(__file__).resolve().parent.parent / "templates"
 templates = Jinja2Templates(directory=str(templates_path))
@@ -163,6 +164,8 @@ async def server_page(
     rating_stats = await repo.get_server_rating_stats(clean_addr)
     votes = await repo.get_votes_count(clean_addr)
     current_user = await get_current_user_from_request(request, repo)
+    probes = get_multi_region_probes(clean_addr, status.latency_ms, edition=status.edition)
+    peak_info = await repo.get_server_peak(clean_addr)
 
     return templates.TemplateResponse(
         request=request,
@@ -175,6 +178,8 @@ async def server_page(
             "reviews": reviews,
             "rating_stats": rating_stats,
             "votes": votes,
+            "probes": probes,
+            "peak_info": peak_info,
             "current_user": current_user,
             "app_name": settings.app_name,
         },

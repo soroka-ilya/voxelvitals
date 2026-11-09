@@ -1,8 +1,10 @@
 """REST JSON API and dynamic SVG badge endpoints."""
 
+import asyncio
 import json
 from typing import Any, Dict, List, Optional, Union
-from fastapi import APIRouter, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from app.domain.models import BadgeConfig, ServerStatus, TelemetryPoint
 from app.repository import ServerRepository
@@ -13,8 +15,11 @@ from app.services.auth_service import (
     hash_password,
     verify_password,
 )
+from app.limiter import limiter
 from app.services.badge_service import generate_status_badge
 from app.services.pinger import get_mock_server_status, query_server
+from app.services.probes_service import get_multi_region_probes
+from app.services.rate_limiter import review_rate_limiter, vote_rate_limiter
 
 api_router = APIRouter(prefix="/api", tags=["API"])
 repo = ServerRepository()
@@ -116,6 +121,52 @@ async def get_server_status(
     )
     await repo.record_telemetry(server_id, status)
     return status
+
+
+@api_router.get("/live/{address}")
+async def live_server_stream(
+    address: str,
+    request: Request,
+    bedrock: bool = Query(False, description="Query Bedrock edition"),
+    interval: int = Query(10, ge=3, le=60, description="Stream interval in seconds"),
+):
+    """Server-Sent Events (SSE) live telemetry stream.
+    Streams real-time player counts, ping, and multi-region probes every 10 seconds.
+    """
+    clean_addr = resolve_address(address.strip())
+    effective_bedrock = bedrock or is_bedrock_address(clean_addr)
+
+    async def event_generator():
+        while True:
+            if await request.is_disconnected():
+                break
+            try:
+                status = await query_server(clean_addr, is_bedrock=effective_bedrock)
+                probes = get_multi_region_probes(clean_addr, status.latency_ms, edition=status.edition)
+                payload = {
+                    "address": clean_addr,
+                    "is_online": status.is_online,
+                    "players_online": status.players_online,
+                    "players_max": status.players_max,
+                    "latency_ms": status.latency_ms,
+                    "version_name": status.version_name,
+                    "motd_html": status.motd_html,
+                    "probes": [p.to_dict() for p in probes],
+                }
+                yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+            except Exception as exc:
+                yield f"data: {json.dumps({'error': str(exc)}, ensure_ascii=False)}\n\n"
+            await asyncio.sleep(interval)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @api_router.get("/history/{address}", response_model=List[TelemetryPoint])
@@ -268,9 +319,9 @@ async def get_reviews_by_path(address: str):
     return await repo.get_reviews_for_server(clean_addr)
 
 
-@api_router.post("/reviews")
+@api_router.post("/reviews", dependencies=[Depends(review_rate_limiter)])
 async def create_review(payload: ReviewCreateRequest, request: Request):
-    """Submit a rating and review for a server."""
+    """Submit a rating and review for a server (rate limited to 5 req/min)."""
     clean_addr = resolve_address(payload.server_address.strip())
     user = await get_current_user_from_request(request, repo)
     author_name = payload.author_name or (user["mc_nickname"] if user else "Анонимный игрок")
@@ -326,9 +377,9 @@ async def create_news(payload: NewsCreateRequest, request: Request):
 
 
 # ----------------- Vote Endpoint -----------------
-@api_router.post("/vote")
+@api_router.post("/vote", dependencies=[Depends(vote_rate_limiter)])
 async def vote_server(request: Request, payload: Dict[str, str]):
-    """Cast a daily vote for a server."""
+    """Cast a daily vote for a server (rate limited to 10 req/min)."""
     raw_addr = payload.get("server_address", "")
     if not raw_addr:
         raise HTTPException(status_code=400, detail="Укажите адрес сервера")

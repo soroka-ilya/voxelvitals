@@ -12,7 +12,11 @@ CREATE TABLE IF NOT EXISTS servers (
     edition TEXT NOT NULL DEFAULT 'java',
     first_seen TEXT NOT NULL,
     last_seen TEXT NOT NULL,
-    is_pinned INTEGER NOT NULL DEFAULT 0
+    is_pinned INTEGER NOT NULL DEFAULT 0,
+    peak_players INTEGER NOT NULL DEFAULT 0,
+    peak_online INTEGER NOT NULL DEFAULT 0,
+    peak_date TEXT,
+    peak_players_time TEXT
 );
 
 CREATE TABLE IF NOT EXISTS telemetry_history (
@@ -150,4 +154,17 @@ async def init_db(db_path: str = None) -> None:
             await conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT")
         if "is_verified_license" not in existing_cols:
             await conn.execute("ALTER TABLE users ADD COLUMN is_verified_license INTEGER NOT NULL DEFAULT 0")
+
+        # Migrate servers table for peak records
+        cursor_s = await conn.execute("PRAGMA table_info(servers)")
+        server_cols = {row["name"] for row in await cursor_s.fetchall()}
+        if "peak_players" not in server_cols:
+            await conn.execute("ALTER TABLE servers ADD COLUMN peak_players INTEGER NOT NULL DEFAULT 0")
+        if "peak_online" not in server_cols:
+            await conn.execute("ALTER TABLE servers ADD COLUMN peak_online INTEGER NOT NULL DEFAULT 0")
+        if "peak_date" not in server_cols:
+            await conn.execute("ALTER TABLE servers ADD COLUMN peak_date TEXT")
+        if "peak_players_time" not in server_cols:
+            await conn.execute("ALTER TABLE servers ADD COLUMN peak_players_time TEXT")
+
         await conn.commit()
