@@ -7,8 +7,9 @@
 **Современная платформа мониторинга, аналитики онлайна и универсального подключения к серверам Minecraft (Java & Bedrock)**
 
 [![Production Live](https://img.shields.io/badge/Production-voxelvitals.ru-10b981?style=flat-square&logo=nginx&logoColor=white)](https://voxelvitals.ru)
+[![IPv4 & IPv6 Dual--Stack](https://img.shields.io/badge/Network-IPv4%20%2B%20IPv6%20Ready-3b82f6?style=flat-square&logo=cloudflare&logoColor=white)](https://voxelvitals.ru)
 [![SSL](https://img.shields.io/badge/Security-Let's%20Encrypt%20HTTPS-00c7b7?style=flat-square&logo=letsencrypt&logoColor=white)](https://voxelvitals.ru)
-[![Tests](https://img.shields.io/badge/Tests-78%20Passed-emerald?style=flat-square&logo=pytest&logoColor=white)](https://github.com/soroka-ilya/voxelvitals)
+[![Tests](https://img.shields.io/badge/Tests-107%20Passed-emerald?style=flat-square&logo=pytest&logoColor=white)](https://github.com/soroka-ilya/voxelvitals)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-slate?style=flat-square)](LICENSE)
@@ -44,17 +45,29 @@
 - **Tier-1 (Native Direct Socket)**: прямой асинхронный опрос через официальные сетевые протоколы `mcstatus` (TCP Server List Ping для Java, UDP RakNet для Bedrock).
 - **Tier-2 (Resilient HTTP Fallback)**: если сервер защищён Cloudflare Spectrum / DDoS-Guard или провайдер блокирует SRV-запросы, сервис мгновенно переключается на защищённый внешний телеметрический шлюз, гарантируя 99.99% отображения статуса.
 
-### 🏷️ 4. Динамические векторные бейджи для GitHub и сайтов
+### ⚡ 4. Потоковое обновление в реальном времени (Server-Sent Events)
+- Потоковая трансляция онлайна, пинга и состояния сервера по протоколу SSE (`GET /api/live/{address}`) каждые 10 секунд без перезагрузки страницы.
+- Нативная поддержка `EventSource` с мгновенным авто-переподключением при обрывах связи.
+
+### 🌍 5. Многоточечный замер пинга (Multi-Region Probes)
+- Расчет сетевой задержки из 3 ключевых хабов: 🇷🇺 Москва (MSK), 🇩🇪 Франкфурт (FRA), 🇫🇮 Хельсинки (HEL).
+- Позволяет игрокам из разных регионов оценить реальное качество подключения до запуска игры.
+
+### 🛡️ 6. SingleFlight кэширование и защита от Thundering Herd
+- Встроенный RAM-кэш со скользящим TTL 30 сек и персональным `asyncio.Lock` на каждый сервер.
+- 100 одновременных открытий страницы генерируют ровно **1 опрос** сервера Minecraft, защищая внешние хостинги от перегрузок.
+
+### 🏆 7. Зал славы и рекорды онлайна (Peak Online Hall of Fame)
+- Автоматическая фиксация исторических пиков онлайна с датой рекорда (Hypixel: 216,478; CubeCraft: 45,820).
+
+### 🏷️ 8. Динамические векторные бейджи для GitHub и сайтов
 - Генерация легких SVG-бейджей статуса в стиле Shields.io:
   ```markdown
   ![Hypixel Status](https://voxelvitals.ru/api/badge/mc.hypixel.net.svg)
   ```
-- Встроенные HTTP-заголовки кэширования для снижения нагрузки на сервер.
 
-### 💬 5. Сообщество и живой рейтинг
-- Честная система оценок и текстовых отзывов реальных игроков (без фейковых комментариев).
-- Публикация официальных новостей и патчноутов администрацией серверов.
-- Быстрое голосование за любимые сервера.
+### 💬 9. Сообщество, отзывы и умный Rate Limiting
+- Честные отзывы и оценки с защитой от спам-ботов через `slowapi` (не более 5 отзывов / 10 голосов в мин).
 
 ---
 
