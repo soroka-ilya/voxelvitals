@@ -132,7 +132,7 @@ def _make_2b2t_icon() -> str:
 
 
 def _get_server_icon_url(address: str, edition: str = "java") -> str:
-    """Return real public server favicon URL. Uses specialized brand SVGs for Bedrock and flagship servers."""
+    """Return instant SVG brand/styled icon for servers without external CDN network dependencies."""
     clean_host = address.strip().lower().split(":")[0]
     if "hypixel" in clean_host:
         return _make_hypixel_icon()
@@ -144,9 +144,33 @@ def _get_server_icon_url(address: str, edition: str = "java") -> str:
         return _make_hive_icon()
     if "nethergames" in clean_host:
         return _make_nethergames_icon()
+    if "donut" in clean_host:
+        return _make_svg_icon("DS", "#be185d", "#fdf2f8")
+    if "reallyworld" in clean_host:
+        return _make_svg_icon("RW", "#e11d48", "#fff1f2")
+    if "funtime" in clean_host:
+        return _make_svg_icon("FT", "#059669", "#ecfdf5")
+    if "holyworld" in clean_host:
+        return _make_svg_icon("HW", "#8b5cf6", "#f5f3ff")
+    if "gomme" in clean_host:
+        return _make_svg_icon("GHD", "#c2410c", "#ffedd5")
+    if "vime" in clean_host:
+        return _make_svg_icon("VW", "#1d4ed8", "#dbeafe")
+    if "wynn" in clean_host:
+        return _make_svg_icon("WY", "#4338ca", "#e0e7ff")
+    if "mana" in clean_host:
+        return _make_svg_icon("MC", "#047857", "#d1fae5")
+    if "complex" in clean_host:
+        return _make_svg_icon("CX", "#7c3aed", "#ede9fe")
+    if "minemen" in clean_host:
+        return _make_svg_icon("MMC", "#b91c1c", "#fee2e2")
     if "bedrock" in clean_host or edition == "bedrock":
         return _make_bedrock_generic_icon()
-    return f"https://api.mcstatus.io/v2/icon/{clean_host}"
+
+    # Generate initials for any custom server address
+    parts = [p for p in clean_host.replace(".", " ").split() if p and p not in ("mc", "play", "hub", "srv", "net", "com", "ru", "org")]
+    letters = "".join(p[0].upper() for p in parts[:3]) if parts else clean_host[:2].upper()
+    return _make_svg_icon(letters[:3] or "MC", "#1e293b", "#38bdf8")
 
 
 # Curated catalog servers with rich metadata, versions, and verified icons

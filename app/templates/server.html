@@ -623,8 +623,8 @@
     }
   }
 
-  // Live SSE Telemetry Stream (Updates online & ping every 60s without reload per R1)
-  (function initLiveStream() {
+  // Live SSE Telemetry Stream: Deferred until AFTER page load completes to prevent browser tab spinner from hanging
+  function initLiveStream() {
     const serverAddr = "{{ status.address }}";
     const isBedrock = "{{ status.edition }}" === "bedrock";
     const sseUrl = `/api/sse/status/${encodeURIComponent(serverAddr)}${isBedrock ? '?bedrock=true' : ''}`;
@@ -678,6 +678,14 @@
       evtSource.addEventListener('status', handleData);
       evtSource.onmessage = handleData;
     } catch (e) {}
-  })();
+  }
+
+  if (document.readyState === 'complete') {
+    setTimeout(initLiveStream, 500);
+  } else {
+    window.addEventListener('load', function() {
+      setTimeout(initLiveStream, 500);
+    });
+  }
 </script>
 {% endblock %}
