@@ -109,13 +109,17 @@
             <span class="font-mono text-xs text-emerald-600 dark:text-emerald-400 truncate">{{ server.address }}</span>
             <div class="flex items-center gap-1.5 flex-shrink-0">
               <button type="button" 
-                      onclick="event.stopPropagation(); launchMinecraft('{{ server.address }}', '{{ server.edition }}', '{{ server.name }}', this);" 
+                      data-address="{{ server.address }}"
+                      data-edition="{{ server.edition }}"
+                      data-name="{{ server.name }}"
+                      onclick="event.stopPropagation(); launchMinecraft(this.getAttribute('data-address'), this.getAttribute('data-edition'), this.getAttribute('data-name'), this);" 
                       title="{{ t('server_card.to_launcher') }}"
                       class="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium transition-colors flex items-center gap-1">
                 <span>{{ t('server_card.to_launcher') }}</span>
               </button>
               <button type="button" 
-                      onclick="event.stopPropagation(); copyIp('{{ server.address }}', this);" 
+                      data-address="{{ server.address }}"
+                      onclick="event.stopPropagation(); copyIp(this.getAttribute('data-address'), this);" 
                       title="{{ t('server_card.copy_ip') }}"
                       class="px-2 py-1 rounded bg-white dark:bg-[#161b26] hover:bg-slate-100 dark:hover:bg-[#273147] border border-slate-200 dark:border-[#273147] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[11px] font-medium transition-colors flex items-center gap-1">
                 <span class="copy-label">{{ t('server_card.copy_ip') }}</span>

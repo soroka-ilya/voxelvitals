@@ -148,7 +148,10 @@
     <div class="flex flex-wrap items-center gap-2">
       <!-- Quick Open in Launcher Button -->
       <button type="button"
-              onclick="event.stopPropagation(); launchMinecraft('{{ status.address }}', '{{ status.edition }}', '{{ status.name or status.address }}', this);"
+              data-address="{{ status.address }}"
+              data-edition="{{ status.edition }}"
+              data-name="{{ status.name or status.address }}"
+              onclick="event.stopPropagation(); launchMinecraft(this.getAttribute('data-address'), this.getAttribute('data-edition'), this.getAttribute('data-name'), this);"
               title="{{ t('server_card.to_launcher') }}"
               class="px-2.5 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1 transition-colors">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
@@ -157,7 +160,8 @@
 
       <!-- Copy IP Button -->
       <button type="button"
-              onclick="event.stopPropagation(); copyIp('{{ status.address }}', this);" 
+              data-address="{{ status.address }}"
+              onclick="event.stopPropagation(); copyIp(this.getAttribute('data-address'), this);" 
               title="Copy IP"
               aria-label="Copy IP"
               class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-[#273147] dark:hover:bg-[#3b4866] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-transparent transition-colors font-medium flex items-center gap-1">

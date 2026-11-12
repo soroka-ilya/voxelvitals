@@ -17,6 +17,18 @@ class Settings:
     history_retention_hours: int = 24
     query_timeout_seconds: float = float(os.getenv("QUERY_TIMEOUT_SECONDS", "5.0"))
 
+    # Security & Environment flags
+    enable_mock_auth: bool = os.getenv("ENABLE_MOCK_AUTH", "false").lower() in ("true", "1")
+    enable_docs: bool = os.getenv("ENABLE_DOCS", "false").lower() in ("true", "1")
+    require_news_admin: bool = os.getenv("REQUIRE_NEWS_ADMIN", "true").lower() in ("true", "1")
+    admin_api_key: str = os.getenv("ADMIN_API_KEY", "")
+    telegram_webhook_secret: str = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")
+    trusted_proxies: List[str] = field(
+        default_factory=lambda: [
+            ip.strip() for ip in os.getenv("TRUSTED_PROXIES", "127.0.0.1,::1").split(",") if ip.strip()
+        ]
+    )
+
     # Base application URL for OAuth redirects (e.g. http://localhost:8000 or https://voxelvitals.com)
     base_url: str = os.getenv("BASE_URL", "http://localhost:8000").rstrip("/")
 

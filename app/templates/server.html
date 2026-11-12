@@ -75,7 +75,8 @@
 
         <!-- Copy IP Button -->
         <button type="button" 
-                onclick="copyIp('{{ status.address }}', this);" 
+                data-address="{{ status.address }}"
+                onclick="copyIp(this.getAttribute('data-address'), this);" 
                 class="px-3.5 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#273147] dark:hover:bg-[#3b4866] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-transparent text-xs font-medium transition-colors flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
           <span class="copy-label">{{ t('server_detail.copy_ip') }}</span>
@@ -84,7 +85,8 @@
         <!-- Vote Button -->
         <button type="button" 
                 id="vote-btn"
-                onclick="handleVote('{{ status.address }}', this);"
+                data-address="{{ status.address }}"
+                onclick="handleVote(this.getAttribute('data-address'), this);"
                 class="px-3.5 py-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-semibold transition-colors flex items-center gap-1.5">
           <span>{{ t('server_detail.vote_button') }}</span>
           <span id="vote-count" class="font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-[10px]">{{ votes or 0 }}</span>

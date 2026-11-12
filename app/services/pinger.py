@@ -1,7 +1,9 @@
 """Asynchronous Minecraft server pinger supporting Java and Bedrock editions."""
 
 import asyncio
+import ipaddress
 import logging
+import socket
 from typing import Optional
 import httpx
 from mcstatus import BedrockServer, JavaServer
@@ -12,6 +14,65 @@ from app.services.motd_formatter import format_motd_html, strip_minecraft_format
 from app.services.probes import calculate_regional_latencies
 
 logger = logging.getLogger(__name__)
+
+
+def is_safe_address(address: str) -> bool:
+    """Validate whether an address is safe for outbound ping queries, preventing SSRF."""
+    if not address or not isinstance(address, str):
+        return False
+    raw_host = address.strip()
+    if raw_host.startswith("[") and "]" in raw_host:
+        host = raw_host[1 : raw_host.index("]")]
+    elif ":" in raw_host and raw_host.count(":") == 1:
+        host = raw_host.split(":", 1)[0]
+    else:
+        host = raw_host
+
+    host_lower = host.lower().strip()
+    if host_lower in ("localhost", "0.0.0.0", "127.0.0.1", "::1", "169.254.169.254"):
+        return False
+
+    for suffix in (".localhost", ".local", ".internal", ".lan", ".corp", ".home"):
+        if host_lower.endswith(suffix):
+            return False
+
+    # Check if host is direct IP
+    try:
+        ip = ipaddress.ip_address(host_lower)
+        return not (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        )
+    except ValueError:
+        pass
+
+    # Resolve domain to IPs and check for DNS rebinding / private mapping
+    try:
+        addr_infos = socket.getaddrinfo(host_lower, None)
+        for family, _, _, _, sockaddr in addr_infos:
+            ip_str = sockaddr[0]
+            try:
+                ip = ipaddress.ip_address(ip_str)
+                if (
+                    ip.is_private
+                    or ip.is_loopback
+                    or ip.is_link_local
+                    or ip.is_multicast
+                    or ip.is_reserved
+                    or ip.is_unspecified
+                ):
+                    return False
+            except ValueError:
+                return False
+    except (socket.gaierror, OSError):
+        # Allow unresolved domain names in offline/test environments as long as not internal suffixes
+        return True
+
+    return True
 
 
 def _extract_motd_str(motd: any) -> str:
@@ -187,7 +248,7 @@ async def _execute_query(
             address=clean_addr,
             is_online=False,
             edition=edition,
-            error_message=str(exc) or "Server offline or unreachable",
+            error_message="Server offline or unreachable",
             region_latencies=offline_regions,
             regional_latencies=offline_regions,
         )
@@ -199,10 +260,22 @@ async def query_server(
     timeout: Optional[float] = None,
     force_refresh: bool = False,
 ) -> ServerStatus:
-    """Query live server with cache, DNS SRV support, and fallback handling."""
-    effective_timeout = timeout or settings.query_timeout_seconds
+    """Query live server with cache, DNS SRV support, SSRF validation, and fallback handling."""
     clean_addr = address.strip()
     edition_str = "bedrock" if is_bedrock else "java"
+
+    if not is_safe_address(clean_addr):
+        offline_regions = {"moscow": 0.0, "frankfurt": 0.0, "helsinki": 0.0}
+        return ServerStatus(
+            address=clean_addr,
+            is_online=False,
+            edition=edition_str,
+            error_message="Запрещенный адрес сервера (SSRF protection)",
+            region_latencies=offline_regions,
+            regional_latencies=offline_regions,
+        )
+
+    effective_timeout = timeout or settings.query_timeout_seconds
     cache_key = f"status:{clean_addr.lower()}:{edition_str}"
 
     return await status_cache.get_or_fetch(

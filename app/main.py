@@ -91,14 +91,16 @@ app = FastAPI(
     description="Production-grade Minecraft server telemetry and analytics engine.",
     version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs" if settings.enable_docs else None,
+    redoc_url="/redoc" if settings.enable_docs else None,
+    openapi_url="/openapi.json" if settings.enable_docs else None,
 )
 
 def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(
         status_code=429,
         content={
-            "detail": f"Слишком много запросов. Лимит: {exc.detail}",
-            "error": str(exc),
+            "detail": "Слишком много запросов. Пожалуйста, повторите попытку позже.",
         },
         headers={"Retry-After": "60"},
     )
@@ -106,6 +108,31 @@ def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, custom_rate_limit_handler)
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    """Enforce strict security headers across all HTTP responses."""
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
+
+def _is_safe_redirect(url: str) -> bool:
+    """Validate internal redirect to prevent open redirect vulnerabilities."""
+    if not url or not isinstance(url, str):
+        return False
+    if url.startswith("//") or url.startswith("/\\") or "\\" in url:
+        return False
+    import urllib.parse
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme or parsed.netloc:
+        return False
+    return url.startswith("/")
 
 
 @app.middleware("http")
@@ -136,7 +163,7 @@ async def set_language_endpoint(code: str, request: Request, redirect: str = "/"
     """Switch user language, persist in vv_lang cookie, and redirect back."""
     target_lang = code.lower() if code.lower() in SUPPORTED_LANGUAGES else "ru"
     ref = redirect or request.headers.get("referer") or "/"
-    if not ref.startswith("/"):
+    if not _is_safe_redirect(ref):
         ref = "/"
     from fastapi.responses import RedirectResponse
     resp = RedirectResponse(url=ref, status_code=303)

@@ -6,23 +6,30 @@ from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from app.config import settings
 from app.domain.models import BadgeConfig, ServerStatus, TelemetryPoint
+from app.limiter import get_real_client_ip, limiter
 from app.repository import ServerRepository
 from app.services.alias_service import is_bedrock_address, resolve_address, search_suggestions
 from app.services.auth_service import (
     generate_session_token,
     get_current_user_from_request,
     hash_password,
+    is_legacy_hash,
     verify_password,
 )
-from app.limiter import limiter
 from app.services.badge_service import generate_status_badge
-from app.services.pinger import get_mock_server_status, query_server
+from app.services.pinger import get_mock_server_status, is_safe_address, query_server
 from app.services.probes_service import get_multi_region_probes
 from app.services.rate_limiter import review_rate_limiter, vote_rate_limiter
 
 api_router = APIRouter(prefix="/api", tags=["API"])
 repo = ServerRepository()
+
+
+def _is_request_https(request: Request) -> bool:
+    """Detect if connection is encrypted either directly or through reverse proxy."""
+    return request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
 
 
 @api_router.get("/health")
@@ -31,8 +38,8 @@ async def health_check():
     try:
         await repo.get_all_servers()
         db_status = "connected"
-    except Exception as exc:
-        db_status = f"unhealthy: {exc}"
+    except Exception:
+        db_status = "degraded"
     return {
         "status": "ok" if db_status == "connected" else "degraded",
         "version": "1.0.0",
@@ -167,10 +174,14 @@ async def live_server_stream(
     mock: bool = Query(False, description="Return mock data"),
 ):
     """Server-Sent Events (SSE) live telemetry stream.
-    Streams real-time player counts, ping, multi-region probes, and peak online every 60 seconds.
+    Streams real-time player counts, ping, multi-region probes, and peak online.
     """
     clean_addr = resolve_address(address.strip())
+    if not is_safe_address(clean_addr):
+        raise HTTPException(status_code=400, detail="Недопустимый адрес сервера")
+
     effective_bedrock = bedrock or is_bedrock_address(clean_addr)
+    safe_interval = max(interval, 3)
 
     async def event_generator():
         while True:
@@ -201,7 +212,7 @@ async def live_server_stream(
             except Exception as exc:
                 yield f"data: {json.dumps({'error': str(exc)}, ensure_ascii=False)}\n\n"
             try:
-                await asyncio.sleep(interval)
+                await asyncio.sleep(safe_interval)
             except (asyncio.CancelledError, GeneratorExit):
                 break
 
@@ -271,8 +282,9 @@ async def get_badge(
 
 # ----------------- Auth Endpoints -----------------
 @api_router.post("/auth/register", status_code=status.HTTP_201_CREATED)
-async def register(payload: RegisterRequest, response: Response):
-    """Register a new user account."""
+@limiter.limit("10/minute")
+async def register(payload: RegisterRequest, request: Request, response: Response):
+    """Register a new user account with scrypt password hashing."""
     existing = await repo.get_user_by_username(payload.username)
     if existing:
         raise HTTPException(status_code=400, detail="Пользователь с таким логином уже существует")
@@ -287,11 +299,13 @@ async def register(payload: RegisterRequest, response: Response):
     user = await repo.get_user_by_id(user_id)
     token = generate_session_token()
     await repo.create_session(token, user_id)
+    is_secure = _is_request_https(request)
     response.set_cookie(
         key="session_token",
         value=token,
         httponly=True,
         samesite="lax",
+        secure=is_secure,
         max_age=30 * 86400,
     )
     return {
@@ -303,19 +317,29 @@ async def register(payload: RegisterRequest, response: Response):
 
 
 @api_router.post("/auth/login")
-async def login(payload: LoginRequest, response: Response):
-    """Authenticate user and issue session cookie."""
+@limiter.limit("10/minute")
+async def login(payload: LoginRequest, request: Request, response: Response):
+    """Authenticate user, auto-upgrade legacy hash to scrypt, and issue session cookie."""
     user = await repo.get_user_by_username(payload.username)
     if not user or not verify_password(payload.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Неверное имя пользователя или пароль")
 
+    # Transparent auto-upgrade legacy SHA-256 hash to scrypt
+    if is_legacy_hash(user["password_hash"]):
+        try:
+            await repo.update_user_password(user["id"], hash_password(payload.password))
+        except Exception:
+            pass
+
     token = generate_session_token()
     await repo.create_session(token, user["id"])
+    is_secure = _is_request_https(request)
     response.set_cookie(
         key="session_token",
         value=token,
         httponly=True,
         samesite="lax",
+        secure=is_secure,
         max_age=30 * 86400,
     )
     return {
@@ -326,6 +350,7 @@ async def login(payload: LoginRequest, response: Response):
     }
 
 
+@api_router.post("/auth/logout")
 @api_router.get("/auth/logout")
 async def logout(request: Request, response: Response):
     """Log out user and clear session cookie."""
@@ -401,10 +426,21 @@ async def get_news(address: str = Query(..., description="Server address")):
 
 
 @api_router.post("/news")
+@limiter.limit("5/minute")
 async def create_news(payload: NewsCreateRequest, request: Request):
-    """Publish a news article for a server."""
+    """Publish a news article for a server. Protected by admin role check and rate limiting."""
     clean_addr = resolve_address(payload.server_address.strip())
     user = await get_current_user_from_request(request, repo)
+
+    if settings.require_news_admin:
+        admin_header = request.headers.get("X-Admin-Key")
+        is_key_valid = bool(settings.admin_api_key and admin_header == settings.admin_api_key)
+        is_admin_user = bool(user and user.get("role") == "admin")
+        if not (is_key_valid or is_admin_user):
+            if not user:
+                raise HTTPException(status_code=401, detail="Необходима авторизация")
+            raise HTTPException(status_code=403, detail="Требуются права администратора")
+
     author = payload.author or (user["username"] if user else "Администрация")
 
     news_id = await repo.add_news(
@@ -433,8 +469,8 @@ async def vote_server(request: Request, payload: Dict[str, str]):
         raise HTTPException(status_code=400, detail="Укажите адрес сервера")
     clean_addr = resolve_address(raw_addr.strip())
 
-    # Hash client IP for privacy & rate limiting
-    client_ip = request.client.host if request.client else "127.0.0.1"
+    # Hash real client IP for privacy & rate limiting
+    client_ip = get_real_client_ip(request)
     import hashlib
     ip_hash = hashlib.sha256(client_ip.encode("utf-8")).hexdigest()
 
@@ -449,8 +485,13 @@ async def vote_server(request: Request, payload: Dict[str, str]):
 @api_router.post("/tg/webhook")
 async def telegram_webhook(request: Request):
     """Receive and process incoming Telegram Bot updates via Webhook.
-    Returns inline Webhook response JSON, bypassing outbound TSPU filtering.
+    Validates X-Telegram-Bot-Api-Secret-Token when secret is configured.
     """
+    if settings.telegram_webhook_secret:
+        header_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+        if header_secret != settings.telegram_webhook_secret:
+            raise HTTPException(status_code=403, detail="Invalid Telegram secret token")
+
     from app.services.tg_service import process_telegram_update
     try:
         update_data = await request.json()

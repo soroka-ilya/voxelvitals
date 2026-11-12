@@ -234,6 +234,15 @@ class ServerRepository:
             await conn.commit()
             return cursor.lastrowid
 
+    async def update_user_password(self, user_id: int, new_password_hash: str) -> None:
+        """Update user password hash (used for automatic upgrade to scrypt)."""
+        async with get_db_connection(self.db_path) as conn:
+            await conn.execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?",
+                (new_password_hash, user_id),
+            )
+            await conn.commit()
+
     async def get_user_by_username(self, username: str) -> Optional[dict]:
         """Fetch user by case-insensitive username."""
         async with get_db_connection(self.db_path) as conn:
@@ -315,8 +324,9 @@ class ServerRepository:
         mc_nickname: str = "",
         avatar_url: str = "",
         is_verified_license: bool = False,
+        email_verified: bool = True,
     ) -> dict:
-        """Find existing user by provider_id or email, or create a new linked account."""
+        """Find existing user by provider_id or verified email, or create a new account."""
         now = datetime.now(timezone.utc).isoformat()
         clean_email = email.strip().lower() if email else ""
         col_id = "google_id" if provider == "google" else "microsoft_id"
@@ -343,8 +353,8 @@ class ServerRepository:
                 await conn.commit()
                 return await self.get_user_by_id(user_id)
 
-            # 2. Check if user exists by email
-            if clean_email:
+            # 2. Check if user exists by verified email (prevents pre-account takeover)
+            if clean_email and email_verified:
                 cursor = await conn.execute(
                     "SELECT * FROM users WHERE LOWER(email) = ?", (clean_email,)
                 )

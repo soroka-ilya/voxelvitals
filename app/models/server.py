@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class PlayerSample(BaseModel):
@@ -43,6 +43,25 @@ class ServerStatus(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     error_message: Optional[str] = None
+
+    @field_validator("icon_base64", mode="before")
+    @classmethod
+    def validate_icon(cls, v):
+        """Sanitize and validate server icon data URI."""
+        if not v or not isinstance(v, str):
+            return None
+        # Enforce max length of 256 KB
+        if len(v) > 262144:
+            return None
+        safe_prefixes = (
+            "data:image/png;base64,",
+            "data:image/jpeg;base64,",
+            "data:image/svg+xml;base64,",
+            "data:image/webp;base64,",
+        )
+        if not any(v.startswith(prefix) for prefix in safe_prefixes):
+            return None
+        return v
 
     # Multi-Region Latency Probes (R2)
     region_latencies: Optional[Dict[str, float]] = Field(

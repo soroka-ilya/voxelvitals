@@ -579,11 +579,11 @@ def resolve_address(query: str, default_tld: str = ".net") -> str:
 
     # Check if host is localhost or already contains a domain dot or is an IPv6 address
     if host_lower == "localhost" or "." in host or host.count(":") > 1 or host.startswith("["):
-        sanitized_host = re.sub(r"\s+", "", host)
+        sanitized_host = re.sub(r"[^a-zA-Z0-9.\-_\[\]:]", "", host)
         return f"{sanitized_host}:{port}" if port else sanitized_host
 
-    # Fallback to appending default TLD if no dot is present (remove spaces for valid hostname)
-    sanitized_host = re.sub(r"\s+", "", host)
+    # Fallback to appending default TLD if no dot is present (remove spaces and unsafe chars)
+    sanitized_host = re.sub(r"[^a-zA-Z0-9.\-_\[\]:]", "", host)
     tld = default_tld if default_tld.startswith(".") else f".{default_tld}"
     fallback_host = f"{sanitized_host}{tld}"
     return f"{fallback_host}:{port}" if port else fallback_host

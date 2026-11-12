@@ -16,6 +16,9 @@ def configure_test_db(tmp_path_factory):
 
     settings.db_path = test_db_path
     os.environ["DB_PATH"] = test_db_path
+    settings.enable_mock_auth = True
+    settings.enable_docs = True
+    settings.require_news_admin = False
 
     for mod in (api_routes, oauth_routes, routes, main, tg_service):
         if hasattr(mod, "repo"):

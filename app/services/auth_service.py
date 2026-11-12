@@ -9,20 +9,35 @@ from app.repository import ServerRepository
 
 
 def hash_password(password: str) -> str:
-    """Hash password with a random 16-byte salt using SHA-256."""
-    salt = secrets.token_hex(16)
-    key = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
-    return f"{salt}${key}"
+    """Hash password using memory-hard scrypt KDF with random salt."""
+    salt = secrets.token_bytes(16)
+    n, r, p = 16384, 8, 1
+    derived = hashlib.scrypt(password.encode("utf-8"), salt=salt, n=n, r=r, p=p).hex()
+    return f"scrypt${n}${r}${p}${salt.hex()}${derived}"
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    """Verify raw password against salt$hash string."""
+    """Verify raw password against scrypt or legacy salt$sha256 hash string."""
     try:
+        if password_hash.startswith("scrypt$"):
+            parts = password_hash.split("$")
+            if len(parts) == 6:
+                _, n_str, r_str, p_str, salt_hex, key = parts
+                n, r, p = int(n_str), int(r_str), int(p_str)
+                salt = bytes.fromhex(salt_hex)
+                derived = hashlib.scrypt(password.encode("utf-8"), salt=salt, n=n, r=r, p=p).hex()
+                return secrets.compare_digest(key, derived)
+        # Legacy SHA-256 fallback (salt$hash)
         salt, key = password_hash.split("$", 1)
         expected_key = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
         return secrets.compare_digest(key, expected_key)
     except Exception:
         return False
+
+
+def is_legacy_hash(password_hash: str) -> bool:
+    """Check if hash requires upgrade to scrypt."""
+    return not password_hash.startswith("scrypt$")
 
 
 def generate_session_token() -> str:

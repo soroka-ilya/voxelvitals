@@ -116,7 +116,7 @@
                 </span>
               {% endif %}
             </div>
-            <a href="/api/auth/logout" onclick="event.preventDefault(); fetch('/api/auth/logout').then(() => location.reload());" class="text-xs text-slate-500 hover:text-red-400 transition-colors font-medium">
+            <a href="/api/auth/logout" onclick="event.preventDefault(); fetch('/api/auth/logout', {method: 'POST'}).then(() => location.reload());" class="text-xs text-slate-500 hover:text-red-400 transition-colors font-medium">
               {{ t('nav.logout') }}
             </a>
           </div>
