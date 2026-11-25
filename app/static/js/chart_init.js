@@ -26,6 +26,9 @@ function renderTelemetryChart(canvasId, historyData) {
   const isDark = document.documentElement.classList.contains('dark');
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const i18nDetail = (typeof window !== 'undefined' && window.VV_I18N && window.VV_I18N.server_detail) || {};
+  const playersLabel = i18nDetail.chart_legend_players || 'Players Online';
+  const pingLabel = i18nDetail.chart_legend_ping || 'Latency (ms)';
 
   currentTelemetryChart = new Chart(ctx, {
     type: 'line',
@@ -33,7 +36,7 @@ function renderTelemetryChart(canvasId, historyData) {
       labels: labels,
       datasets: [
         {
-          label: 'Players Online',
+          label: playersLabel,
           data: playersData,
           borderColor: '#10b981',
           backgroundColor: 'rgba(16, 185, 129, 0.08)',
@@ -46,7 +49,7 @@ function renderTelemetryChart(canvasId, historyData) {
           yAxisID: 'yPlayers'
         },
         {
-          label: 'Latency (ms)',
+          label: pingLabel,
           data: pingData,
           borderColor: '#f59e0b',
           backgroundColor: 'transparent',

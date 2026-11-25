@@ -29,7 +29,17 @@ def is_safe_address(address: str) -> bool:
         host = raw_host
 
     host_lower = host.lower().strip()
-    if host_lower in ("localhost", "0.0.0.0", "127.0.0.1", "::1", "169.254.169.254"):
+    if (
+        not host_lower
+        or host_lower.startswith(".")
+        or host_lower.endswith(".")
+        or ".." in host_lower
+        or "/" in host_lower
+        or "\\" in host_lower
+        or any(ch.isspace() for ch in host_lower)
+        or len(host_lower) > 253
+        or host_lower in ("localhost", "0.0.0.0", "127.0.0.1", "::1", "169.254.169.254")
+    ):
         return False
 
     for suffix in (".localhost", ".local", ".internal", ".lan", ".corp", ".home"):
@@ -68,6 +78,8 @@ def is_safe_address(address: str) -> bool:
                     return False
             except ValueError:
                 return False
+    except UnicodeError:
+        return False
     except (socket.gaierror, OSError):
         # Allow unresolved domain names in offline/test environments as long as not internal suffixes
         return True

@@ -1,6 +1,7 @@
 """Multi-region network probe service measuring and calculating latency for Moscow, Frankfurt, and Helsinki."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from app.services.i18n_service import get_current_lang, t
 
 
 class ProbeItem(dict):
@@ -20,8 +21,11 @@ class ProbeItem(dict):
         if resolved in self:
             val = self[resolved]
             if name == "status_label":
-                labels = {"excellent": "Отличный", "good": "Хороший", "fair": "Средний", "offline": "Офлайн"}
-                return labels.get(val, str(val).capitalize())
+                eff_lang = self.__dict__.get("_lang") or get_current_lang()
+                localized = t(f"probes.statuses.{val}", lang=eff_lang)
+                if localized != f"probes.statuses.{val}":
+                    return localized
+                return str(val).capitalize()
             return val
         raise AttributeError(f"ProbeItem has no attribute {name}")
 
@@ -67,37 +71,35 @@ def calculate_regional_latencies(
 
 
 def get_multi_region_probes(
-    address: str, base_latency_ms: float, edition: str = "java", is_online: bool = True
+    address: str,
+    base_latency_ms: float,
+    edition: str = "java",
+    is_online: bool = True,
+    lang: Optional[str] = None,
 ) -> List[ProbeItem]:
     """Return structured probe entries for Moscow (MSK), Frankfurt (FRA), and Helsinki (HEL)."""
+    eff_lang = lang or get_current_lang()
     latencies = calculate_regional_latencies(address, base_latency_ms, is_online=is_online)
-    msk_lat = latencies["moscow"]
-    fra_lat = latencies["frankfurt"]
-    hel_lat = latencies["helsinki"]
-
-    return [
-        ProbeItem({
-            "code": "MSK",
-            "city": "Москва",
-            "country": "Россия",
-            "flag": "🇷🇺",
-            "latency_ms": msk_lat,
-            "status": "offline" if not is_online else ("excellent" if msk_lat < 45 else ("good" if msk_lat < 90 else "fair")),
-        }),
-        ProbeItem({
-            "code": "FRA",
-            "city": "Франкфурт",
-            "country": "Германия",
-            "flag": "🇩🇪",
-            "latency_ms": fra_lat,
-            "status": "offline" if not is_online else ("excellent" if fra_lat < 45 else ("good" if fra_lat < 90 else "fair")),
-        }),
-        ProbeItem({
-            "code": "HEL",
-            "city": "Хельсинки",
-            "country": "Финляндия",
-            "flag": "🇫🇮",
-            "latency_ms": hel_lat,
-            "status": "offline" if not is_online else ("excellent" if hel_lat < 45 else ("good" if hel_lat < 90 else "fair")),
-        }),
-    ]
+    hubs = (
+        ("MSK", latencies["moscow"]),
+        ("FRA", latencies["frankfurt"]),
+        ("HEL", latencies["helsinki"]),
+    )
+    probes: List[ProbeItem] = []
+    for code, lat in hubs:
+        status_val = (
+            "offline"
+            if not is_online
+            else ("excellent" if lat < 45 else ("good" if lat < 90 else "fair"))
+        )
+        item = ProbeItem({
+            "code": code,
+            "city": t(f"probes.hubs.{code}.city", lang=eff_lang),
+            "country": t(f"probes.hubs.{code}.country", lang=eff_lang),
+            "flag": t(f"probes.hubs.{code}.flag", lang=eff_lang),
+            "latency_ms": lat,
+            "status": status_val,
+        })
+        item._lang = eff_lang
+        probes.append(item)
+    return probes

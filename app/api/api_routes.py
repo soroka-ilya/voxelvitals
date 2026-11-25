@@ -19,6 +19,7 @@ from app.services.auth_service import (
     verify_password,
 )
 from app.services.badge_service import generate_status_badge
+from app.services.i18n_service import get_request_language
 from app.services.pinger import get_mock_server_status, is_safe_address, query_server
 from app.services.probes_service import get_multi_region_probes
 from app.services.rate_limiter import review_rate_limiter, vote_rate_limiter
@@ -101,11 +102,13 @@ async def track_event(request: Request, payload: AnalyticsEventRequest):
 
 @api_router.get("/suggestions", response_model=List[Dict[str, Any]])
 async def get_suggestions(
+    request: Request,
     q: str = Query("", description="Search query string"),
     limit: int = Query(5, ge=1, le=20, description="Max suggestions to return"),
 ):
     """Return autocomplete server suggestions matching query."""
-    return search_suggestions(q, limit=limit)
+    lang = get_request_language(request)
+    return search_suggestions(q, limit=limit, lang=lang)
 
 
 @api_router.get("/status/{address}", response_model=ServerStatus)
@@ -119,7 +122,8 @@ async def get_server_status(
     """Query live server status and update telemetry history."""
     clean_addr = resolve_address(address.strip())
     effective_bedrock = bedrock or is_bedrock_address(clean_addr)
-    if mock:
+    effective_mock = mock and settings.enable_mock_auth
+    if effective_mock:
         status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
     else:
         status = await query_server(clean_addr, is_bedrock=effective_bedrock, force_refresh=force_refresh)
@@ -154,7 +158,8 @@ async def manual_ping_server(
     server_id = await repo.get_or_create_server(
         address=clean_addr, edition="bedrock" if effective_bedrock else "java"
     )
-    await repo.record_telemetry(server_id, status)
+    if server_id > 0:
+        await repo.record_telemetry(server_id, status)
     peak_info = await repo.get_server_peak(clean_addr)
     status.peak_players = peak_info["peak_players"]
     status.peak_online = peak_info["peak_online"]
@@ -181,16 +186,24 @@ async def live_server_stream(
         raise HTTPException(status_code=400, detail="Недопустимый адрес сервера")
 
     effective_bedrock = bedrock or is_bedrock_address(clean_addr)
+    effective_mock = mock and settings.enable_mock_auth
     safe_interval = max(interval, 3)
+    lang = get_request_language(request)
 
     async def event_generator():
         while True:
             try:
-                if mock:
+                if effective_mock:
                     status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
                 else:
                     status = await query_server(clean_addr, is_bedrock=effective_bedrock)
-                probes = get_multi_region_probes(clean_addr, status.latency_ms, edition=status.edition, is_online=status.is_online)
+                probes = get_multi_region_probes(
+                    clean_addr,
+                    status.latency_ms,
+                    edition=status.edition,
+                    is_online=status.is_online,
+                    lang=lang,
+                )
                 peak_info = await repo.get_server_peak(clean_addr)
                 payload = {
                     "address": clean_addr,
@@ -235,6 +248,8 @@ async def get_server_history(
     """Retrieve time-series telemetry points for graphing."""
     clean_addr = resolve_address(address.strip())
     server_id = await repo.get_or_create_server(clean_addr)
+    if server_id <= 0:
+        return []
     history = await repo.get_24h_history(server_id, hours=hours)
     return history
 
@@ -259,7 +274,8 @@ async def get_badge(
     """Generate dynamic SVG badge styled like Shields.io. Filename can end with .svg."""
     raw_addr = filename[:-4] if filename.endswith(".svg") else filename
     clean_addr = resolve_address(raw_addr.strip())
-    if mock:
+    effective_mock = mock and settings.enable_mock_auth
+    if effective_mock:
         status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if bedrock else "java")
     else:
         status = await query_server(clean_addr, is_bedrock=bedrock)
@@ -351,7 +367,6 @@ async def login(payload: LoginRequest, request: Request, response: Response):
 
 
 @api_router.post("/auth/logout")
-@api_router.get("/auth/logout")
 async def logout(request: Request, response: Response):
     """Log out user and clear session cookie."""
     token = request.cookies.get("session_token")

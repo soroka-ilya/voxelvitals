@@ -4,6 +4,8 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Optional
+import urllib.parse
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,7 +15,7 @@ from app.api.oauth_routes import oauth_router
 from app.api.routes import web_router
 from app.config import settings
 from app.database import init_db
-from app.limiter import limiter
+from app.limiter import get_real_client_ip, limiter
 from app.repository import ServerRepository
 from app.services.analytics_service import (
     get_or_create_visitor_id,
@@ -27,7 +29,7 @@ from app.services.i18n_service import (
     set_current_lang,
     t,
 )
-from app.services.pinger import query_server
+from app.services.pinger import is_safe_address, query_server
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,31 +42,56 @@ repo = ServerRepository()
 
 async def background_telemetry_poller():
     """Periodic worker that polls tracked servers and prunes old telemetry."""
-    logger.info("Background telemetry poller started.")
-    while True:
+    try:
+        import fcntl
+    except ImportError:
+        fcntl = None
+
+    lock_fh = None
+    if fcntl is not None:
+        lock_path = Path(f"{settings.db_path}.poller.lock")
+        lock_fh = open(lock_path, "a+")
         try:
-            # Seed featured servers into DB if not present
-            for addr in settings.featured_servers:
-                await repo.get_or_create_server(addr, is_pinned=True)
+            fcntl.flock(lock_fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            lock_fh.close()
+            logger.info("Background telemetry poller handled by another worker; skipping.")
+            return
 
-            servers = await repo.get_all_servers()
-            for s in servers:
-                addr = s["address"]
-                is_bedrock = s["edition"] == "bedrock"
-                status = await query_server(addr, is_bedrock=is_bedrock)
-                await repo.record_telemetry(s["id"], status)
+    logger.info("Background telemetry poller started.")
+    try:
+        while True:
+            try:
+                # Seed featured servers into DB if not present
+                for addr in settings.featured_servers:
+                    await repo.get_or_create_server(addr, is_pinned=True)
 
-            # Prune records older than 24h
-            pruned = await repo.prune_old_telemetry(hours=settings.history_retention_hours)
-            if pruned > 0:
-                logger.debug(f"Pruned {pruned} outdated telemetry entries.")
-        except asyncio.CancelledError:
-            logger.info("Background poller cancelled.")
-            break
-        except Exception as exc:
-            logger.error(f"Error during poller cycle: {exc}")
+                servers = await repo.get_all_servers()
+                for s in servers:
+                    addr = s["address"]
+                    if not is_safe_address(addr) and not s.get("is_pinned"):
+                        continue
+                    is_bedrock = s["edition"] == "bedrock"
+                    status = await query_server(addr, is_bedrock=is_bedrock)
+                    await repo.record_telemetry(s["id"], status)
 
-        await asyncio.sleep(settings.poll_interval_seconds)
+                # Prune records older than 24h
+                pruned = await repo.prune_old_telemetry(hours=settings.history_retention_hours)
+                if pruned > 0:
+                    logger.debug(f"Pruned {pruned} outdated telemetry entries.")
+            except asyncio.CancelledError:
+                logger.info("Background poller cancelled.")
+                break
+            except Exception as exc:
+                logger.error(f"Error during poller cycle: {exc}")
+
+            await asyncio.sleep(settings.poll_interval_seconds)
+    finally:
+        if lock_fh is not None:
+            try:
+                lock_fh.close()
+            except Exception:
+                pass
 
 
 @asynccontextmanager
@@ -128,11 +155,29 @@ def _is_safe_redirect(url: str) -> bool:
         return False
     if url.startswith("//") or url.startswith("/\\") or "\\" in url:
         return False
-    import urllib.parse
     parsed = urllib.parse.urlsplit(url)
     if parsed.scheme or parsed.netloc:
         return False
     return url.startswith("/")
+
+
+def _normalize_same_origin_referer(referer: Optional[str], request: Request) -> str:
+    """Extract safe relative path from same-origin Referer header."""
+    if not referer or not isinstance(referer, str):
+        return "/"
+    cleaned = referer.strip()
+    if cleaned.startswith("//") or cleaned.startswith("/\\") or "\\" in cleaned:
+        return "/"
+    parsed = urllib.parse.urlsplit(cleaned)
+    if parsed.scheme or parsed.netloc:
+        req_host = (request.headers.get("host") or request.url.netloc or "").split(":")[0].lower()
+        ref_host = (parsed.hostname or "").lower()
+        if not req_host or ref_host != req_host:
+            return "/"
+        path = parsed.path or "/"
+        rel = f"{path}?{parsed.query}" if parsed.query else path
+        return rel if _is_safe_redirect(rel) else "/"
+    return cleaned if _is_safe_redirect(cleaned) else "/"
 
 
 @app.middleware("http")
@@ -159,12 +204,17 @@ async def i18n_middleware(request: Request, call_next):
 
 @app.get("/set-lang/{code}")
 @app.post("/api/lang/{code}")
-async def set_language_endpoint(code: str, request: Request, redirect: str = "/"):
+async def set_language_endpoint(
+    code: str,
+    request: Request,
+    redirect: Optional[str] = None,
+):
     """Switch user language, persist in vv_lang cookie, and redirect back."""
     target_lang = code.lower() if code.lower() in SUPPORTED_LANGUAGES else "ru"
-    ref = redirect or request.headers.get("referer") or "/"
-    if not _is_safe_redirect(ref):
-        ref = "/"
+    if redirect:
+        ref = redirect if _is_safe_redirect(redirect) else "/"
+    else:
+        ref = _normalize_same_origin_referer(request.headers.get("referer"), request)
     from fastapi.responses import RedirectResponse
     resp = RedirectResponse(url=ref, status_code=303)
     resp.set_cookie(
@@ -204,13 +254,15 @@ async def analytics_middleware(request: Request, call_next):
         )
 
     path = request.url.path
-    if not (
+    if response.status_code < 400 and not (
         path.startswith("/static")
         or path.startswith("/api")
+        or path.startswith("/partials")
+        or path in ("/health", "/healthz")
         or path.endswith(".ico")
         or path.endswith(".svg")
     ):
-        client_ip = request.client.host if request.client else "127.0.0.1"
+        client_ip = get_real_client_ip(request)
         ip_h = hash_ip(client_ip)
         ua = request.headers.get("user-agent", "")
         dev_type, browser = parse_device_and_browser(ua)
@@ -218,7 +270,14 @@ async def analytics_middleware(request: Request, call_next):
 
         server_addr = None
         if path.startswith("/server/"):
-            server_addr = path.split("/server/")[1].split("?")[0].strip()
+            raw_srv = path.split("/server/", 1)[1].split("?")[0].strip()
+            if (
+                raw_srv
+                and not raw_srv.startswith(".")
+                and "/" not in raw_srv
+                and is_safe_address(raw_srv)
+            ):
+                server_addr = raw_srv
 
         asyncio.create_task(
             repo.record_pageview(

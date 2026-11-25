@@ -1,5 +1,6 @@
 <!-- Server Status Card Component -->
-<div onclick="window.location.href='/server/{{ status.address }}{% if status.edition == "bedrock" %}?bedrock=true{% endif %}';"
+<div data-href="/server/{{ status.address }}{% if status.edition == 'bedrock' %}?bedrock=true{% endif %}"
+     onclick="window.location.href=this.getAttribute('data-href');"
      class="cursor-pointer rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-5 shadow-sm hover:border-emerald-500/70 hover:shadow-xl hover:-translate-y-1 hover:ring-1 hover:ring-emerald-500/30 transition-all duration-200 group">
   <div class="flex items-start justify-between gap-4">
     <!-- Server Icon & Header -->
@@ -41,7 +42,7 @@
       {% else %}
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20">
           <span class="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400"></span>
-          Offline
+          {{ t('server_detail.offline_badge') }}
         </span>
       {% endif %}
     </div>
@@ -64,11 +65,11 @@
           <div class="flex items-center justify-between px-2 py-1 rounded bg-white dark:bg-[#121622] border border-slate-200 dark:border-[#1e293b]">
             <span class="text-slate-500 dark:text-slate-400">{{ t('server_card.latency_label') }}</span>
             {% if status.latency_ms < 60 %}
-              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ status.latency_ms | int }} ms (Отличный)</span>
+              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ status.latency_ms | int }} ms ({{ t('probes.statuses.excellent') }})</span>
             {% elif status.latency_ms < 150 %}
-              <span class="text-amber-600 dark:text-amber-400 font-semibold">{{ status.latency_ms | int }} ms (Хороший)</span>
+              <span class="text-amber-600 dark:text-amber-400 font-semibold">{{ status.latency_ms | int }} ms ({{ t('probes.statuses.good') }})</span>
             {% else %}
-              <span class="text-rose-600 dark:text-rose-400 font-semibold">{{ status.latency_ms | int }} ms (Высокий)</span>
+              <span class="text-rose-600 dark:text-rose-400 font-semibold">{{ status.latency_ms | int }} ms ({{ t('probes.statuses.high') }})</span>
             {% endif %}
           </div>
           <div class="flex items-center justify-between px-2 py-1 rounded bg-white dark:bg-[#121622] border border-slate-200 dark:border-[#1e293b]">
@@ -85,8 +86,8 @@
             {{ status.edition | upper }} Online
           </span>
           {% if status.peak_players and status.peak_players > 0 %}
-          <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold" title="{{ status.peak_players_formatted or 'Пик онлайна' }}">
-            🏆 Пик: {{ "{:,}".format(status.peak_players) }}
+          <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold" title="{{ status.peak_players_formatted or t('server_card.peak_title') }}">
+            {{ t('server_card.peak_badge', count="{:,}".format(status.peak_players)) }}
           </span>
           {% endif %}
           {% if status.region_latencies and status.is_online %}
@@ -96,12 +97,12 @@
           {% endif %}
           {% if status.latency_ms < 80 and status.latency_ms > 0 %}
           <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            Низкий пинг
+            {{ t('server_card.low_ping') }}
           </span>
           {% endif %}
           {% if status.players_online >= 100 %}
           <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-            Высокий онлайн
+            {{ t('server_card.high_online') }}
           </span>
           {% endif %}
         </div>
@@ -109,16 +110,16 @@
         <div class="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400 mb-2 pb-1.5 border-b border-slate-200 dark:border-[#1f293d]/50">
           <span class="flex items-center gap-1.5 font-medium text-rose-500 dark:text-rose-400">
             <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-            Диагностика соединения
+            {{ t('server_card.conn_diagnostics') }}
           </span>
-          <span class="text-rose-500 dark:text-rose-400 font-mono">Узел недоступен</span>
+          <span class="text-rose-500 dark:text-rose-400 font-mono">{{ t('server_card.node_unreachable') }}</span>
         </div>
         <div class="space-y-1.5 text-[11px] font-mono">
           <p class="text-slate-700 dark:text-slate-300">
-            Сервер не отвечает на пинг-запросы.
+            {{ t('server_card.unreachable_desc') }}
           </p>
           <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-            Причина: {{ status.error_message or 'Превышено время ожидания (Connection timed out)' }}
+            {{ t('server_card.cause_label') }} {{ status.error_message or t('server_card.timeout_cause') }}
           </p>
         </div>
       {% endif %}

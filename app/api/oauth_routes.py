@@ -102,7 +102,7 @@ async def google_callback(
         mc_nickname=user_info.get("mc_nickname", ""),
         avatar_url=user_info.get("avatar_url", ""),
         is_verified_license=user_info.get("is_verified_license", False),
-        email_verified=user_info.get("email_verified", True),
+        email_verified=user_info.get("email_verified", False),
     )
 
     # Issue session token
@@ -192,7 +192,7 @@ async def microsoft_callback(
         mc_nickname=user_info.get("mc_nickname", ""),
         avatar_url=user_info.get("avatar_url", ""),
         is_verified_license=user_info.get("is_verified_license", False),
-        email_verified=user_info.get("email_verified", True),
+        email_verified=user_info.get("email_verified", False),
     )
 
     # Issue session token

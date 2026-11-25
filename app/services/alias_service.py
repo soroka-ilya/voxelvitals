@@ -632,12 +632,31 @@ def check_search_route(query: str, bedrock: bool = False) -> tuple[str, str]:
     return "search", clean
 
 
+def _localize_server_item(s: Dict[str, Any], eff_lang: str) -> Dict[str, Any]:
+    """Return a copy of catalog entry with localized description and category_label."""
+    from app.services.i18n_service import t
+
+    sid = s["id"]
+    item = dict(s)
+    item["description"] = t(f"catalog.servers.{sid}.description", lang=eff_lang, default=s.get("description", ""))
+    item["category_label"] = t(
+        f"catalog.servers.{sid}.category_label",
+        lang=eff_lang,
+        default=s.get("category_label", s.get("category", "")),
+    )
+    return item
+
+
 def search_servers_catalog(
     query: str,
     category: Optional[str] = None,
     edition: Optional[str] = None,
+    lang: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Search catalog servers with relevance scoring and optional filters."""
+    from app.services.i18n_service import get_current_lang
+
+    eff_lang = lang or get_current_lang()
     clean_q = normalize_query(query).lower()
     compact_q = re.sub(r"[^a-z0-9]", "", clean_q)
 
@@ -652,7 +671,7 @@ def search_servers_catalog(
                 continue
 
         if not clean_q:
-            results.append((100, s))
+            results.append((100, _localize_server_item(s, eff_lang)))
             continue
 
         score = 0
@@ -679,7 +698,7 @@ def search_servers_catalog(
             score += 30
 
         if score > 0:
-            results.append((score, s))
+            results.append((score, _localize_server_item(s, eff_lang)))
 
     results.sort(key=lambda x: x[0], reverse=True)
     return [item for _, item in results]
@@ -734,25 +753,20 @@ def is_featured_bedrock(address: str) -> bool:
 
 def get_curated_catalog(category: Optional[str] = None, lang: Optional[str] = None) -> List[Dict[str, Any]]:
     """Return list of curated Minecraft servers, optionally filtered by genre category and localized."""
-    from app.services.i18n_service import get_current_lang, t
+    from app.services.i18n_service import get_current_lang
     eff_lang = lang or get_current_lang()
 
     servers = list(CURATED_SERVERS)
     if category and category != "all":
         servers = [s for s in servers if s.get("category") == category]
 
-    result = []
-    for s in servers:
-        sid = s["id"]
-        item = dict(s)
-        item["description"] = t(f"catalog.servers.{sid}.description", lang=eff_lang, default=s.get("description", ""))
-        item["category_label"] = t(f"catalog.servers.{sid}.category_label", lang=eff_lang, default=s.get("category_label", s.get("category", "")))
-        result.append(item)
-    return result
+    return [_localize_server_item(s, eff_lang) for s in servers]
 
 
-def search_suggestions(query: str, limit: int = 6) -> List[Dict[str, Any]]:
+def search_suggestions(query: str, limit: int = 6, lang: Optional[str] = None) -> List[Dict[str, Any]]:
     """Provide autocomplete suggestions matching the query, with universal fallback."""
+    from app.services.i18n_service import get_current_lang, t
+    eff_lang = lang or get_current_lang()
     clean_q = normalize_query(query).lower()
     if not clean_q:
         return [
@@ -760,13 +774,14 @@ def search_suggestions(query: str, limit: int = 6) -> List[Dict[str, Any]]:
                 "name": s["name"],
                 "address": s["address"],
                 "category": s["category"],
-                "category_label": s.get("category_label", s["category"]),
+                "category_label": loc["category_label"],
                 "icon": s["icon"],
                 "fallback_icon": s.get("fallback_icon", s["icon"]),
                 "edition": s.get("edition", "java"),
-                "description": s.get("description", ""),
+                "description": loc["description"],
             }
             for s in CURATED_SERVERS[:limit]
+            for loc in [_localize_server_item(s, eff_lang)]
         ]
 
     q_host, _ = _split_host_port(clean_q)
@@ -812,15 +827,16 @@ def search_suggestions(query: str, limit: int = 6) -> List[Dict[str, Any]]:
             score += 30
 
         if score > 0:
+            loc = _localize_server_item(s, eff_lang)
             item = {
                 "name": s["name"],
                 "address": s["address"],
                 "category": s["category"],
-                "category_label": s.get("category_label", s["category"]),
+                "category_label": loc["category_label"],
                 "icon": s["icon"],
                 "fallback_icon": s.get("fallback_icon", s["icon"]),
                 "edition": s.get("edition", "java"),
-                "description": s.get("description", ""),
+                "description": loc["description"],
             }
             scored_results.append((score, item))
             seen_addresses.add(s["address"].lower())
@@ -835,11 +851,11 @@ def search_suggestions(query: str, limit: int = 6) -> List[Dict[str, Any]]:
                 "name": alias_key.title(),
                 "address": target_addr,
                 "category": "bedrock" if is_bedrock else "popular",
-                "category_label": "Bedrock Network" if is_bedrock else "Игровая сеть",
+                "category_label": t("categories.bedrock_network", lang=eff_lang) if is_bedrock else t("categories.gaming_network", lang=eff_lang),
                 "icon": _get_server_icon_url(target_addr),
                 "fallback_icon": _make_svg_icon(alias_key[:3].upper(), "#1e293b", "#94a3b8"),
                 "edition": "bedrock" if is_bedrock else "java",
-                "description": f"Сервер Minecraft: {target_addr}",
+                "description": t("search.direct_probe_action", lang=eff_lang, host=target_addr),
             }
             score = 100 if alias_key == clean_q else 65
             scored_results.append((score, item))
@@ -852,14 +868,14 @@ def search_suggestions(query: str, limit: int = 6) -> List[Dict[str, Any]]:
     if resolved and resolved.lower() not in seen_addresses:
         is_bedrock = "bedrock" in clean_q or "bedrock" in resolved.lower()
         dynamic_item = {
-            "name": f"Прямой адрес: {resolved}",
+            "name": t("search.direct_probe_title", lang=eff_lang, host=resolved),
             "address": resolved,
             "category": "custom",
-            "category_label": "Direct Host",
+            "category_label": t("categories.direct_host", lang=eff_lang),
             "icon": _get_server_icon_url(resolved),
             "fallback_icon": _make_svg_icon("MC", "#0f172a", "#38bdf8"),
             "edition": "bedrock" if is_bedrock else "java",
-            "description": f"Опросить узел {resolved}",
+            "description": t("search.direct_probe_action", lang=eff_lang, host=resolved),
         }
         if len(top_items) >= limit:
             top_items[-1] = dynamic_item

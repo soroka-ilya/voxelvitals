@@ -17,8 +17,11 @@ def get_real_client_ip(request: Request) -> str:
             return real_ip.strip()
         forwarded = request.headers.get("X-Forwarded-For")
         if forwarded:
-            # Rightmost entry before proxy is closest client, or leftmost if single-hop nginx
+            # Traverse from right to left, skipping trusted proxies, to get true connecting client IP
             parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+            for part in reversed(parts):
+                if part not in settings.trusted_proxies:
+                    return part
             if parts:
                 return parts[0]
 

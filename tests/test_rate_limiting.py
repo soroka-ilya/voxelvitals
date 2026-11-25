@@ -228,8 +228,8 @@ async def test_rate_limiting_exact_boundary_5th_allowed_6th_blocked(client):
 
 @pytest.mark.asyncio
 async def test_rate_limiting_x_forwarded_for_client_ip_extraction(client):
-    """Verify first IP in comma-separated X-Forwarded-For is extracted correctly."""
-    proxy_chain = "203.0.113.195, 70.41.3.18, 150.172.238.178"
+    """Verify rightmost untrusted client IP in X-Forwarded-For is extracted (prevents XFF spoofing)."""
+    proxy_chain = "203.0.113.195, 198.51.100.77"
     for _ in range(5):
         resp = await client.post(
             "/api/reviews",
@@ -238,8 +238,8 @@ async def test_rate_limiting_x_forwarded_for_client_ip_extraction(client):
         )
         assert resp.status_code == 200
 
-    # Request from same primary client IP via different proxy chain is counted under the same key
-    alt_chain = "203.0.113.195, 198.51.100.1"
+    # Even with a spoofed leftmost XFF prefix and an extra trusted proxy hop, real IP matches and is rate limited
+    alt_chain = "8.8.8.8, 198.51.100.77, 127.0.0.1"
     blocked = await client.post(
         "/api/reviews",
         json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Blocked comment"},

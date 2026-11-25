@@ -16,6 +16,28 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+// Resolve localized frontend strings from window.VV_I18N with parameter interpolation
+function vvMsg(path, fallback, vars = {}) {
+  let val = fallback;
+  try {
+    const parts = path.split('.');
+    let cur = (typeof window !== 'undefined' && window.VV_I18N) ? window.VV_I18N : null;
+    for (const p of parts) {
+      if (cur && Object.prototype.hasOwnProperty.call(cur, p)) {
+        cur = cur[p];
+      } else {
+        cur = null;
+        break;
+      }
+    }
+    if (typeof cur === 'string' && cur.length > 0) val = cur;
+  } catch (e) {}
+  for (const [k, v] of Object.entries(vars)) {
+    val = val.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+  }
+  return val;
+}
+
 // Telemetry & Visitor Interaction Tracking Beacon
 function trackEvent(eventType, target, metadata = {}) {
   try {
@@ -70,7 +92,7 @@ function copyIp(address, btn) {
   if (btn) {
     const label = btn.querySelector('.copy-label') || btn;
     const originalHtml = label.innerHTML;
-    label.innerText = 'Скопировано!';
+    label.innerText = vvMsg('toasts.copied', 'Скопировано!');
     btn.classList.add('border-emerald-500/50', 'text-emerald-400');
 
     setTimeout(() => {
@@ -108,7 +130,7 @@ function copySnippet(text, btn) {
 
   if (btn) {
     const origText = btn.innerText;
-    btn.innerText = 'Скопировано!';
+    btn.innerText = vvMsg('toasts.copied', 'Скопировано!');
     setTimeout(() => {
       btn.innerText = origText;
     }, 1500);
@@ -157,7 +179,7 @@ function renderCatalogPagination(totalPages) {
                 ? 'opacity-40 cursor-not-allowed text-slate-400' 
                 : 'bg-white dark:bg-[#161b26] text-slate-700 dark:text-slate-300 hover:border-emerald-500/50'
             }">
-      ← Назад
+      ${escapeHtml(vvMsg('search.prev_page', '← Назад'))}
     </button>
   `;
 
@@ -187,7 +209,7 @@ function renderCatalogPagination(totalPages) {
                 ? 'opacity-40 cursor-not-allowed text-slate-400' 
                 : 'bg-white dark:bg-[#161b26] text-slate-700 dark:text-slate-300 hover:border-emerald-500/50'
             }">
-      Вперед →
+      ${escapeHtml(vvMsg('search.next_page', 'Вперед →'))}
     </button>
   `;
 
@@ -266,16 +288,16 @@ function applyCatalogFilters(resetPage = true) {
   // Update labels
   const catLabel = document.getElementById('category-filter-label');
   if (catLabel) {
-    catLabel.textContent = selectedCategories.size === 0 
-      ? 'Категории: Все' 
-      : `Категории (${selectedCategories.size})`;
+    catLabel.textContent = selectedCategories.size === 0
+      ? vvMsg('catalog.categories_all', 'Категории: Все')
+      : vvMsg('catalog.categories_count', `Категории (${selectedCategories.size})`, { count: selectedCategories.size });
   }
 
   const verLabel = document.getElementById('version-filter-label');
   if (verLabel) {
-    verLabel.textContent = selectedVersions.size === 0 
-      ? 'Версия: Все' 
-      : `Версии (${selectedVersions.size})`;
+    verLabel.textContent = selectedVersions.size === 0
+      ? vvMsg('catalog.versions_all', 'Версия: Все')
+      : vvMsg('catalog.versions_count', `Версии (${selectedVersions.size})`, { count: selectedVersions.size });
   }
 
   // Toggle reset button
@@ -708,29 +730,33 @@ function copyCurrentJavaIp(btn = null) {
 
 function copyQuickHost(btn = null) {
   if (!currentQcHost) return;
+  const hostLbl = vvMsg('quick_connect.host_label', 'Хост');
+  const copiedLbl = vvMsg('quick_connect.copied_btn', 'Скопирован');
   copyTextToClipboard(currentQcHost, () => {
-    showToast(`Хост скопирован: ${currentQcHost}`);
+    showToast(`${hostLbl}: ${currentQcHost}`);
     if (btn) {
       const orig = btn.textContent;
-      btn.textContent = '✓ Скопирован';
+      btn.textContent = `✓ ${copiedLbl}`;
       setTimeout(() => { btn.textContent = orig; }, 1800);
     }
   }, () => {
-    showToast(`Хост: ${currentQcHost}`);
+    showToast(`${hostLbl}: ${currentQcHost}`);
   });
 }
 
 function copyQuickPort(btn = null) {
   if (!currentQcPort) return;
+  const portLbl = vvMsg('quick_connect.port_label', 'Порт');
+  const copiedLbl = vvMsg('quick_connect.copied_btn', 'Скопирован');
   copyTextToClipboard(currentQcPort, () => {
-    showToast(`Порт скопирован: ${currentQcPort}`);
+    showToast(`${portLbl}: ${currentQcPort}`);
     if (btn) {
       const orig = btn.textContent;
-      btn.textContent = '✓ Скопирован';
+      btn.textContent = `✓ ${copiedLbl}`;
       setTimeout(() => { btn.textContent = orig; }, 1800);
     }
   }, () => {
-    showToast(`Порт: ${currentQcPort}`);
+    showToast(`${portLbl}: ${currentQcPort}`);
   });
 }
 
@@ -743,7 +769,7 @@ function confirmAnyLauncher() {
     localStorage.setItem('preferred_minecraft_launcher', 'any');
     localStorage.setItem('preferred_java_client', 'any');
   }
-  showToast('IP скопирован! Вставьте в лаунчере через Ctrl+V');
+  showToast(vvMsg('toasts.ip_copied_paste', 'IP скопирован! Вставьте в лаунчере через Ctrl+V'));
   closeQuickConnectModal();
 }
 
@@ -844,10 +870,10 @@ function launchClient(clientType) {
 
   if (clientType === 'lunar') {
     window.location.href = `lunarclient://play?serverAddress=${encodeURIComponent(targetAddr)}`;
-    showToast(`Запуск Lunar Client... IP ${targetAddr} в буфере!`);
+    showToast(vvMsg('toasts.lunar_launching', `Запуск Lunar Client... IP ${targetAddr} в буфере!`, { addr: targetAddr }));
   } else if (clientType === 'badlion') {
     window.location.href = `badlion://join?server=${encodeURIComponent(targetAddr)}`;
-    showToast(`Запуск Badlion Client... IP ${targetAddr} в буфере!`);
+    showToast(vvMsg('toasts.badlion_launching', `Запуск Badlion Client... IP ${targetAddr} в буфере!`, { addr: targetAddr }));
   }
   closeQuickConnectModal();
 }
@@ -861,7 +887,7 @@ function triggerBedrockUri() {
   const uri = `minecraft://?addExternalServer=${sName}|${currentQcHost}:${currentQcPort}`;
   try {
     window.location.href = uri;
-    showToast('Minecraft Bedrock запускается! Если сервер не добавился — скопируйте хост и порт.');
+    showToast(vvMsg('toasts.bedrock_launching', 'Minecraft Bedrock запускается! Если сервер не добавился — скопируйте хост и порт.'));
   } catch (e) {
     console.warn('Bedrock URI failed', e);
   }
@@ -874,7 +900,7 @@ function resetPreferredLauncher() {
   if (remCb) remCb.checked = false;
   const resetBtn = document.getElementById('qc-reset-btn');
   if (resetBtn) resetBtn.classList.add('hidden');
-  showToast('Сохраненный лаунчер сброшен');
+  showToast(vvMsg('toasts.pref_reset', 'Сохраненный лаунчер сброшен'));
 }
 
 function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = null) {
@@ -896,7 +922,7 @@ function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = 
     const isFeatured = isFeaturedBedrock(cleanAddr);
     if (isFeatured) {
       openQuickConnectModal(cleanAddr, 'bedrock', customName, 'bedrock');
-      showToast('Сервер встроен во вкладку «Серверы» Bedrock! IP скопирован.');
+      showToast(vvMsg('toasts.bedrock_featured_notice', 'Сервер встроен во вкладку «Серверы» Bedrock! IP скопирован.'));
     } else {
       const hp = parseHostPort(cleanAddr, 'bedrock');
       const sName = encodeURIComponent(customName || hp.host);
@@ -906,29 +932,30 @@ function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = 
         console.warn('Bedrock URI trigger failed:', err);
       }
       openQuickConnectModal(cleanAddr, 'bedrock', customName, 'bedrock');
-      showToast('Запуск Minecraft Bedrock... Хост и порт в окне подключения.');
+      showToast(vvMsg('toasts.bedrock_launching', 'Запуск Minecraft Bedrock... Хост и порт в окне подключения.'));
     }
     return;
   }
 
   // Java Edition: check preferred launcher
   const preferred = localStorage.getItem('preferred_minecraft_launcher') || localStorage.getItem('preferred_java_client');
+  const changeLabel = vvMsg('toasts.change_btn', 'Сменить');
   if (preferred === 'lunar') {
     window.location.href = `lunarclient://play?serverAddress=${encodeURIComponent(cleanAddr)}`;
-    showToast(`Запуск Lunar Client... IP скопирован!`, 4000, 'Сменить', () => {
+    showToast(vvMsg('toasts.lunar_launching', `Запуск Lunar Client... IP ${cleanAddr} в буфере!`, { addr: cleanAddr }), 4000, changeLabel, () => {
       resetPreferredLauncher();
       openQuickConnectModal(cleanAddr, 'java', customName, 'any');
     });
     return;
   } else if (preferred === 'badlion') {
     window.location.href = `badlion://join?server=${encodeURIComponent(cleanAddr)}`;
-    showToast(`Запуск Badlion Client... IP скопирован!`, 4000, 'Сменить', () => {
+    showToast(vvMsg('toasts.badlion_launching', `Запуск Badlion Client... IP ${cleanAddr} в буфере!`, { addr: cleanAddr }), 4000, changeLabel, () => {
       resetPreferredLauncher();
       openQuickConnectModal(cleanAddr, 'java', customName, 'any');
     });
     return;
   } else if (preferred === 'any') {
-    showToast(`IP скопирован для прямого подключения (Ctrl+V)!`, 4000, 'Сменить', () => {
+    showToast(vvMsg('toasts.ip_copied_paste', 'IP скопирован для прямого подключения (Ctrl+V)!'), 4000, changeLabel, () => {
       resetPreferredLauncher();
       openQuickConnectModal(cleanAddr, 'java', customName, 'any');
     });

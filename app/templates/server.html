@@ -60,13 +60,19 @@
         <!-- Quick Open in Launcher Button with Hub Options -->
         <div class="inline-flex rounded-lg shadow-sm">
           <button type="button" 
-                  onclick="launchMinecraft('{{ status.address }}', '{{ status.edition }}', '{{ status.name or status.address }}');" 
+                  data-address="{{ status.address }}"
+                  data-edition="{{ status.edition }}"
+                  data-name="{{ status.name or status.address }}"
+                  onclick="launchMinecraft(this.getAttribute('data-address'), this.getAttribute('data-edition'), this.getAttribute('data-name'));" 
                   class="px-4 py-2.5 rounded-l-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs tracking-wide transition-all flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
             <span>{{ t('server_detail.play_launcher') }}</span>
           </button>
           <button type="button"
-                  onclick="openQuickConnectModal('{{ status.address }}', '{{ status.edition }}', '{{ status.name or status.address }}');"
+                  data-address="{{ status.address }}"
+                  data-edition="{{ status.edition }}"
+                  data-name="{{ status.name or status.address }}"
+                  onclick="openQuickConnectModal(this.getAttribute('data-address'), this.getAttribute('data-edition'), this.getAttribute('data-name'));"
                   title="{{ t('server_detail.launcher_options_title') }}"
                   class="px-2.5 py-2.5 rounded-r-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold text-xs transition-colors border-l border-emerald-400/40 flex items-center justify-center">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -107,15 +113,17 @@
     </div>
 
     <!-- Authentic Minecraft MultiPlayer MOTD Panel -->
-    <div class="mt-6 pt-6 border-t border-[#273147]">
+    <div class="mt-6 pt-6 border-t border-slate-200 dark:border-[#273147]">
       <div class="flex items-center justify-between mb-2">
         <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           <span>{{ t('server_detail.motd_title') }}</span>
         </h3>
         <button type="button" 
-                onclick="navigator.clipboard.writeText(document.querySelector('.mc-motd-content').innerText); this.innerText='{{ t('server_detail.motd_copied') }}'; setTimeout(() => this.innerText='{{ t('server_detail.copy_motd') }}', 1500);" 
-                class="text-[11px] font-mono text-slate-400 hover:text-emerald-400 px-2 py-0.5 rounded bg-[#1e293b]/70 border border-[#273147] transition-colors">
+                data-copied="{{ t('server_detail.motd_copied') }}"
+                data-copy="{{ t('server_detail.copy_motd') }}"
+                onclick="navigator.clipboard.writeText(document.querySelector('.mc-motd-content').innerText); this.innerText=this.getAttribute('data-copied'); setTimeout(() => this.innerText=this.getAttribute('data-copy'), 1500);" 
+                class="text-[11px] font-mono text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 px-2 py-0.5 rounded bg-slate-100 dark:bg-[#1e293b]/70 border border-slate-200 dark:border-[#273147] transition-colors">
           {{ t('server_detail.copy_motd') }}
         </button>
       </div>
@@ -168,7 +176,7 @@
       <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span class="font-medium">{{ t('server_detail.metric_ping') }}</span>
         <span id="live-ping-label" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-          {% if status.latency_ms < 60 %}Отличный{% elif status.latency_ms < 120 %}Хороший{% else %}Средний{% endif %}
+          {% if status.latency_ms < 60 %}{{ t('probes.statuses.excellent') }}{% elif status.latency_ms < 120 %}{{ t('probes.statuses.good') }}{% else %}{{ t('probes.statuses.fair') }}{% endif %}
         </span>
       </div>
       <div class="flex items-baseline gap-1.5">
@@ -332,8 +340,6 @@
       <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
         {{ t('server_detail.players_count', count=(status.players_sample | length)) }}
       </span>
-        {{ status.players_sample | length }} Players
-      </span>
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -411,7 +417,7 @@
     <!-- Submit Review Form -->
     <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] space-y-3">
       <h3 class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{{ t('server_detail.leave_review_title') }}</h3>
-      <form id="review-form" onsubmit="submitReview(event, '{{ status.address }}')" class="space-y-3">
+      <form id="review-form" data-address="{{ status.address }}" onsubmit="submitReview(event, this.getAttribute('data-address'))" class="space-y-3">
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2">
             <span class="text-xs text-slate-600 dark:text-slate-300">{{ t('server_detail.your_rating') }}</span>
@@ -478,7 +484,7 @@
       </button>
 
       <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-4">{{ t('news_modal.title') }}</h3>
-      <form onsubmit="submitNews(event, '{{ status.address }}')" class="space-y-3">
+      <form data-address="{{ status.address }}" onsubmit="submitNews(event, this.getAttribute('data-address'))" class="space-y-3">
         <div>
           <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('news_modal.news_title_label') }}</label>
           <input type="text" id="news-title" required class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="{{ t('news_modal.news_title_placeholder') }}" />
@@ -511,11 +517,11 @@
   const historyData = [
     {% for point in history %}
       {
-        timestamp: "{{ point.timestamp }}",
-        players_online: {{ point.players_online }},
-        players_max: {{ point.players_max }},
-        ping_ms: {{ point.ping_ms }},
-        is_online: {{ 'true' if point.is_online else 'false' }}
+        timestamp: {{ point.timestamp | tojson }},
+        players_online: {{ point.players_online | tojson }},
+        players_max: {{ point.players_max | tojson }},
+        ping_ms: {{ point.ping_ms | tojson }},
+        is_online: {{ point.is_online | tojson }}
       }{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
@@ -523,11 +529,11 @@
   // If history is empty, populate with current point for visual chart
   if (historyData.length === 0) {
     historyData.push({
-      timestamp: "{{ status.last_updated }}",
-      players_online: {{ status.players_online }},
-      players_max: {{ status.players_max }},
-      ping_ms: {{ status.latency_ms }},
-      is_online: {{ 'true' if status.is_online else 'false' }}
+      timestamp: {{ status.last_updated | tojson }},
+      players_online: {{ status.players_online | tojson }},
+      players_max: {{ status.players_max | tojson }},
+      ping_ms: {{ status.latency_ms | tojson }},
+      is_online: {{ status.is_online | tojson }}
     });
   }
 
@@ -559,7 +565,7 @@
         document.getElementById('vote-count').textContent = data.votes;
       }
     } catch (e) {
-      showToast('Ошибка при отправке голоса');
+      showToast((window.VV_I18N && window.VV_I18N.toasts.vote_error) || 'Ошибка при отправке голоса');
     }
   }
 
@@ -583,14 +589,14 @@
         })
       });
       if (res.ok) {
-        showToast('Отзыв успешно добавлен!');
+        showToast((window.VV_I18N && window.VV_I18N.toasts.review_success) || 'Отзыв успешно добавлен!');
         setTimeout(() => location.reload(), 800);
       } else {
         const data = await res.json();
-        showToast(data.detail || 'Ошибка при отправке отзыва');
+        showToast(data.detail || (window.VV_I18N && window.VV_I18N.toasts.review_error) || 'Ошибка при отправке отзыва');
       }
     } catch (e) {
-      showToast('Ошибка сети');
+      showToast((window.VV_I18N && window.VV_I18N.toasts.network_error) || 'Ошибка сети');
     }
   }
 
@@ -614,23 +620,23 @@
         })
       });
       if (res.ok) {
-        showToast('Новость успешно опубликована!');
+        showToast((window.VV_I18N && window.VV_I18N.toasts.news_success) || 'Новость успешно опубликована!');
         setTimeout(() => location.reload(), 800);
       } else {
         const data = await res.json();
-        err.textContent = data.detail || 'Ошибка при публикации';
+        err.textContent = data.detail || (window.VV_I18N && window.VV_I18N.toasts.news_error) || 'Ошибка при публикации';
         err.classList.remove('hidden');
       }
     } catch (e) {
-      err.textContent = 'Ошибка сети';
+      err.textContent = (window.VV_I18N && window.VV_I18N.toasts.network_error) || 'Ошибка сети';
       err.classList.remove('hidden');
     }
   }
 
   // Live SSE Telemetry Stream: Deferred until AFTER page load completes to prevent browser tab spinner from hanging
   function initLiveStream() {
-    const serverAddr = "{{ status.address }}";
-    const isBedrock = "{{ status.edition }}" === "bedrock";
+    const serverAddr = {{ status.address | tojson }};
+    const isBedrock = {{ (status.edition == "bedrock") | tojson }};
     const sseUrl = `/api/sse/status/${encodeURIComponent(serverAddr)}${isBedrock ? '?bedrock=true' : ''}`;
 
     if (!window.EventSource) return;

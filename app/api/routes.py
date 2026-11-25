@@ -35,6 +35,7 @@ templates.env.globals["_"] = t
 templates.env.globals["SUPPORTED_LANGUAGES"] = SUPPORTED_LANGUAGES
 templates.env.globals["LANGUAGE_METADATA"] = LANGUAGE_METADATA
 templates.env.globals["get_lang"] = get_request_language
+templates.env.globals["is_docs_enabled"] = lambda: settings.enable_docs
 
 web_router = APIRouter(tags=["Web Pages"])
 repo = ServerRepository()
@@ -97,8 +98,9 @@ async def search_page(
         return RedirectResponse(url=url, status_code=303)
 
     # Partial / Multi-match query -> Render dedicated search results page
+    lang = get_request_language(request)
     eff_edition = "bedrock" if bedrock else (edition or "all")
-    results = search_servers_catalog(raw_query, category=category, edition=eff_edition)
+    results = search_servers_catalog(raw_query, category=category, edition=eff_edition, lang=lang)
     page_items, total_pages, total_count = get_catalog_page(
         page=page,
         page_size=6,
@@ -114,7 +116,6 @@ async def search_page(
     )
     current_user = await get_current_user_from_request(request, repo)
     resolved_fallback = resolve_address(raw_query)
-    lang = get_request_language(request)
 
     return templates.TemplateResponse(
         request=request,
@@ -146,24 +147,32 @@ async def server_page(
     """Render server detail page with interactive history charts and player list."""
     clean_addr = resolve_address(address.strip())
     effective_bedrock = bedrock or is_bedrock_address(clean_addr)
-    if mock:
+    effective_mock = mock and settings.enable_mock_auth
+    if effective_mock:
         status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
     else:
         status = await query_server(clean_addr, is_bedrock=effective_bedrock)
 
     server_id = await repo.get_or_create_server(clean_addr, edition=status.edition)
-    await repo.record_telemetry(server_id, status)
+    if server_id > 0:
+        await repo.record_telemetry(server_id, status)
     history = await repo.get_24h_history(server_id, hours=24)
 
+    lang = get_request_language(request)
     extra_info = get_server_extra_info(clean_addr, edition=status.edition)
     news = await repo.get_news_for_server(clean_addr)
     reviews = await repo.get_reviews_for_server(clean_addr)
     rating_stats = await repo.get_server_rating_stats(clean_addr)
     votes = await repo.get_votes_count(clean_addr)
     current_user = await get_current_user_from_request(request, repo)
-    probes = get_multi_region_probes(clean_addr, status.latency_ms, edition=status.edition)
+    probes = get_multi_region_probes(
+        clean_addr,
+        status.latency_ms,
+        edition=status.edition,
+        is_online=status.is_online,
+        lang=lang,
+    )
     peak_info = await repo.get_server_peak(clean_addr)
-    lang = get_request_language(request)
 
     return templates.TemplateResponse(
         request=request,
@@ -196,19 +205,22 @@ async def partial_server_card(
     """HTMX partial for rendering a single server card on search or live update."""
     clean_addr = resolve_address(address.strip())
     effective_bedrock = bedrock or is_bedrock_address(clean_addr)
-    if mock:
+    effective_mock = mock and settings.enable_mock_auth
+    if effective_mock:
         status = get_mock_server_status(clean_addr, is_online=True, edition="bedrock" if effective_bedrock else "java")
     else:
         status = await query_server(clean_addr, is_bedrock=effective_bedrock)
 
     server_id = await repo.get_or_create_server(clean_addr, edition=status.edition)
-    await repo.record_telemetry(server_id, status)
+    if server_id > 0:
+        await repo.record_telemetry(server_id, status)
     extra_info = get_server_extra_info(clean_addr, edition=status.edition)
+    lang = get_request_language(request)
 
     return templates.TemplateResponse(
         request=request,
         name="partials/server_card.html",
-        context={"status": status, "extra_info": extra_info},
+        context={"status": status, "extra_info": extra_info, "current_lang": lang},
     )
 
 
@@ -225,20 +237,24 @@ async def partial_skeleton_card(request: Request):
 @web_router.get("/privacy", response_class=HTMLResponse)
 async def privacy_page(request: Request):
     """Privacy Policy page adhering to anti-vibecoding guidelines."""
+    current_user = await get_current_user_from_request(request, repo)
+    lang = get_request_language(request)
     return templates.TemplateResponse(
         request=request,
         name="privacy.html",
-        context={"app_name": settings.app_name},
+        context={"app_name": settings.app_name, "current_user": current_user, "current_lang": lang},
     )
 
 
 @web_router.get("/terms", response_class=HTMLResponse)
 async def terms_page(request: Request):
     """Terms of Service page adhering to anti-vibecoding guidelines."""
+    current_user = await get_current_user_from_request(request, repo)
+    lang = get_request_language(request)
     return templates.TemplateResponse(
         request=request,
         name="terms.html",
-        context={"app_name": settings.app_name},
+        context={"app_name": settings.app_name, "current_user": current_user, "current_lang": lang},
     )
 
 
@@ -272,5 +288,6 @@ async def analytics_dashboard(
             "hours": hours,
             "current_user": current_user,
             "app_name": settings.app_name,
+            "current_lang": get_request_language(request),
         },
     )

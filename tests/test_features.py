@@ -51,8 +51,8 @@ async def test_auth_workflow(client):
     assert me_res.status_code == 200
     assert me_res.json()["username"] == uname
 
-    # 4. Logout
-    logout_res = await client.get("/api/auth/logout")
+    # 4. Logout (POST only, GET prohibited to prevent CSRF)
+    logout_res = await client.post("/api/auth/logout")
     assert logout_res.status_code == 200
 
 

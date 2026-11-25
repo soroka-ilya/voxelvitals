@@ -34,6 +34,57 @@
   <link rel="stylesheet" href="/static/css/tailwind.min.css">
   <link rel="stylesheet" href="/static/css/style.css">
 
+  <!-- Localized Frontend Strings -->
+  <script>
+    window.VV_I18N = {{ {
+      "catalog": {
+        "categories_all": t("catalog.categories_all"),
+        "categories_count": t("catalog.categories_count"),
+        "versions_all": t("catalog.versions_all"),
+        "versions_count": t("catalog.versions_count")
+      },
+      "categories": {
+        "all": t("categories.all"),
+        "anarchy": t("categories.anarchy"),
+        "minigames": t("categories.minigames"),
+        "rpg": t("categories.rpg"),
+        "pvp": t("categories.pvp"),
+        "survival": t("categories.survival")
+      },
+      "search": {
+        "direct_probe_action": t("search.direct_probe_action"),
+        "prev_page": t("search.prev_page"),
+        "next_page": t("search.next_page")
+      },
+      "quick_connect": {
+        "copied_btn": t("quick_connect.copied_btn"),
+        "host_label": t("quick_connect.host_label"),
+        "port_label": t("quick_connect.port_label")
+      },
+      "toasts": {
+        "ip_copied": t("toasts.ip_copied"),
+        "copied": t("toasts.copied"),
+        "ip_copied_paste": t("toasts.ip_copied_paste"),
+        "lunar_launching": t("toasts.lunar_launching"),
+        "badlion_launching": t("toasts.badlion_launching"),
+        "bedrock_launching": t("toasts.bedrock_launching"),
+        "bedrock_featured_notice": t("toasts.bedrock_featured_notice"),
+        "pref_reset": t("toasts.pref_reset"),
+        "change_btn": t("toasts.change_btn"),
+        "vote_error": t("toasts.vote_error"),
+        "review_success": t("toasts.review_success"),
+        "review_error": t("toasts.review_error"),
+        "news_success": t("toasts.news_success"),
+        "news_error": t("toasts.news_error"),
+        "network_error": t("toasts.network_error")
+      },
+      "server_detail": {
+        "chart_legend_players": t("server_detail.chart_legend_players"),
+        "chart_legend_ping": t("server_detail.chart_legend_ping")
+      }
+    } | tojson }};
+  </script>
+
   <!-- Local Fast Scripts with Defer -->
   <script src="/static/js/htmx.min.js" defer></script>
   <script src="/static/js/sse.js" defer></script>
@@ -62,10 +113,12 @@
               <span>{{ t('nav.analytics') }}</span>
             </a>
           {% endif %}
+          {% if is_docs_enabled() %}
           <a href="/docs" target="_blank" class="hover:text-emerald-500 transition-colors flex items-center gap-1.5">
             <span>{{ t('nav.api_reference') }}</span>
             <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
+          {% endif %}
         </nav>
 
         <!-- Language Selector Dropdown -->
@@ -116,9 +169,9 @@
                 </span>
               {% endif %}
             </div>
-            <a href="/api/auth/logout" onclick="event.preventDefault(); fetch('/api/auth/logout', {method: 'POST'}).then(() => location.reload());" class="text-xs text-slate-500 hover:text-red-400 transition-colors font-medium">
+            <button type="button" onclick="fetch('/api/auth/logout', {method: 'POST'}).then(() => location.reload());" class="text-xs text-slate-500 hover:text-red-400 transition-colors font-medium">
               {{ t('nav.logout') }}
-            </a>
+            </button>
           </div>
         {% else %}
           <button type="button" 
@@ -425,11 +478,11 @@
           location.reload();
         } else {
           const data = await res.json();
-          err.textContent = data.detail || 'Ошибка авторизации';
+          err.textContent = data.detail || (window.VV_I18N && window.VV_I18N.toasts && window.VV_I18N.toasts.network_error) || 'Ошибка авторизации';
           err.classList.remove('hidden');
         }
       } catch (e) {
-        err.textContent = 'Ошибка сети';
+        err.textContent = (window.VV_I18N && window.VV_I18N.toasts && window.VV_I18N.toasts.network_error) || 'Ошибка сети';
         err.classList.remove('hidden');
       }
     }
@@ -450,11 +503,11 @@
           location.reload();
         } else {
           const data = await res.json();
-          err.textContent = data.detail || 'Ошибка регистрации';
+          err.textContent = data.detail || (window.VV_I18N && window.VV_I18N.toasts && window.VV_I18N.toasts.network_error) || 'Ошибка регистрации';
           err.classList.remove('hidden');
         }
       } catch (e) {
-        err.textContent = 'Ошибка сети';
+        err.textContent = (window.VV_I18N && window.VV_I18N.toasts && window.VV_I18N.toasts.network_error) || 'Ошибка сети';
         err.classList.remove('hidden');
       }
     }
@@ -473,7 +526,7 @@
         openAuthModal();
         const err = document.getElementById('login-error');
         if (err) {
-          err.textContent = `Ошибка авторизации: ${params.get('auth_error')}`;
+          err.textContent = params.get('auth_error');
           err.classList.remove('hidden');
         }
       }

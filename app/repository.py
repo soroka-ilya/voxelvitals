@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from app.database import get_db_connection
 from app.domain.models import ServerStatus, TelemetryPoint
+from app.services.pinger import is_safe_address
 
 RUSSIAN_MONTHS = {
     1: "января", 2: "февраля", 3: "марта", 4: "апреля",
@@ -54,15 +55,25 @@ class ServerRepository:
         now = datetime.now(timezone.utc).isoformat()
         normalized_addr = address.strip().lower()
 
-        # Reject scanners and junk paths (e.g. /.env, wp-login.php, script injections)
+        # Reject scanners, static web assets, and SSRF targets (e.g. /.env, s3.js, 127.0.0.1:25565)
+        blocked_exts = (
+            ".php", ".env", ".git", ".txt", ".bak", ".ini",
+            ".js", ".css", ".html", ".htm", ".xml", ".json",
+            ".yml", ".yaml", ".py", ".sh", ".sql", ".map",
+            ".ico", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp",
+            ".woff", ".woff2", ".ttf", ".eot", ".wasm",
+        )
+        host_part = normalized_addr.split(":", 1)[0]
         if (
             not normalized_addr
             or normalized_addr.startswith(".")
             or "/" in normalized_addr
             or "\\" in normalized_addr
             or " " in normalized_addr
-            or normalized_addr.endswith((".php", ".env", ".git", ".txt", ".bak", ".ini"))
-            or (not is_pinned and "." not in normalized_addr and normalized_addr != "localhost")
+            or any(c in normalized_addr for c in ("?", "&", "=", "<", ">", '"', "'"))
+            or host_part.endswith(blocked_exts)
+            or (not is_pinned and "." not in normalized_addr)
+            or (not is_pinned and not is_safe_address(normalized_addr))
         ):
             return 0
 
@@ -101,6 +112,8 @@ class ServerRepository:
 
     async def record_telemetry(self, server_id: int, status: ServerStatus) -> None:
         """Record a single telemetry point and update peak player record if exceeded."""
+        if not server_id or server_id <= 0:
+            return
         now_dt = datetime.now(timezone.utc)
         now = now_dt.isoformat()
         date_str = f"{now_dt.day} {RUSSIAN_MONTHS.get(now_dt.month, '')} {now_dt.year}"
@@ -184,6 +197,8 @@ class ServerRepository:
         self, server_id: int, hours: int = 24
     ) -> List[TelemetryPoint]:
         """Fetch telemetry points within the last N hours."""
+        if not server_id or server_id <= 0:
+            return []
         cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
         async with get_db_connection(self.db_path) as conn:
             cursor = await conn.execute(
@@ -636,11 +651,19 @@ class ServerRepository:
             c_row = await cursor.fetchone()
             conversions = int(c_row["conversions"]) if c_row else 0
 
+            cursor = await conn.execute(
+                "SELECT COUNT(*) as total_events FROM analytics_events WHERE created_at >= ?",
+                (cutoff,),
+            )
+            e_row = await cursor.fetchone()
+            total_events = int(e_row["total_events"]) if e_row else 0
+
             return {
                 "total_pageviews": total_pv,
                 "unique_visitors": uniq_visitors,
                 "total_searches": total_searches,
                 "total_conversions": conversions,
+                "total_events": total_events,
             }
 
     async def get_top_searches(self, limit: int = 20, hours: int = 24) -> list:
@@ -649,14 +672,30 @@ class ServerRepository:
         async with get_db_connection(self.db_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT query, COUNT(*) as count, MAX(created_at) as last_searched, MAX(matched_server) as matched_server
+                SELECT
+                    query,
+                    COUNT(*) as count,
+                    COUNT(*) as search_count,
+                    MAX(created_at) as last_searched,
+                    MAX(matched_server) as matched_server,
+                    COALESCE(
+                        (
+                            SELECT s2.results_count
+                            FROM analytics_searches s2
+                            WHERE LOWER(s2.query) = LOWER(analytics_searches.query)
+                              AND s2.created_at >= ?
+                            ORDER BY s2.created_at DESC, s2.id DESC
+                            LIMIT 1
+                        ),
+                        0
+                    ) as last_results_count
                 FROM analytics_searches
                 WHERE created_at >= ?
                 GROUP BY LOWER(query)
                 ORDER BY count DESC
                 LIMIT ?
                 """,
-                (cutoff, limit),
+                (cutoff, cutoff, limit),
             )
             rows = await cursor.fetchall()
             return [dict(r) for r in rows]
