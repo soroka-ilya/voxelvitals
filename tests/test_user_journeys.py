@@ -13,10 +13,9 @@ import uuid
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from app.database import init_db
+from app.database import get_db_connection, init_db
 from app.main import app
 from app.repository import ServerRepository
-from app.services.auth_service import hash_password
 
 
 @pytest_asyncio.fixture
@@ -40,7 +39,7 @@ async def test_user_journey_discovery_and_catalog(journey_env):
     assert "VoxelVitals" in res_home.text
     assert "Live Explorer" in res_home.text
     assert "Каталог серверов" in res_home.text
-    assert "vv_vid" in res_home.cookies, "Visitor cookie must be set on arrival"
+    assert "vv_vid" not in res_home.cookies, "Tracking visitor cookie must NOT be set"
 
     # 2. User searches autocomplete for 'hyp'
     res_suggest_hyp = await client.get("/api/suggestions?q=hyp")
@@ -133,136 +132,28 @@ async def test_user_journey_server_detail_and_telemetry(journey_env):
 
 
 @pytest.mark.asyncio
-async def test_user_journey_client_interaction_beacons(journey_env):
-    """User Journey 4: Interactive client events (copy IP, launch client, toggle theme)."""
-    client, repo = journey_env
+async def test_user_journey_privacy_and_stateless_db(journey_env):
+    """User Journey 4: Verify local fonts, zero tracking cookies, and strict stateless telemetry-only DB."""
+    client, _ = journey_env
 
-    # 1. User clicks 'Копировать IP' -> beacon sent
-    res_copy = await client.post(
-        "/api/analytics/event",
-        json={"event_type": "copy_ip", "target": "mc.hypixel.net", "metadata": {"source": "card"}},
-    )
-    assert res_copy.status_code == 200
-    assert res_copy.json()["status"] == "ok"
+    # 1. Local fonts CSS served cleanly
+    res_fonts = await client.get("/static/css/fonts.css")
+    assert res_fonts.status_code == 200
+    assert "/static/fonts/" in res_fonts.text
 
-    # 2. User clicks 'Запустить' client launcher -> beacon sent
-    res_launch = await client.post(
-        "/api/analytics/event",
-        json={"event_type": "launch_client", "target": "mc.hypixel.net", "metadata": {"edition": "java"}},
-    )
-    assert res_launch.status_code == 200
+    # 2. Legacy UGC / auth / visitor-analytics routes all return 404
+    for method, path in [
+        ("POST", "/api/analytics/event"),
+        ("POST", "/api/reviews"),
+        ("POST", "/api/news"),
+        ("POST", "/api/auth/register"),
+        ("GET", "/analytics"),
+    ]:
+        resp = await client.request(method, path)
+        assert resp.status_code == 404
 
-    # 3. User toggles theme -> beacon sent
-    res_theme = await client.post(
-        "/api/analytics/event",
-        json={"event_type": "toggle_theme", "target": "dark", "metadata": {}},
-    )
-    assert res_theme.status_code == 200
-
-    # 4. Invalid event payload returns validation error (422)
-    res_invalid = await client.post(
-        "/api/analytics/event",
-        json={"event_type": "", "target": ""},
-    )
-    assert res_invalid.status_code == 422
-
-
-@pytest.mark.asyncio
-async def test_user_journey_auth_reviews_and_community(journey_env):
-    """User Journey 5: Account registration, login, server review & news creation."""
-    client, repo = journey_env
-
-    # 1. Unauthenticated review attempt should be rejected or require author
-    res_unauth_rev = await client.post(
-        "/api/reviews",
-        json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Great server!"},
-    )
-    # If anonymous reviews are allowed, author defaults to 'Гость' or user name; let's check response
-    assert res_unauth_rev.status_code in (200, 201, 401, 403)
-
-    # 2. Register a new user
-    uname = f"gamer_{uuid.uuid4().hex[:8]}"
-    pwd = "SecretPassword123"
-    res_reg = await client.post(
-        "/api/auth/register",
-        json={"username": uname, "password": pwd, "mc_nickname": "Steve_Pro"},
-    )
-    assert res_reg.status_code in (200, 201)
-
-    # 3. Log in as registered user
-    res_login = await client.post(
-        "/api/auth/login",
-        json={"username": uname, "password": pwd},
-    )
-    assert res_login.status_code == 200
-    assert "session_token" in res_login.cookies
-    client.cookies.update(res_login.cookies)
-
-    # 4. Check user profile / auth status
-    res_me = await client.get("/api/auth/me")
-    assert res_me.status_code == 200
-    assert res_me.json()["username"] == uname
-    assert res_me.json()["mc_nickname"] == "Steve_Pro"
-
-    # 5. Post server review as logged in user
-    res_rev = await client.post(
-        "/api/reviews",
-        json={
-            "server_address": "mc.hypixel.net",
-            "rating": 5,
-            "comment": "Отличный сервер, стабильный пинг и крутые мини-игры!",
-        },
-    )
-    assert res_rev.status_code in (200, 201)
-
-    # 6. Verify review appears in reviews list
-    res_rev_list = await client.get("/api/reviews/mc.hypixel.net")
-    assert res_rev_list.status_code == 200
-    reviews = res_rev_list.json()
-    assert any("Отличный сервер" in r.get("comment", "") for r in reviews)
-
-    # 7. Post server news
-    res_news = await client.post(
-        "/api/news",
-        json={
-            "server_address": "mc.hypixel.net",
-            "title": "Праздничный турнир BedWars",
-            "content": "В эту субботу пройдет турнир с призами для всех участников!",
-            "tag": "Ивент",
-        },
-    )
-    assert res_news.status_code in (200, 201)
-
-
-@pytest.mark.asyncio
-async def test_user_journey_admin_analytics_audit(journey_env):
-    """User Journey 6: Admin inspecting real user activity generated during sessions."""
-    client, repo = journey_env
-
-    # 1. Simulate user actions: search & server visit
-    unique_tag = f"audit_{uuid.uuid4().hex[:6]}"
-    await client.get(f"/search?q={unique_tag}")
-    await client.get(f"/server/donutsmp.net?mock=true")
-    await client.post(
-        "/api/analytics/event",
-        json={"event_type": "copy_ip", "target": "donutsmp.net", "metadata": {"tag": unique_tag}},
-    )
-
-    # 2. Register / login as admin
-    admin_uname = f"admin_{uuid.uuid4().hex[:8]}"
-    admin_id = await repo.create_user(
-        username=admin_uname,
-        password_hash=hash_password("adminSecret123"),
-        role="admin",
-    )
-    admin_token = await repo.create_session(f"token_{uuid.uuid4().hex[:8]}", admin_id)
-    client.cookies.set("session_token", admin_token)
-
-    # 3. Access analytics dashboard
-    res_dash = await client.get("/analytics?hours=24")
-    assert res_dash.status_code == 200
-    assert "Телеметрия и активность сайта" in res_dash.text
-    assert "Что вбивают пользователи" in res_dash.text
-    assert "Что смотрят (Популярные серверы)" in res_dash.text
-    assert "Живой поток действий" in res_dash.text
-    assert unique_tag in res_dash.text
+    # 3. Verify SQLite contains ONLY stateless server telemetry tables
+    async with get_db_connection() as conn:
+        cur = await conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r["name"] for r in await cur.fetchall() if not r["name"].startswith("sqlite_")}
+        assert tables == {"servers", "telemetry_history"}

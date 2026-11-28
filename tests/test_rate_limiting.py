@@ -14,12 +14,12 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from app.database import init_db
+from app.domain.models import ServerStatus
+from app.limiter import limiter
 from app.main import app
 from app.services.rate_limiter import (
     SlidingWindowRateLimiter,
     api_query_rate_limiter,
-    review_rate_limiter,
-    vote_rate_limiter,
 )
 
 
@@ -27,12 +27,10 @@ from app.services.rate_limiter import (
 async def setup_test_db():
     """Ensure test DB is initialized and rate limiters are cleared before each test."""
     await init_db()
-    review_rate_limiter._records.clear()
-    vote_rate_limiter._records.clear()
+    limiter._storage.reset()
     api_query_rate_limiter._records.clear()
     yield
-    review_rate_limiter._records.clear()
-    vote_rate_limiter._records.clear()
+    limiter._storage.reset()
     api_query_rate_limiter._records.clear()
 
 
@@ -50,82 +48,45 @@ async def client():
 
 
 @pytest.mark.asyncio
-async def test_review_submission_within_limit_succeeds(client):
-    """Verify up to 5 review submissions from one IP succeed within 1 minute."""
-    for i in range(5):
-        resp = await client.post(
-            "/api/reviews",
-            json={
-                "server_address": "mc.hypixel.net",
-                "rating": 5,
-                "comment": f"Valid review comment #{i} here",
-                "author_name": f"Tester_{i}",
-            },
-            headers={"X-Forwarded-For": "192.168.1.10"},
-        )
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["server_address"] == "mc.hypixel.net"
-        assert data["rating"] == 5
+async def test_ping_within_limit_succeeds(client):
+    """Verify ping requests under 30/min limit succeed."""
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
+    with patch("app.api.api_routes.query_server", return_value=mock_status):
+        for _ in range(5):
+            resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": "192.168.1.10"})
+            assert resp.status_code == 200
+            assert resp.json()["address"] == "mc.hypixel.net"
 
 
 @pytest.mark.asyncio
-async def test_review_submission_6th_exceeding_limit_returns_429(client):
-    """Verify 6th review submission from same IP triggers HTTP 429 Too Many Requests."""
-    for i in range(5):
-        resp = await client.post(
-            "/api/reviews",
-            json={
-                "server_address": "mc.hypixel.net",
-                "rating": 4,
-                "comment": f"Legitimate review #{i}",
-            },
-            headers={"X-Forwarded-For": "192.168.1.20"},
-        )
-        assert resp.status_code == 200
+async def test_ping_exceeding_limit_returns_429(client):
+    """Verify 31st manual ping from same IP triggers HTTP 429 Too Many Requests."""
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
+    with patch("app.api.api_routes.query_server", return_value=mock_status):
+        for _ in range(30):
+            resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": "192.168.1.20"})
+            assert resp.status_code == 200
 
-    # 6th request from same IP must be rejected with 429
-    excess_resp = await client.post(
-        "/api/reviews",
-        json={
-            "server_address": "mc.hypixel.net",
-            "rating": 1,
-            "comment": "Spam attack review attempt #6",
-        },
-        headers={"X-Forwarded-For": "192.168.1.20"},
-    )
-    assert excess_resp.status_code == 429
-    assert "Слишком много запросов" in excess_resp.json().get("detail", "")
-    assert "Retry-After" in excess_resp.headers
+        excess_resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": "192.168.1.20"})
+        assert excess_resp.status_code == 429
+        assert "Слишком много запросов" in excess_resp.json().get("detail", "")
+        assert "Retry-After" in excess_resp.headers
 
 
 @pytest.mark.asyncio
 async def test_rate_limiting_distinct_ips_have_independent_quotas(client):
     """Verify distinct IPs have their own isolated rate limiting quotas."""
-    # IP 10.0.0.1 exhausts all 5 requests
-    for i in range(5):
-        resp = await client.post(
-            "/api/reviews",
-            json={"server_address": "2b2t.org", "rating": 5, "comment": f"Review {i}"},
-            headers={"X-Forwarded-For": "10.0.0.1"},
-        )
-        assert resp.status_code == 200
+    mock_status = ServerStatus(address="2b2t.org", is_online=True, players_online=200, players_max=500)
+    with patch("app.api.api_routes.query_server", return_value=mock_status):
+        for _ in range(30):
+            resp = await client.post("/api/ping/2b2t.org", headers={"X-Forwarded-For": "10.0.0.1"})
+            assert resp.status_code == 200
 
-    # 6th from IP 10.0.0.1 gets 429
-    resp_blocked = await client.post(
-        "/api/reviews",
-        json={"server_address": "2b2t.org", "rating": 5, "comment": "Spam"},
-        headers={"X-Forwarded-For": "10.0.0.1"},
-    )
-    assert resp_blocked.status_code == 429
+        resp_blocked = await client.post("/api/ping/2b2t.org", headers={"X-Forwarded-For": "10.0.0.1"})
+        assert resp_blocked.status_code == 429
 
-    # IP 10.0.0.2 can still submit its own 5 requests normally
-    resp_allowed = await client.post(
-        "/api/reviews",
-        json={"server_address": "2b2t.org", "rating": 5, "comment": "Review from IP 2"},
-        headers={"X-Forwarded-For": "10.0.0.2"},
-    )
-    assert resp_allowed.status_code == 200
+        resp_allowed = await client.post("/api/ping/2b2t.org", headers={"X-Forwarded-For": "10.0.0.2"})
+        assert resp_allowed.status_code == 200
 
 
 @pytest.mark.asyncio
@@ -160,24 +121,16 @@ async def test_sliding_window_allows_requests_after_window_expires():
 
 
 @pytest.mark.asyncio
-async def test_vote_rate_limiter_limit_enforced(client):
-    """Verify vote endpoint enforces rate limit (10 req/min)."""
-    # 10 vote attempts
-    for i in range(10):
-        resp = await client.post(
-            "/api/vote",
-            json={"server_address": f"server{i}.net"},
-            headers={"X-Forwarded-For": "172.16.0.5"},
-        )
-        assert resp.status_code in [200, 400]
-
-    # 11th request triggers rate limit 429
-    resp_rate_limited = await client.post(
-        "/api/vote",
-        json={"server_address": "server_overflow.net"},
-        headers={"X-Forwarded-For": "172.16.0.5"},
-    )
-    assert resp_rate_limited.status_code == 429
+async def test_custom_sliding_window_10_req_limit_enforced():
+    """Verify SlidingWindowRateLimiter enforces 10 req/min limit without storing IPs in DB."""
+    from fastapi import Request
+    limiter_10 = SlidingWindowRateLimiter(requests_limit=10, window_seconds=60)
+    req = Request({"type": "http", "method": "POST", "path": "/api/ping/x", "headers": [(b"x-forwarded-for", b"172.16.0.5")], "client": ("127.0.0.1", 1000)})
+    for _ in range(10):
+        assert await limiter_10(req) is True
+    with pytest.raises(Exception) as exc:
+        await limiter_10(req)
+    assert exc.value.status_code == 429
 
 
 @pytest.mark.asyncio
@@ -211,127 +164,88 @@ async def test_api_query_rate_limiter_behavior():
 
 
 @pytest.mark.asyncio
-async def test_rate_limiting_exact_boundary_5th_allowed_6th_blocked(client):
-    """Explicitly verify off-by-one boundary: N=5 allowed, N=6 blocked."""
+async def test_rate_limiting_exact_boundary_30th_allowed_31st_blocked(client):
+    """Explicitly verify exact boundary: N=30 allowed, N=31 blocked."""
     ip = "192.168.100.55"
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
     statuses = []
-    for i in range(7):
-        resp = await client.post(
-            "/api/reviews",
-            json={"server_address": "mc.hypixel.net", "rating": 5, "comment": f"Boundary comment {i}"},
-            headers={"X-Forwarded-For": ip},
-        )
-        statuses.append(resp.status_code)
+    with patch("app.api.api_routes.query_server", return_value=mock_status):
+        for _ in range(32):
+            resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": ip})
+            statuses.append(resp.status_code)
 
-    assert statuses == [200, 200, 200, 200, 200, 429, 429]
+    assert statuses[:30] == [200] * 30
+    assert statuses[30:] == [429, 429]
 
 
 @pytest.mark.asyncio
 async def test_rate_limiting_x_forwarded_for_client_ip_extraction(client):
     """Verify rightmost untrusted client IP in X-Forwarded-For is extracted (prevents XFF spoofing)."""
     proxy_chain = "203.0.113.195, 198.51.100.77"
-    for _ in range(5):
-        resp = await client.post(
-            "/api/reviews",
-            json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Valid comment"},
-            headers={"X-Forwarded-For": proxy_chain},
-        )
-        assert resp.status_code == 200
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
+    with patch("app.api.api_routes.query_server", return_value=mock_status):
+        for _ in range(30):
+            resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": proxy_chain})
+            assert resp.status_code == 200
 
-    # Even with a spoofed leftmost XFF prefix and an extra trusted proxy hop, real IP matches and is rate limited
-    alt_chain = "8.8.8.8, 198.51.100.77, 127.0.0.1"
-    blocked = await client.post(
-        "/api/reviews",
-        json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Blocked comment"},
-        headers={"X-Forwarded-For": alt_chain},
-    )
-    assert blocked.status_code == 429
+        alt_chain = "8.8.8.8, 198.51.100.77, 127.0.0.1"
+        blocked = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": alt_chain})
+        assert blocked.status_code == 429
 
 
 @pytest.mark.asyncio
 async def test_rate_limiting_x_real_ip_client_ip_extraction(client):
     """Verify X-Real-IP header is properly recognized when X-Forwarded-For is absent."""
     ip = "198.51.100.42"
-    for _ in range(5):
-        resp = await client.post(
-            "/api/reviews",
-            json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Valid comment"},
-            headers={"X-Real-IP": ip},
-        )
-        assert resp.status_code == 200
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
+    with patch("app.api.api_routes.query_server", return_value=mock_status):
+        for _ in range(30):
+            resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Real-IP": ip})
+            assert resp.status_code == 200
 
-    blocked = await client.post(
-        "/api/reviews",
-        json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Blocked"},
-        headers={"X-Real-IP": ip},
-    )
-    assert blocked.status_code == 429
+        blocked = await client.post("/api/ping/mc.hypixel.net", headers={"X-Real-IP": ip})
+        assert blocked.status_code == 429
 
 
 @pytest.mark.asyncio
 async def test_rate_limiting_burst_concurrency_protection(client):
     """Verify simultaneous concurrent burst requests respect the limit."""
-    async def post_review(idx: int):
-        return await client.post(
-            "/api/reviews",
-            json={"server_address": "burst.server.net", "rating": 5, "comment": f"Burst review {idx}"},
-            headers={"X-Forwarded-For": "10.99.99.1"},
-        )
+    mock_status = ServerStatus(address="burst.server.net", is_online=True, players_online=100, players_max=200)
+    with patch("app.api.api_routes.query_server", return_value=mock_status):
+        async def post_ping():
+            return await client.post("/api/ping/burst.server.net", headers={"X-Forwarded-For": "10.99.99.1"})
 
-    responses = await asyncio.gather(*[post_review(i) for i in range(12)])
-    status_codes = [r.status_code for r in responses]
-
-    # Exactly 5 should be accepted (200), remaining 7 should be rejected (429)
-    assert status_codes.count(200) == 5
-    assert status_codes.count(429) == 7
+        responses = await asyncio.gather(*[post_ping() for _ in range(35)])
+        status_codes = [r.status_code for r in responses]
+        assert status_codes.count(200) == 30
+        assert status_codes.count(429) == 5
 
 
 @pytest.mark.asyncio
 async def test_rate_limiting_retry_after_header_returned(client):
     """Verify 429 response contains a valid Retry-After header with seconds remaining."""
-    for _ in range(5):
-        await client.post(
-            "/api/reviews",
-            json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Filler"},
-            headers={"X-Forwarded-For": "10.50.50.50"},
-        )
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
+    with patch("app.api.api_routes.query_server", return_value=mock_status):
+        for _ in range(30):
+            await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": "10.50.50.50"})
 
-    resp = await client.post(
-        "/api/reviews",
-        json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Overflow"},
-        headers={"X-Forwarded-For": "10.50.50.50"},
-    )
-    assert resp.status_code == 429
-    assert "retry-after" in resp.headers
-    retry_after = int(resp.headers["retry-after"])
-    assert retry_after > 0 and retry_after <= 60
+        resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": "10.50.50.50"})
+        assert resp.status_code == 429
+        assert "retry-after" in resp.headers
+        assert 0 < int(resp.headers["retry-after"]) <= 60
 
 
 @pytest.mark.asyncio
-async def test_rate_limiter_isolated_paths(client):
-    """Verify rate limit tracking is isolated per path (reviews vs votes do not share bucket)."""
-    ip = "192.168.200.200"
+async def test_rate_limiter_isolated_paths():
+    """Verify rate limit tracking is isolated per path."""
+    from fastapi import Request
+    limiter_5 = SlidingWindowRateLimiter(requests_limit=5, window_seconds=60)
+    req_a = Request({"type": "http", "method": "POST", "path": "/api/ping/a", "headers": [(b"x-forwarded-for", b"192.168.200.200")], "client": ("127.0.0.1", 1000)})
+    req_b = Request({"type": "http", "method": "GET", "path": "/api/status/b", "headers": [(b"x-forwarded-for", b"192.168.200.200")], "client": ("127.0.0.1", 1000)})
 
-    # Exhaust review quota (5 reqs)
     for _ in range(5):
-        await client.post(
-            "/api/reviews",
-            json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Comment"},
-            headers={"X-Forwarded-For": ip},
-        )
-
-    # 6th review gets 429
-    resp_review_429 = await client.post(
-        "/api/reviews",
-        json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Blocked"},
-        headers={"X-Forwarded-For": ip},
-    )
-    assert resp_review_429.status_code == 429
-
-    # Vote endpoint for same IP is NOT blocked
-    resp_vote = await client.post(
-        "/api/vote",
-        json={"server_address": "mc.hypixel.net"},
-        headers={"X-Forwarded-For": ip},
-    )
-    assert resp_vote.status_code in [200, 400]
+        assert await limiter_5(req_a) is True
+    with pytest.raises(Exception) as exc:
+        await limiter_5(req_a)
+    assert exc.value.status_code == 429
+    assert await limiter_5(req_b) is True

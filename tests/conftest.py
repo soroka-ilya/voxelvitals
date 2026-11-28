@@ -3,7 +3,7 @@
 import os
 import pytest
 from app.config import settings
-from app.api import api_routes, oauth_routes, routes
+from app.api import api_routes, routes
 import app.main as main
 import app.services.tg_service as tg_service
 
@@ -18,9 +18,8 @@ def configure_test_db(tmp_path_factory):
     os.environ["DB_PATH"] = test_db_path
     settings.enable_mock_auth = True
     settings.enable_docs = True
-    settings.require_news_admin = False
 
-    for mod in (api_routes, oauth_routes, routes, main, tg_service):
+    for mod in (api_routes, routes, main, tg_service):
         if hasattr(mod, "repo"):
             mod.repo.db_path = test_db_path
 

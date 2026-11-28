@@ -17,11 +17,11 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from app.database import init_db
 from app.domain.models import ServerStatus
+from app.limiter import limiter
 from app.main import app
 from app.repository import ServerRepository
 from app.services.cache_service import status_cache
 from app.services.probes_service import get_multi_region_probes
-from app.services.rate_limiter import review_rate_limiter, vote_rate_limiter
 
 
 
@@ -51,12 +51,10 @@ async def setup_test_environment():
     """Reset database, cache, and rate limiters before each scenario."""
     await init_db()
     status_cache.clear()
-    review_rate_limiter._records.clear()
-    vote_rate_limiter._records.clear()
+    limiter._storage.reset()
     yield
     status_cache.clear()
-    review_rate_limiter._records.clear()
-    vote_rate_limiter._records.clear()
+    limiter._storage.reset()
 
 
 @pytest_asyncio.fixture
@@ -137,26 +135,18 @@ async def test_cross_peak_online_and_multi_region_probes(repo):
 
 @pytest.mark.asyncio
 async def test_cross_caching_and_rate_limiting(client):
-    """Pairwise F3 x F4: Status caching shields backend while rate limiter protects reviews."""
+    """Pairwise F3 x F4: Status caching shields backend while rate limiter protects ping endpoint."""
     ip = "192.168.10.99"
-    # Submit 5 reviews to reach rate limit
-    for i in range(5):
-        r = await client.post(
-            "/api/reviews",
-            json={"server_address": "mc.hypixel.net", "rating": 5, "comment": f"Good server {i}"},
-            headers={"X-Forwarded-For": ip},
-        )
-        assert r.status_code == 200
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
+    with patch("app.api.api_routes.query_server", new_callable=AsyncMock, return_value=mock_status):
+        for _ in range(30):
+            r = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": ip})
+            assert r.status_code == 200
 
-    # 6th review gets 429
-    r_spam = await client.post(
-        "/api/reviews",
-        json={"server_address": "mc.hypixel.net", "rating": 5, "comment": "Spam"},
-        headers={"X-Forwarded-For": ip},
-    )
-    assert r_spam.status_code == 429
+        r_spam = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": ip})
+        assert r_spam.status_code == 429
 
-    # Meanwhile, status queries continue to be served from cache safely
+    # Meanwhile, status queries continue to be served safely
     status_resp = await client.get("/api/status/mc.hypixel.net?mock=true")
     assert status_resp.status_code == 200
     assert status_resp.json()["address"] == "mc.hypixel.net"
@@ -164,7 +154,7 @@ async def test_cross_caching_and_rate_limiting(client):
 
 @pytest.mark.asyncio
 async def test_cross_peak_online_and_rate_limiting(client, repo):
-    """Pairwise F4 x F5: Blocked review spammers cannot pollute or mutate peak online records."""
+    """Pairwise F4 x F5: Blocked ping spammers cannot pollute or reduce existing peak online records."""
     addr = f"protected.server.{uuid.uuid4().hex[:8]}.net"
 
     server_id = await repo.get_or_create_server(addr)
@@ -174,13 +164,10 @@ async def test_cross_peak_online_and_rate_limiting(client, repo):
     await repo.record_telemetry(server_id, legit_status)
 
     spammer_ip = "192.168.66.77"
-    # Spammer hits review endpoint repeatedly
-    for _ in range(7):
-        await client.post(
-            "/api/reviews",
-            json={"server_address": addr, "rating": 1, "comment": "Trolling review spam attempt"},
-            headers={"X-Forwarded-For": spammer_ip},
-        )
+    low_status = ServerStatus(address=addr, is_online=True, edition="java", players_online=10)
+    with patch("app.api.api_routes.query_server", new_callable=AsyncMock, return_value=low_status):
+        for _ in range(35):
+            await client.post(f"/api/ping/{addr}", headers={"X-Forwarded-For": spammer_ip})
 
     # Peak online records remained untampered
     peak = await repo.get_server_peak(addr)
@@ -288,37 +275,23 @@ async def test_scenario_2_telemetry_polling_new_all_time_peak(repo):
 
 @pytest.mark.asyncio
 async def test_scenario_3_malicious_review_spam_attack(client):
-    """Scenario 3: Malicious script sends 20 rapid reviews from single IP; exactly 5 pass, 15 get 429."""
+    """Scenario 3: Malicious script sends 35 rapid ping requests from single IP; 30 pass, 5 get 429."""
     attacker_ip = "185.220.101.5"
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
 
     responses = []
-    for i in range(20):
-        resp = await client.post(
-            "/api/reviews",
-            json={
-                "server_address": "mc.hypixel.net",
-                "rating": 1,
-                "comment": f"Automated DDoS spam review payload #{i}",
-            },
-            headers={"X-Forwarded-For": attacker_ip},
-        )
-        responses.append(resp.status_code)
+    with patch("app.api.api_routes.query_server", new_callable=AsyncMock, return_value=mock_status):
+        for _ in range(35):
+            resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": attacker_ip})
+            responses.append(resp.status_code)
 
-    # Exactly first 5 accepted, all remaining 15 blocked with 429
-    assert responses[:5] == [200, 200, 200, 200, 200]
-    assert responses[5:] == [429] * 15
+        # First 30 accepted, remaining 5 blocked with 429
+        assert responses[:30] == [200] * 30
+        assert responses[30:] == [429] * 5
 
-    # Innocent user from separate IP is unaffected
-    legit_resp = await client.post(
-        "/api/reviews",
-        json={
-            "server_address": "mc.hypixel.net",
-            "rating": 5,
-            "comment": "Legitimate honest review from another user",
-        },
-        headers={"X-Forwarded-For": "93.184.216.34"},
-    )
-    assert legit_resp.status_code == 200
+        # Innocent user from separate IP is unaffected
+        legit_resp = await client.post("/api/ping/mc.hypixel.net", headers={"X-Forwarded-For": "93.184.216.34"})
+        assert legit_resp.status_code == 200
 
 
 @pytest.mark.asyncio

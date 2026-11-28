@@ -11,17 +11,11 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from app.api.api_routes import api_router
-from app.api.oauth_routes import oauth_router
 from app.api.routes import web_router
 from app.config import settings
 from app.database import init_db
-from app.limiter import get_real_client_ip, limiter
+from app.limiter import limiter
 from app.repository import ServerRepository
-from app.services.analytics_service import (
-    get_or_create_visitor_id,
-    hash_ip,
-    parse_device_and_browser,
-)
 from app.services.i18n_service import (
     LANGUAGE_METADATA,
     SUPPORTED_LANGUAGES,
@@ -115,7 +109,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    description="Production-grade Minecraft server telemetry and analytics engine.",
+    description="Stateless Minecraft server monitoring and telemetry engine.",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.enable_docs else None,
@@ -235,65 +229,6 @@ async def healthz_check():
     return {"status": "ok", "version": "1.0.0"}
 
 
-@app.middleware("http")
-async def analytics_middleware(request: Request, call_next):
-    """Automatic visitor telemetry tracking middleware."""
-    vid, is_new = get_or_create_visitor_id(request)
-    request.state.visitor_id = vid
-
-    response = await call_next(request)
-
-    if is_new or not request.cookies.get("vv_vid"):
-        response.set_cookie(
-            key="vv_vid",
-            value=vid,
-            max_age=365 * 86400,
-            httponly=False,
-            samesite="lax",
-            path="/",
-        )
-
-    path = request.url.path
-    if response.status_code < 400 and not (
-        path.startswith("/static")
-        or path.startswith("/api")
-        or path.startswith("/partials")
-        or path in ("/health", "/healthz")
-        or path.endswith(".ico")
-        or path.endswith(".svg")
-    ):
-        client_ip = get_real_client_ip(request)
-        ip_h = hash_ip(client_ip)
-        ua = request.headers.get("user-agent", "")
-        dev_type, browser = parse_device_and_browser(ua)
-        ref = request.headers.get("referer", "")
-
-        server_addr = None
-        if path.startswith("/server/"):
-            raw_srv = path.split("/server/", 1)[1].split("?")[0].strip()
-            if (
-                raw_srv
-                and not raw_srv.startswith(".")
-                and "/" not in raw_srv
-                and is_safe_address(raw_srv)
-            ):
-                server_addr = raw_srv
-
-        asyncio.create_task(
-            repo.record_pageview(
-                visitor_id=vid,
-                path=path,
-                server_address=server_addr,
-                page_title=path,
-                referrer=ref,
-                device_type=dev_type,
-                browser=browser,
-                ip_hash=ip_h,
-            )
-        )
-
-    return response
-
 # Static files directory
 static_dir = Path(__file__).resolve().parent / "static"
 static_dir.mkdir(parents=True, exist_ok=True)
@@ -302,4 +237,3 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 # Mount Routers
 app.include_router(web_router)
 app.include_router(api_router)
-app.include_router(oauth_router)

@@ -943,26 +943,6 @@ SERVER_CONTACTS_MAP: Dict[str, Dict[str, str]] = {
     },
 }
 
-DEFAULT_SCREENSHOTS = [
-    {
-        "url": "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=1200&q=80",
-        "title": "Главный спавн и хаб сервера",
-    },
-    {
-        "url": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-        "title": "Соревновательная PvP арена и дуэли",
-    },
-    {
-        "url": "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?auto=format&fit=crop&w=1200&q=80",
-        "title": "Игровые биомы и кастомные постройки",
-    },
-    {
-        "url": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-        "title": "Лобби мини-игр и ивентов",
-    },
-]
-
-
 def get_server_extra_info(address: str, edition: str = "java") -> Dict[str, Any]:
     """Retrieve social contacts, brand icon, host/port connection info, and launcher deep-links."""
     clean_addr = address.strip().lower()

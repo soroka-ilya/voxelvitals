@@ -8,29 +8,16 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from app.config import settings
 from app.domain.models import BadgeConfig, ServerStatus, TelemetryPoint
-from app.limiter import get_real_client_ip, limiter
+from app.limiter import limiter
 from app.repository import ServerRepository
 from app.services.alias_service import is_bedrock_address, resolve_address, search_suggestions
-from app.services.auth_service import (
-    generate_session_token,
-    get_current_user_from_request,
-    hash_password,
-    is_legacy_hash,
-    verify_password,
-)
 from app.services.badge_service import generate_status_badge
 from app.services.i18n_service import get_request_language
 from app.services.pinger import get_mock_server_status, is_safe_address, query_server
 from app.services.probes_service import get_multi_region_probes
-from app.services.rate_limiter import review_rate_limiter, vote_rate_limiter
 
 api_router = APIRouter(prefix="/api", tags=["API"])
 repo = ServerRepository()
-
-
-def _is_request_https(request: Request) -> bool:
-    """Detect if connection is encrypted either directly or through reverse proxy."""
-    return request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
 
 
 @api_router.get("/health")
@@ -46,58 +33,6 @@ async def health_check():
         "version": "1.0.0",
         "database": db_status,
     }
-
-
-class RegisterRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=30)
-    password: str = Field(..., min_length=6)
-    mc_nickname: Optional[str] = ""
-    email: Optional[str] = ""
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-class ReviewCreateRequest(BaseModel):
-    server_address: str
-    rating: int = Field(..., ge=1, le=5)
-    comment: str = Field(..., min_length=3, max_length=1000)
-    author_name: Optional[str] = None
-
-
-class NewsCreateRequest(BaseModel):
-    server_address: str
-    title: str = Field(..., min_length=3, max_length=120)
-    content: str = Field(..., min_length=5, max_length=5000)
-    tag: str = "Обновление"
-    author: Optional[str] = "Администрация"
-
-
-class AnalyticsEventRequest(BaseModel):
-    event_type: str = Field(..., min_length=1, max_length=50)
-    target: Optional[str] = None
-    metadata: Optional[Union[Dict[str, Any], str]] = None
-
-
-@api_router.post("/analytics/event")
-async def track_event(request: Request, payload: AnalyticsEventRequest):
-    """Record interactive client-side telemetry event."""
-    vid = getattr(request.state, "visitor_id", None) or request.cookies.get("vv_vid") or "unknown"
-    meta_str = (
-        json.dumps(payload.metadata, ensure_ascii=False)
-        if isinstance(payload.metadata, dict)
-        else payload.metadata
-    )
-    await repo.record_event(
-        visitor_id=vid,
-        event_type=payload.event_type,
-        target=payload.target,
-        metadata=meta_str,
-    )
-    return {"status": "ok"}
-
 
 
 @api_router.get("/suggestions", response_model=List[Dict[str, Any]])
@@ -294,206 +229,6 @@ async def get_badge(
             "Content-Disposition": "inline",
         },
     )
-
-
-# ----------------- Auth Endpoints -----------------
-@api_router.post("/auth/register", status_code=status.HTTP_201_CREATED)
-@limiter.limit("10/minute")
-async def register(payload: RegisterRequest, request: Request, response: Response):
-    """Register a new user account with scrypt password hashing."""
-    existing = await repo.get_user_by_username(payload.username)
-    if existing:
-        raise HTTPException(status_code=400, detail="Пользователь с таким логином уже существует")
-
-    pwd_hash = hash_password(payload.password)
-    user_id = await repo.create_user(
-        username=payload.username,
-        password_hash=pwd_hash,
-        mc_nickname=payload.mc_nickname or payload.username,
-        email=payload.email or "",
-    )
-    user = await repo.get_user_by_id(user_id)
-    token = generate_session_token()
-    await repo.create_session(token, user_id)
-    is_secure = _is_request_https(request)
-    response.set_cookie(
-        key="session_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=is_secure,
-        max_age=30 * 86400,
-    )
-    return {
-        "id": user["id"],
-        "username": user["username"],
-        "mc_nickname": user["mc_nickname"],
-        "role": user["role"],
-    }
-
-
-@api_router.post("/auth/login")
-@limiter.limit("10/minute")
-async def login(payload: LoginRequest, request: Request, response: Response):
-    """Authenticate user, auto-upgrade legacy hash to scrypt, and issue session cookie."""
-    user = await repo.get_user_by_username(payload.username)
-    if not user or not verify_password(payload.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Неверное имя пользователя или пароль")
-
-    # Transparent auto-upgrade legacy SHA-256 hash to scrypt
-    if is_legacy_hash(user["password_hash"]):
-        try:
-            await repo.update_user_password(user["id"], hash_password(payload.password))
-        except Exception:
-            pass
-
-    token = generate_session_token()
-    await repo.create_session(token, user["id"])
-    is_secure = _is_request_https(request)
-    response.set_cookie(
-        key="session_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=is_secure,
-        max_age=30 * 86400,
-    )
-    return {
-        "id": user["id"],
-        "username": user["username"],
-        "mc_nickname": user["mc_nickname"],
-        "role": user["role"],
-    }
-
-
-@api_router.post("/auth/logout")
-async def logout(request: Request, response: Response):
-    """Log out user and clear session cookie."""
-    token = request.cookies.get("session_token")
-    if token:
-        await repo.delete_session(token)
-    response.delete_cookie("session_token")
-    return {"message": "Успешный выход из системы"}
-
-
-@api_router.get("/auth/me")
-async def get_me(request: Request):
-    """Get currently authenticated user info."""
-    user = await get_current_user_from_request(request, repo)
-    if not user:
-        raise HTTPException(status_code=401, detail="Не авторизован")
-    return {
-        "id": user["id"],
-        "username": user["username"],
-        "mc_nickname": user["mc_nickname"],
-        "role": user["role"],
-    }
-
-
-# ----------------- Reviews Endpoints -----------------
-@api_router.get("/reviews")
-async def get_reviews(address: str = Query(..., description="Server address")):
-    """Get reviews and aggregate rating stats for a server."""
-    clean_addr = resolve_address(address.strip())
-    reviews = await repo.get_reviews_for_server(clean_addr)
-    return reviews
-
-
-@api_router.get("/reviews/{address}")
-async def get_reviews_by_path(address: str):
-    """Get reviews for a server by path parameter."""
-    clean_addr = resolve_address(address.strip())
-    return await repo.get_reviews_for_server(clean_addr)
-
-
-@api_router.post("/reviews", dependencies=[Depends(review_rate_limiter)])
-@limiter.limit("5/minute")
-async def create_review(request: Request, payload: ReviewCreateRequest):
-    """Submit a rating and review for a server (rate limited to 5 req/min)."""
-    clean_addr = resolve_address(payload.server_address.strip())
-    user = await get_current_user_from_request(request, repo)
-    author_name = payload.author_name or (user["mc_nickname"] if user else "Анонимный игрок")
-    user_id = user["id"] if user else None
-
-    review_id = await repo.add_review(
-        server_address=clean_addr,
-        author_name=author_name,
-        rating=payload.rating,
-        comment=payload.comment,
-        user_id=user_id,
-    )
-    return {
-        "id": review_id,
-        "server_address": clean_addr,
-        "author_name": author_name,
-        "rating": payload.rating,
-        "comment": payload.comment,
-    }
-
-
-# ----------------- News Endpoints -----------------
-@api_router.get("/news")
-async def get_news(address: str = Query(..., description="Server address")):
-    """Get news updates for a server."""
-    clean_addr = resolve_address(address.strip())
-    news = await repo.get_news_for_server(clean_addr)
-    return news
-
-
-@api_router.post("/news")
-@limiter.limit("5/minute")
-async def create_news(payload: NewsCreateRequest, request: Request):
-    """Publish a news article for a server. Protected by admin role check and rate limiting."""
-    clean_addr = resolve_address(payload.server_address.strip())
-    user = await get_current_user_from_request(request, repo)
-
-    if settings.require_news_admin:
-        admin_header = request.headers.get("X-Admin-Key")
-        is_key_valid = bool(settings.admin_api_key and admin_header == settings.admin_api_key)
-        is_admin_user = bool(user and user.get("role") == "admin")
-        if not (is_key_valid or is_admin_user):
-            if not user:
-                raise HTTPException(status_code=401, detail="Необходима авторизация")
-            raise HTTPException(status_code=403, detail="Требуются права администратора")
-
-    author = payload.author or (user["username"] if user else "Администрация")
-
-    news_id = await repo.add_news(
-        server_address=clean_addr,
-        title=payload.title,
-        content=payload.content,
-        tag=payload.tag,
-        author=author,
-    )
-    return {
-        "id": news_id,
-        "server_address": clean_addr,
-        "title": payload.title,
-        "content": payload.content,
-        "tag": payload.tag,
-        "author": author,
-    }
-
-
-# ----------------- Vote Endpoint -----------------
-@api_router.post("/vote", dependencies=[Depends(vote_rate_limiter)])
-async def vote_server(request: Request, payload: Dict[str, str]):
-    """Cast a daily vote for a server (rate limited to 10 req/min)."""
-    raw_addr = payload.get("server_address", "")
-    if not raw_addr:
-        raise HTTPException(status_code=400, detail="Укажите адрес сервера")
-    clean_addr = resolve_address(raw_addr.strip())
-
-    # Hash real client IP for privacy & rate limiting
-    client_ip = get_real_client_ip(request)
-    import hashlib
-    ip_hash = hashlib.sha256(client_ip.encode("utf-8")).hexdigest()
-
-    success = await repo.vote_server(clean_addr, ip_hash)
-    total_votes = await repo.get_votes_count(clean_addr)
-    if not success:
-        return {"success": False, "message": "Вы уже голосовали за этот сервер сегодня!", "votes": total_votes}
-    return {"success": True, "message": "Спасибо за ваш голос!", "votes": total_votes}
 
 
 # ----------------- Telegram Bot Webhook Endpoint -----------------

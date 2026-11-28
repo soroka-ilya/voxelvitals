@@ -107,19 +107,20 @@ async def test_peak_hall_of_fame_records():
 
 @pytest.mark.asyncio
 async def test_rate_limiting_endpoint(client):
-    """Verify HTTP 429 response on review endpoint when rate limit is exceeded."""
+    """Verify HTTP 429 response on /api/ping/{address} when rate limit (30/min) is exceeded."""
+    from unittest.mock import AsyncMock, patch
+    from app.domain.models import ServerStatus
+    from app.limiter import limiter
+
+    limiter._storage.reset()
+    mock_status = ServerStatus(address="mc.hypixel.net", is_online=True, players_online=100, players_max=200)
     responses = []
-    for i in range(7):
-        resp = await client.post(
-            "/api/reviews",
-            json={
-                "server_address": "mc.hypixel.net",
-                "rating": 5,
-                "comment": f"Super test review {i}",
-                "author_name": "Tester",
-            },
-            headers={"X-Forwarded-For": "198.51.100.55"}
-        )
-        responses.append(resp.status_code)
+    with patch("app.api.api_routes.query_server", new_callable=AsyncMock, return_value=mock_status):
+        for _ in range(32):
+            resp = await client.post(
+                "/api/ping/mc.hypixel.net",
+                headers={"X-Forwarded-For": "198.51.100.55"},
+            )
+            responses.append(resp.status_code)
 
     assert 429 in responses

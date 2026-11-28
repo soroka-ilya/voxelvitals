@@ -55,6 +55,4 @@ class SlidingWindowRateLimiter:
 
 
 # Pre-configured rate limiters
-review_rate_limiter = SlidingWindowRateLimiter(requests_limit=5, window_seconds=60)
-vote_rate_limiter = SlidingWindowRateLimiter(requests_limit=10, window_seconds=60)
 api_query_rate_limiter = SlidingWindowRateLimiter(requests_limit=60, window_seconds=60)

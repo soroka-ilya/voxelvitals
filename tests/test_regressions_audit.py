@@ -15,7 +15,6 @@ from app.database import init_db
 from app.limiter import get_real_client_ip
 from app.main import app
 from app.repository import ServerRepository
-from app.services.auth_service import hash_password
 from app.services.probes_service import get_multi_region_probes
 
 
@@ -68,35 +67,8 @@ async def test_mock_param_ignored_when_mock_auth_disabled(client):
 
 
 @pytest.mark.asyncio
-async def test_analytics_dashboard_summary_top_searches_and_links(client):
-    """Analytics dashboard must populate KPI events, top search counts/results, and valid /server/ links."""
-    ac, repo = client
-    tag = f"q_{uuid.uuid4().hex[:6]}"
-    await repo.record_pageview("v1", "/server/mc.hypixel.net", "mc.hypixel.net", ip_hash="h1")
-    await repo.record_search("v1", tag, results_count=4, matched_server="mc.hypixel.net")
-    await repo.record_event("v1", "toggle_theme", "dark")
-
-    summary = await repo.get_analytics_summary(hours=24)
-    assert "total_events" in summary and summary["total_events"] >= 1
-    assert "total_conversions" in summary
-
-    top_searches = await repo.get_top_searches(limit=50, hours=24)
-    row = next(s for s in top_searches if s["query"] == tag)
-    assert row["search_count"] >= 1
-    assert row["last_results_count"] == 4
-
-    admin_id = await repo.create_user(f"adm_{uuid.uuid4().hex[:6]}", hash_password("Pass1234!"), role="admin")
-    tok = await repo.create_session(f"tok_{uuid.uuid4().hex[:8]}", admin_id)
-    ac.cookies.set("session_token", tok)
-    dash = await ac.get("/analytics?hours=24")
-    assert dash.status_code == 200
-    assert 'href="/servers/' not in dash.text
-    assert 'href="/server/mc.hypixel.net"' in dash.text
-
-
-@pytest.mark.asyncio
-async def test_server_html_markup_navbar_docs_logout_and_legal_pages(client):
-    """Verify server HTML has no dangling closing tags, navbar hides disabled /docs, GET logout rejected, and legal pages support light theme."""
+async def test_server_html_markup_navbar_docs_and_legal_pages(client):
+    """Verify server HTML has no dangling closing tags, navbar hides disabled /docs, and legal pages support light theme."""
     ac, repo = client
     res_srv = await ac.get("/server/mc.hypixel.net?mock=true")
     assert res_srv.status_code == 200
@@ -110,19 +82,11 @@ async def test_server_html_markup_navbar_docs_logout_and_legal_pages(client):
     finally:
         settings.enable_docs = orig_docs
 
-    # CSRF check: GET /api/auth/logout must NOT be allowed
-    res_get_logout = await ac.get("/api/auth/logout")
-    assert res_get_logout.status_code == 405
-
-    # Logged-in user on /privacy & /terms still keeps session navbar & light mode contrast
-    uid = await repo.create_user(f"u_{uuid.uuid4().hex[:6]}", hash_password("Pass1234!"), mc_nickname="VisibleUser")
-    tok = await repo.create_session(f"t_{uuid.uuid4().hex[:8]}", uid)
-    ac.cookies.set("session_token", tok)
     res_priv = await ac.get("/privacy")
-    assert "VisibleUser" in res_priv.text
+    assert res_priv.status_code == 200
     assert '<h1 class="text-2xl font-bold text-white' not in res_priv.text
     res_terms = await ac.get("/terms")
-    assert "VisibleUser" in res_terms.text
+    assert res_terms.status_code == 200
     assert '<h1 class="text-2xl font-bold text-white' not in res_terms.text
 
 
@@ -170,34 +134,6 @@ async def test_i18n_referer_localization_suggestions_cards_and_probes(client):
     probes_en = get_multi_region_probes("mc.hypixel.net", 25.0, lang="en")
     assert probes_en[0]["city"] == "Moscow"
     assert probes_en[0]["country"] == "Russia"
-
-
-@pytest.mark.asyncio
-async def test_google_oauth_respects_verified_email_flag():
-    """GoogleOAuthService must propagate verified_email=False instead of assuming True."""
-    from app.services.oauth_service import GoogleOAuthService
-
-    mock_token_resp = MagicMock()
-    mock_token_resp.status_code = 200
-    mock_token_resp.json.return_value = {"access_token": "tok"}
-
-    mock_user_resp = MagicMock()
-    mock_user_resp.status_code = 200
-    mock_user_resp.json.return_value = {
-        "id": "g123",
-        "email": "unverified@example.com",
-        "verified_email": False,
-        "name": "Test",
-    }
-
-    mock_client = AsyncMock()
-    mock_client.__aenter__.return_value = mock_client
-    mock_client.post.return_value = mock_token_resp
-    mock_client.get.return_value = mock_user_resp
-
-    with patch("app.services.oauth_service.httpx.AsyncClient", return_value=mock_client):
-        info = await GoogleOAuthService.exchange_code("code123")
-        assert info.get("email_verified") is False
 
 
 def test_trusted_proxy_xff_rightmost_client_ip():

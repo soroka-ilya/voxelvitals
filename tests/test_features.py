@@ -18,124 +18,45 @@ async def client():
 
 
 @pytest.mark.asyncio
-async def test_auth_workflow(client):
-    """Test user registration, login, session check, and logout."""
-    import uuid
-    uname = f"user_{uuid.uuid4().hex[:8]}"
-    # 1. Register a new user
-    reg_res = await client.post(
-        "/api/auth/register",
-        json={
-            "username": uname,
-            "password": "securepassword123",
-            "mc_nickname": "StevePro",
-            "email": f"{uname}@example.com",
-        },
-    )
-    assert reg_res.status_code in (200, 201)
-    data = reg_res.json()
-    assert data["username"] == uname
-    assert data["mc_nickname"] == "StevePro"
-
-    # 2. Login
-    login_res = await client.post(
-        "/api/auth/login",
-        json={"username": uname, "password": "securepassword123"},
-    )
-    assert login_res.status_code == 200
-    assert "session_token" in login_res.cookies
-    client.cookies.update(login_res.cookies)
-
-    # 3. Check me endpoint
-    me_res = await client.get("/api/auth/me")
-    assert me_res.status_code == 200
-    assert me_res.json()["username"] == uname
-
-    # 4. Logout (POST only, GET prohibited to prevent CSRF)
-    logout_res = await client.post("/api/auth/logout")
-    assert logout_res.status_code == 200
-
-
-
-@pytest.mark.asyncio
-async def test_server_reviews_and_news(client):
-    """Test submitting and fetching reviews and news for a server."""
-    import uuid
-    r_uname = f"rev_{uuid.uuid4().hex[:8]}"
-    # Register & Login
-    await client.post(
-        "/api/auth/register",
-        json={"username": r_uname, "password": "pass123456", "mc_nickname": "Alex"},
-    )
-    login_res = await client.post(
-        "/api/auth/login",
-        json={"username": r_uname, "password": "pass123456"},
-    )
-    client.cookies.update(login_res.cookies)
-
-    # Post a review
-    rev_res = await client.post(
-        "/api/reviews",
-        json={
-            "server_address": "mc.hypixel.net",
-            "rating": 5,
-            "comment": "Отличный сервер, играем с друзьями каждый день!",
-        },
-    )
-    assert rev_res.status_code == 200
-    rev_data = rev_res.json()
-    assert rev_data["rating"] == 5
-
-    # Get reviews for server
-    list_res = await client.get("/api/reviews?address=mc.hypixel.net")
-    assert list_res.status_code == 200
-    reviews = list_res.json()
-    assert len(reviews) >= 1
-    assert any(r["comment"] == "Отличный сервер, играем с друзьями каждый день!" for r in reviews)
-
-    # Post a news article
-    news_res = await client.post(
-        "/api/news",
-        json={
-            "server_address": "mc.hypixel.net",
-            "title": "Большое летнее обновление мини-игр",
-            "content": "Добавлены новые карты для BedWars и SkyWars!",
-            "tag": "Обновление",
-        },
-    )
-
-    assert news_res.status_code == 200
-
-    # Get news for server
-    news_list_res = await client.get("/api/news?address=mc.hypixel.net")
-    assert news_list_res.status_code == 200
-    news = news_list_res.json()
-    assert len(news) >= 1
-    assert any(n["title"] == "Большое летнее обновление мини-игр" for n in news)
+async def test_no_auth_or_ugc_endpoints(client):
+    """Verify personal-data auth/OAuth and UGC endpoints (reviews, news, votes, analytics) are removed."""
+    for method, path in [
+        ("POST", "/api/auth/register"),
+        ("POST", "/api/auth/login"),
+        ("GET", "/api/auth/me"),
+        ("GET", "/api/auth/google/login"),
+        ("GET", "/api/reviews?address=mc.hypixel.net"),
+        ("POST", "/api/reviews"),
+        ("GET", "/api/news?address=mc.hypixel.net"),
+        ("POST", "/api/news"),
+        ("POST", "/api/vote"),
+        ("POST", "/api/analytics/event"),
+        ("GET", "/analytics"),
+    ]:
+        res = await client.request(method, path)
+        assert res.status_code == 404, f"{method} {path} unexpectedly returned {res.status_code}"
 
 
 @pytest.mark.asyncio
 async def test_server_page_new_elements_and_removed_elements(client):
-    """Verify server detail page has launcher button, contacts, news, reviews, screenshots, and removed raw svg/markdown."""
+    """Verify server detail page has launcher button, contacts, and removed auth/reviews/news/raw svg."""
     res = await client.get("/server/mc.hypixel.net?mock=true")
     assert res.status_code == 200
     html = res.text
 
-    # Raw SVG and Markdown Snippet must be removed
+    # Raw SVG, Markdown Snippet, News, Reviews, and external avatars must be absent
     assert "Open Raw SVG" not in html
     assert "Markdown Snippet" not in html
+    assert "review-form" not in html
+    assert "add-news-modal" not in html
+    assert "vote-btn" not in html
+    assert "mc-heads.net" not in html
 
     # Launcher quick connect button
     assert "лаунчер" in html.lower() or "launcher" in html.lower()
 
     # Contacts (Discord, VK, etc.)
     assert "discord" in html.lower() or "vk" in html.lower()
-
-    # News section
-    assert "новост" in html.lower() or "news" in html.lower()
-
-    # Reviews section
-    assert "отзыв" in html.lower() or "review" in html.lower()
 
     # Screenshots section removed per design request
     assert "скриншот" not in html.lower()
@@ -157,34 +78,6 @@ async def test_light_theme_and_cursor_card_classes(client):
 
 
 @pytest.mark.asyncio
-async def test_vote_and_auth_edge_cases(client):
-    """Test vote deduplication, invalid credentials, and unauthorized access."""
-    import uuid
-    v_addr = f"vote-{uuid.uuid4().hex[:8]}.net"
-    # 1. Vote once
-    v1 = await client.post("/api/vote", json={"server_address": v_addr})
-    assert v1.status_code == 200
-    assert v1.json()["success"] is True
-
-    # 2. Vote twice from same IP
-    v2 = await client.post("/api/vote", json={"server_address": v_addr})
-    assert v2.status_code == 200
-    assert v2.json()["success"] is False
-    assert "уже голосовали" in v2.json()["message"]
-
-    # 3. Invalid login credentials
-    bad_login = await client.post(
-        "/api/auth/login",
-        json={"username": "nonexistent_user_999", "password": "wrongpassword"},
-    )
-    assert bad_login.status_code == 401
-
-    # 4. Access /api/auth/me without auth cookie
-    unauth = await client.get("/api/auth/me")
-    assert unauth.status_code == 401
-
-
-@pytest.mark.asyncio
 async def test_server_card_online_vs_offline_telemetry(client):
     """Verify that offline server cards display diagnostic info and NOT fake TPS 20.0 or 99.9% uptime."""
     from unittest.mock import patch
@@ -200,10 +93,8 @@ async def test_server_card_online_vs_offline_telemetry(client):
         res = await client.get("/partials/server-card?address=offline.server.test")
         assert res.status_code == 200
         text = res.text
-        # Must not display fake TPS 20.0 or 99.9% uptime when offline!
         assert "Стабильный TPS 20.0" not in text
         assert "99.9%" not in text
-        # Must display offline diagnostics
         assert "Offline" in text or "Недоступен" in text
 
 
@@ -213,11 +104,9 @@ async def test_light_theme_tokens_contrast(client):
     res_home = await client.get("/")
     assert res_home.status_code == 200
     home_html = res_home.text
-    # Section titles must be visible in light theme (not bare text-white)
     assert '<h2 class="text-xl font-bold text-white' not in home_html
     assert '<h2 class="text-lg font-semibold text-white' not in home_html
 
-    # Check server page
     res_server = await client.get("/server/mc.hypixel.net?mock=true")
     assert res_server.status_code == 200
     server_html = res_server.text
@@ -227,13 +116,11 @@ async def test_light_theme_tokens_contrast(client):
 
 @pytest.mark.asyncio
 async def test_audit_enhancements(client):
-    """Verify improvements from audit: data-tags, rating stats sync, badge preview, responsive header."""
-    # 1. Index page catalog cards have data-tags
+    """Verify improvements from audit: data-tags, responsive header, no reviews/badges."""
     res_home = await client.get("/")
     assert res_home.status_code == 200
     assert "data-tags=" in res_home.text
 
-    # 2. Server page header responsive break classes and rating sync
     res_server = await client.get("/server/donutsmp.net?mock=true")
     assert res_server.status_code == 200
     html = res_server.text
@@ -241,9 +128,8 @@ async def test_audit_enhancements(client):
     # Header break-all sm:break-normal
     assert "break-all sm:break-normal" in html
 
-    # Rating stats reflect real reviews only (0 reviews, not hardcoded fake reviews)
-    assert "(0 отзывов)" in html
-    assert "no-reviews-msg" in html
+    # Reviews and fake author profiles are completely removed
+    assert "review-form" not in html
     assert "CraftMaster" not in html
 
     # Live status badge preview card removed per design request

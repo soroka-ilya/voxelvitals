@@ -7,7 +7,6 @@ from app.database import init_db
 from app.main import app
 from app.repository import ServerRepository
 from app.services.alias_service import resolve_address
-from app.services.auth_service import hash_password, verify_password
 from app.services.pinger import is_safe_address, query_server
 
 import pytest_asyncio
@@ -24,46 +23,40 @@ async def client():
 
 
 @pytest.mark.asyncio
-async def test_oauth_mock_disabled_by_default(client):
-    """Vulnerability 1: Ensure OAuth mock is rejected when enable_mock_auth is False."""
-    orig = settings.enable_mock_auth
-    try:
-        settings.enable_mock_auth = False
-        res = await client.get("/api/auth/google/login?mock=true")
-        assert res.status_code in (403, 400), "Mock login must be rejected when disabled"
-        res_cb = await client.get("/api/auth/google/callback?mock=true")
-        assert res_cb.status_code in (403, 400), "Mock callback must be rejected when disabled"
-    finally:
-        settings.enable_mock_auth = orig
-
-
-def test_reflected_xss_address_sanitization():
-    """Vulnerability 2: resolve_address must reject/strip dangerous script characters."""
-    dangerous = "hypixel.net');alert(1);//"
-    resolved = resolve_address(dangerous)
-    for bad_char in ("'", '"', "(", ")", ";", "<", ">"):
-        assert bad_char not in resolved, f"Dangerous character {bad_char} found in resolved address"
+async def test_rkn_personal_data_and_ori_endpoints_removed(client):
+    """Verify user auth, OAuth, UGC comments/news/votes, and visitor tracking endpoints return 404."""
+    for method, path in [
+        ("GET", "/api/auth/google/login"),
+        ("GET", "/api/auth/microsoft/login"),
+        ("POST", "/api/auth/register"),
+        ("POST", "/api/auth/login"),
+        ("GET", "/api/auth/me"),
+        ("POST", "/api/reviews"),
+        ("POST", "/api/news"),
+        ("POST", "/api/vote"),
+        ("POST", "/api/analytics/event"),
+        ("GET", "/analytics"),
+    ]:
+        res = await client.request(method, path)
+        assert res.status_code == 404, f"{method} {path} unexpectedly active: {res.status_code}"
 
 
 @pytest.mark.asyncio
-async def test_news_publication_requires_admin(client):
-    """Vulnerability 3: POST /api/news must reject unauthenticated/non-admin users."""
-    orig = settings.require_news_admin
-    try:
-        settings.require_news_admin = True
-        # Unauthenticated request
-        res = await client.post(
-            "/api/news",
-            json={
-                "server_address": "mc.hypixel.net",
-                "title": "Hacked Title",
-                "content": "Malicious announcement",
-                "tag": "Обновление",
-            },
-        )
-        assert res.status_code in (401, 403), "Unauthenticated news creation must be forbidden"
-    finally:
-        settings.require_news_admin = orig
+async def test_no_tracking_cookies_or_external_cdns(client):
+    """Verify responses set no tracking cookies (vv_vid) and embed no Google Fonts or external CDN images."""
+    res_home = await client.get("/")
+    assert res_home.status_code == 200
+    assert "vv_vid" not in res_home.cookies
+    assert "vv_vid" not in res_home.headers.get("set-cookie", "")
+    assert "fonts.googleapis.com" not in res_home.text
+    assert "fonts.gstatic.com" not in res_home.text
+    assert "mc-heads.net" not in res_home.text
+    assert "/static/css/fonts.css" in res_home.text
+
+    res_srv = await client.get("/server/mc.hypixel.net?mock=true")
+    assert res_srv.status_code == 200
+    assert "fonts.googleapis.com" not in res_srv.text
+    assert "mc-heads.net" not in res_srv.text
 
 
 @pytest.mark.asyncio
@@ -97,22 +90,6 @@ async def test_open_redirect_protection(client):
     assert not res_bs.headers["location"].startswith("/\\")
 
 
-def test_password_hashing_scrypt_and_legacy_compatibility():
-    """Vulnerability 8: Passwords must use scrypt, while preserving legacy sha256 verification."""
-    pwd = "SuperSecretPassword123!"
-    new_hash = hash_password(pwd)
-    assert new_hash.startswith("scrypt$"), f"New password hash should use scrypt: {new_hash}"
-    assert verify_password(pwd, new_hash), "Scrypt hash verification failed"
-    assert not verify_password("WrongPassword", new_hash), "Wrong password verified successfully"
-
-    # Legacy SHA-256 hash test
-    legacy_salt = "abcdef0123456789"
-    import hashlib
-    legacy_key = hashlib.sha256((legacy_salt + pwd).encode("utf-8")).hexdigest()
-    legacy_hash = f"{legacy_salt}${legacy_key}"
-    assert verify_password(pwd, legacy_hash), "Legacy sha256 verification failed"
-
-
 @pytest.mark.asyncio
 async def test_security_headers_present(client):
     """Vulnerability 11: Security headers must be set on responses."""
@@ -121,25 +98,6 @@ async def test_security_headers_present(client):
     assert res.headers.get("x-content-type-options") == "nosniff"
     assert "referrer-policy" in res.headers
     assert "strict-transport-security" in res.headers
-
-
-@pytest.mark.asyncio
-async def test_logout_post_method(client):
-    """Vulnerability 12: POST /api/auth/logout clears user session."""
-    # Register a temp user
-    u_name = "logout_test_user"
-    reg_res = await client.post("/api/auth/register", json={"username": u_name, "password": "Password123!"})
-    assert reg_res.status_code == 201
-    session_token = reg_res.cookies.get("session_token")
-    assert session_token
-
-    # Perform POST logout
-    logout_res = await client.post("/api/auth/logout", cookies={"session_token": session_token})
-    assert logout_res.status_code == 200
-
-    # Verify session is invalidated
-    me_res = await client.get("/api/auth/me", cookies={"session_token": session_token})
-    assert me_res.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -204,39 +162,6 @@ async def test_telegram_webhook_secret_enforcement(client):
         assert res_valid.status_code == 200
     finally:
         settings.telegram_webhook_secret = ""
-
-
-@pytest.mark.asyncio
-async def test_secure_cookie_under_https(client):
-    """Vulnerability 9: Cookies must include Secure flag when running under HTTPS."""
-    settings.enable_mock_auth = True
-    res = await client.get("/api/auth/google/login?mock=true", headers={"x-forwarded-proto": "https"})
-    assert res.status_code == 302
-    set_cookie_header = res.headers.get("set-cookie", "")
-    assert "secure" in set_cookie_header.lower(), "Cookie missing Secure flag on HTTPS connection"
-
-
-@pytest.mark.asyncio
-async def test_oauth_unverified_email_linking_prevented():
-    """Vulnerability 10: OAuth must not link by unverified email."""
-    # Create existing local user with target email
-    target_email = "victim@example.com"
-    pwd_h = hash_password("Password123!")
-    user_id = await repo.create_user(
-        username="victim_account",
-        password_hash=pwd_h,
-        email=target_email,
-    )
-    assert user_id > 0
-
-    # Attempt to link unverified OAuth identity with same email
-    oauth_user = await repo.create_or_link_oauth_user(
-        provider="google",
-        provider_id="attacker_google_id_999",
-        email=target_email,
-        email_verified=False,
-    )
-    assert oauth_user["id"] != user_id, "Account takeover occurred: unverified email linked to victim account!"
 
 
 def test_icon_base64_validation():

@@ -38,33 +38,8 @@ function vvMsg(path, fallback, vars = {}) {
   return val;
 }
 
-// Telemetry & Visitor Interaction Tracking Beacon
-function trackEvent(eventType, target, metadata = {}) {
-  try {
-    const payload = JSON.stringify({
-      event_type: eventType,
-      target: String(target || window.location.pathname),
-      metadata: metadata || {}
-    });
-    if (navigator.sendBeacon) {
-      const blob = new Blob([payload], { type: 'application/json' });
-      navigator.sendBeacon('/api/analytics/event', blob);
-    } else {
-      fetch('/api/analytics/event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload,
-        keepalive: true
-      }).catch(() => {});
-    }
-  } catch (e) {
-    // silently fail
-  }
-}
-
 // 1. One-click IP Copy Helper with fallback
 function copyIp(address, btn) {
-  trackEvent('copy_ip', address, { source: btn ? 'card_or_detail' : 'direct' });
   const fallbackCopy = (text) => {
     const input = document.createElement('input');
     input.value = text;
@@ -218,7 +193,6 @@ function renderCatalogPagination(totalPages) {
 
 function setCatalogPage(page) {
   catalogCurrentPage = page;
-  trackEvent('catalog_pagination', `page_${page}`, { page });
   applyCatalogFilters(false);
   const catalogSection = document.getElementById('catalog-grid');
   if (catalogSection) {
@@ -915,7 +889,6 @@ function launchMinecraft(address, edition = 'java', customNameOrBtn = '', btn = 
   const cleanAddr = (address || '').trim();
   const isBedrock = edition === 'bedrock' || (edition !== 'java' && (cleanAddr.includes('bedrock') || cleanAddr.includes('19132')));
 
-  trackEvent('launch_client', cleanAddr, { edition: isBedrock ? 'bedrock' : 'java', custom_name: customName });
   copyIp(cleanAddr, triggerBtn);
 
   if (isBedrock) {
@@ -993,7 +966,6 @@ function toggleTheme() {
   const newDark = !isDark;
   localStorage.setItem('theme', newDark ? 'dark' : 'light');
   applyTheme(newDark);
-  trackEvent('toggle_theme', newDark ? 'dark' : 'light', {});
 }
 
 function initTheme() {

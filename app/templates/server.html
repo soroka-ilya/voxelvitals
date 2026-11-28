@@ -45,9 +45,6 @@
             <span class="text-xs uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-[#273147] text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-transparent">
               {{ status.edition }}
             </span>
-            <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              ★ {{ rating_stats.avg_rating if rating_stats else 5.0 }}
-            </span>
           </div>
           <p class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">
             {{ status.version_name }} {% if status.version_protocol %}(Protocol {{ status.version_protocol }}){% endif %}
@@ -86,16 +83,6 @@
                 class="px-3.5 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#273147] dark:hover:bg-[#3b4866] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-transparent text-xs font-medium transition-colors flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
           <span class="copy-label">{{ t('server_detail.copy_ip') }}</span>
-        </button>
-
-        <!-- Vote Button -->
-        <button type="button" 
-                id="vote-btn"
-                data-address="{{ status.address }}"
-                onclick="handleVote(this.getAttribute('data-address'), this);"
-                class="px-3.5 py-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-semibold transition-colors flex items-center gap-1.5">
-          <span>{{ t('server_detail.vote_button') }}</span>
-          <span id="vote-count" class="font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-[10px]">{{ votes or 0 }}</span>
         </button>
 
         {% if status.is_online %}
@@ -346,7 +333,7 @@
       {% for player in status.players_sample %}
         {% if player.name and player.name.strip() %}
         <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] hover:border-emerald-500/40 transition-colors group">
-          <img src="https://mc-heads.net/avatar/{{ player.name }}/32" alt="{{ player.name }}" class="w-8 h-8 rounded-md flex-shrink-0 bg-slate-100 dark:bg-[#161b26] border border-slate-200 dark:border-[#273147]" onerror="this.src='/static/favicon.svg';" />
+          <div class="w-8 h-8 rounded-md flex-shrink-0 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono text-xs font-bold flex items-center justify-center uppercase">{{ player.name[:2] }}</div>
           <div class="min-w-0 flex-1">
             <span class="text-xs font-mono text-slate-800 dark:text-slate-200 block truncate group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors font-medium">{{ player.name }}</span>
             <span class="text-[10px] text-slate-500 flex items-center gap-1">
@@ -363,152 +350,6 @@
 
 
 
-  <!-- Server News & Announcements -->
-  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-4">
-    <div class="flex items-center justify-between border-b border-slate-200 dark:border-[#273147] pb-3">
-      <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ t('server_detail.news_title') }}</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('server_detail.news_subtitle') }}</p>
-      </div>
-      <button type="button" onclick="document.getElementById('add-news-modal').classList.remove('hidden')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-[#273147] dark:hover:bg-[#3b4866] text-slate-700 dark:text-slate-200 transition-colors flex items-center gap-1.5">
-        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        <span>{{ t('server_detail.add_news_btn') }}</span>
-      </button>
-    </div>
-
-    <div class="space-y-3">
-      {% for item in news %}
-      <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] space-y-2">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              {{ item.tag or 'Обновление' }}
-            </span>
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ item.title }}</h3>
-          </div>
-          <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-            {{ item.published_at[:10] }} • {{ item.author or 'Администрация' }}
-          </span>
-        </div>
-        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-          {{ item.content }}
-        </p>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Server Reviews & Ratings System -->
-  <div class="rounded-xl border border-slate-200 dark:border-[#273147] bg-white dark:bg-[#161b26] p-6 shadow-sm space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-[#273147] pb-4">
-      <div>
-        <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ t('server_detail.reviews_title') }}</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">{{ t('server_detail.reviews_subtitle') }}</p>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
-          <span class="text-base font-bold font-mono">★ {{ rating_stats.avg_rating }}</span>
-          <span class="text-xs text-slate-500 dark:text-slate-400">/ 5.0 ({{ rating_stats.total_count }} отзывов)</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Submit Review Form -->
-    <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] space-y-3">
-      <h3 class="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{{ t('server_detail.leave_review_title') }}</h3>
-      <form id="review-form" data-address="{{ status.address }}" onsubmit="submitReview(event, this.getAttribute('data-address'))" class="space-y-3">
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-600 dark:text-slate-300">{{ t('server_detail.your_rating') }}</span>
-            <div class="flex items-center gap-1 text-amber-400 cursor-pointer" id="star-rating-select">
-              <span onclick="setRating(1)" class="star text-lg">★</span>
-              <span onclick="setRating(2)" class="star text-lg">★</span>
-              <span onclick="setRating(3)" class="star text-lg">★</span>
-              <span onclick="setRating(4)" class="star text-lg">★</span>
-              <span onclick="setRating(5)" class="star text-lg text-amber-500">★</span>
-            </div>
-            <input type="hidden" id="review-rating-val" value="5" />
-          </div>
-          {% if not current_user %}
-          <div class="flex-1 min-w-[200px]">
-            <input type="text" id="review-author" placeholder="{{ t('server_detail.nickname_placeholder') }}" required class="w-full px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none font-mono" />
-          </div>
-          {% endif %}
-        </div>
-        <div>
-          <textarea id="review-comment" required rows="2" placeholder="{{ t('server_detail.comment_placeholder') }}" class="w-full px-3 py-2 rounded-lg text-xs bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"></textarea>
-        </div>
-        <div class="flex items-center justify-between">
-          <p id="review-status-msg" class="text-xs text-emerald-500 hidden"></p>
-          <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors flex items-center gap-1.5">
-            <span>{{ t('server_detail.submit_review_btn') }}</span>
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Reviews List -->
-    <div class="space-y-3" id="reviews-list-container">
-      {% for rev in reviews %}
-      <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] space-y-2">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <img src="https://mc-heads.net/avatar/{{ rev.author_name }}/28" alt="{{ rev.author_name }}" class="w-7 h-7 rounded-md bg-slate-200 dark:bg-[#161b26] border border-slate-200 dark:border-[#273147]" onerror="this.src='/static/favicon.svg';" />
-            <div>
-              <span class="text-xs font-semibold text-slate-900 dark:text-white font-mono block">{{ rev.author_name }}</span>
-              <div class="flex items-center gap-0.5 text-amber-400 text-xs">
-                {% for _ in range(rev.rating) %}★{% endfor %}
-              </div>
-            </div>
-          </div>
-          <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">{{ rev.created_at[:10] }}</span>
-        </div>
-        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pl-9">
-          {{ rev.comment }}
-        </p>
-      </div>
-      {% else %}
-      <div id="no-reviews-msg" class="p-6 rounded-xl bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-center text-xs text-slate-500 dark:text-slate-400">
-        {{ t('server_detail.no_reviews') }}
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Add News Modal Dialog -->
-  <div id="add-news-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-    <div class="w-full max-w-md rounded-2xl bg-white dark:bg-[#161b26] border border-slate-200 dark:border-[#273147] p-6 shadow-2xl relative">
-      <button type="button" onclick="document.getElementById('add-news-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-
-      <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-4">{{ t('news_modal.title') }}</h3>
-      <form data-address="{{ status.address }}" onsubmit="submitNews(event, this.getAttribute('data-address'))" class="space-y-3">
-        <div>
-          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('news_modal.news_title_label') }}</label>
-          <input type="text" id="news-title" required class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500" placeholder="{{ t('news_modal.news_title_placeholder') }}" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('news_modal.tag_label') }}</label>
-          <select id="news-tag" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none">
-            <option value="Обновление">Обновление</option>
-            <option value="Ивент">Ивент</option>
-            <option value="Вайп">Вайп</option>
-            <option value="Техработы">Техработы</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('news_modal.content_label') }}</label>
-          <textarea id="news-content" required rows="4" class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0c0f17] border border-slate-200 dark:border-[#273147] text-xs text-slate-900 dark:text-slate-100 focus:outline-none" placeholder="{{ t('news_modal.content_placeholder') }}"></textarea>
-        </div>
-        <p id="news-modal-error" class="hidden text-xs text-red-500"></p>
-        <button type="submit" class="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs transition-colors">
-          {{ t('news_modal.submit_btn') }}
-        </button>
-      </form>
-    </div>
-  </div>
 </div>
 {% endblock %}
 
@@ -540,98 +381,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     renderTelemetryChart('telemetryChart', historyData);
   });
-
-  // Star rating selector
-  function setRating(val) {
-    document.getElementById('review-rating-val').value = val;
-    const stars = document.querySelectorAll('#star-rating-select .star');
-    stars.forEach((s, idx) => {
-      s.classList.toggle('text-amber-500', idx < val);
-      s.classList.toggle('text-slate-400', idx >= val);
-    });
-  }
-
-  // Handle server upvote
-  async function handleVote(address, btn) {
-    try {
-      const res = await fetch('/api/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ server_address: address })
-      });
-      const data = await res.json();
-      showToast(data.message);
-      if (data.votes !== undefined) {
-        document.getElementById('vote-count').textContent = data.votes;
-      }
-    } catch (e) {
-      showToast((window.VV_I18N && window.VV_I18N.toasts.vote_error) || 'Ошибка при отправке голоса');
-    }
-  }
-
-  // Handle review submit
-  async function submitReview(e, address) {
-    e.preventDefault();
-    const rating = parseInt(document.getElementById('review-rating-val').value) || 5;
-    const comment = document.getElementById('review-comment').value.trim();
-    const authorEl = document.getElementById('review-author');
-    const author = authorEl ? authorEl.value.trim() : '';
-
-    try {
-      const res = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          server_address: address,
-          rating: rating,
-          comment: comment,
-          author_name: author
-        })
-      });
-      if (res.ok) {
-        showToast((window.VV_I18N && window.VV_I18N.toasts.review_success) || 'Отзыв успешно добавлен!');
-        setTimeout(() => location.reload(), 800);
-      } else {
-        const data = await res.json();
-        showToast(data.detail || (window.VV_I18N && window.VV_I18N.toasts.review_error) || 'Ошибка при отправке отзыва');
-      }
-    } catch (e) {
-      showToast((window.VV_I18N && window.VV_I18N.toasts.network_error) || 'Ошибка сети');
-    }
-  }
-
-  // Handle news submit
-  async function submitNews(e, address) {
-    e.preventDefault();
-    const title = document.getElementById('news-title').value.trim();
-    const tag = document.getElementById('news-tag').value;
-    const content = document.getElementById('news-content').value.trim();
-    const err = document.getElementById('news-modal-error');
-
-    try {
-      const res = await fetch('/api/news', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          server_address: address,
-          title: title,
-          tag: tag,
-          content: content
-        })
-      });
-      if (res.ok) {
-        showToast((window.VV_I18N && window.VV_I18N.toasts.news_success) || 'Новость успешно опубликована!');
-        setTimeout(() => location.reload(), 800);
-      } else {
-        const data = await res.json();
-        err.textContent = data.detail || (window.VV_I18N && window.VV_I18N.toasts.news_error) || 'Ошибка при публикации';
-        err.classList.remove('hidden');
-      }
-    } catch (e) {
-      err.textContent = (window.VV_I18N && window.VV_I18N.toasts.network_error) || 'Ошибка сети';
-      err.classList.remove('hidden');
-    }
-  }
 
   // Live SSE Telemetry Stream: Deferred until AFTER page load completes to prevent browser tab spinner from hanging
   function initLiveStream() {
